@@ -36,3 +36,12 @@ def test_ports_and_params():
 def test_ambiguity_is_an_error():
     with pytest.raises(RackError, match='ambiguous'):
         resolve(LAYOUT, 'Gorgon.out.Gate')
+
+
+def test_blank_point_avoids_controls():
+    from gtut.rack import blank_point
+    mod = {'box': [0, 0, 300, 380], 'ports': [{'centre': [150, 370]}],
+           'params': [{'box': [100, 0, 100, 40], 'centre': [150, 20]}]}   # a control across the top middle
+    x, y = blank_point(mod)
+    assert not (100 <= x <= 200 and 0 <= y <= 40)                     # not on the control
+    assert y in (10, 6, 370, 374) and 0 < x < 300                        # on the panel's top or bottom edge
