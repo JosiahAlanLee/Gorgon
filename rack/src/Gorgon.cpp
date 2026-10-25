@@ -252,7 +252,13 @@ struct GorgonWidget : ModuleWidget {
 		menu->addChild(createMenuLabel("Studio: " + module->bridge.status()));
 		menu->addChild(createMenuLabel("Reads " + module->bridge.advertisementFile()));
 		menu->addChild(createMenuLabel("Audio: inputs 1/2 optical, 3/4 breaks"));
-		app::appendAudioMenu(menu, &module->audioInput);
+		// Rack's driver and device list goes in a submenu: with JACK it lists every client in 4-channel
+		// groups, which inline would push the rest of this menu past the bottom of a 1080p screen.
+		rack::audio::Port* port = &module->audioInput;
+		int device = port->getDeviceId();
+		menu->addChild(createSubmenuItem("Audio device",
+			port->getDriverName() + ": " + (device >= 0 ? port->getDeviceName(device) : "no device"),
+			[=](Menu* sub) { app::appendAudioMenu(sub, port); }));
 		menu->addChild(createMenuLabel(string::f("Audio underrun samples: %llu; backlog drops: %llu; overruns: %llu",
 			(unsigned long long)module->audioInput.underruns.load(), (unsigned long long)module->audioInput.discarded.load(),
 			(unsigned long long)module->audioInput.queue.overruns.load())));
