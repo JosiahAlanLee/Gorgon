@@ -13,14 +13,15 @@ shots:
       actions:
         - shell: rm -rf hydrapy hydrapy-env
     narration: >
-      HydraPy needs Python 3.9 or newer. Clone it, {clone} make a virtual environment, {venv}
-      and install it in editable mode with the extras the tracker uses: {pip}
+      HydraPy needs Python 3.9 or newer. Clone it {clone} from GitHub; a shallow clone is enough.
+      Make a virtual environment and activate it, so HydraPy's packages stay separate from the system's. {venv}
+      Then install it in editable mode, with the extras the tracker uses: {pip}
       gpu for the OpenGL renderer, video for MP4 export, and jack for audio ports Rack can record.
     actions:
       - at: clone
-        term.run: {cmd: "git clone --depth 1 https://github.com/JosiahAlanLee/hydrapy.git && cd hydrapy", wait_for: '\$ $|Resolving deltas.*done', timeout: 300}
+        term.run: {cmd: "git clone --depth 1 https://github.com/JosiahAlanLee/hydrapy.git && cd hydrapy", wait_for: '\$ $|Resolving deltas.*done', timeout: 300, cps: 32}
       - at: venv
-        term.run: {cmd: "python3 -m venv ../hydrapy-env && . ../hydrapy-env/bin/activate", wait_for: '\(hydrapy-env\)|\$ $'}
+        term.run: {cmd: "python3 -m venv ../hydrapy-env && . ../hydrapy-env/bin/activate", wait_for: '\(hydrapy-env\)|\$ $', cps: 32}
       - at: pip
         mark: pip-start
         term.run: {cmd: "pip install -e \".[gpu,video,jack]\"", wait_for: 'Successfully installed', timeout: 900}
