@@ -165,6 +165,19 @@ def _t_run(st, arg):
     st.term.run(kw['cmd'], kw.get('wait_for'), kw.get('timeout', 600), kw.get('cps', 16))
 
 
+@action('term.type', '{cmd, cps}: type a command and press Enter, without waiting (pair with term.wait)')
+def _t_type(st, arg):
+    kw = _kw(arg, 'cmd')
+    st.term.type(kw['cmd'], kw.get('cps', 16))
+
+
+@action('term.wait', '{wait_for, timeout}: wait for the last typed command\'s output; a speed range can start here,'
+                     ' so a long command is typed at normal speed and only its run is fast-forwarded')
+def _t_wait(st, arg):
+    kw = _kw(arg, 'wait_for')
+    st.term.wait(kw['wait_for'], kw.get('timeout', 600))
+
+
 @action('term.quiet', 'cmd: run without typing it on camera, then clear')
 def _t_quiet(st, arg):
     st.term.quiet(arg)
@@ -192,9 +205,14 @@ def _h_move(st, arg):
     st.hand.move(x + w * arg['x'], y + h * arg['y'], seconds=arg.get('seconds'))
 
 
-@action('shell', 'cmd: run a command off camera, with the stage environment')
+@action('shell', 'cmd: run a command off camera, with the stage environment, in the terminal\'s sandbox')
 def _shell(st, arg):
-    subprocess.run(arg, shell=True, check=True, env=st.env(), cwd=st.cfg.work)
+    # The same folder the on-camera terminal starts in (work/sandbox), so a path in a script means one thing.
+    # Not work/ itself: that holds the stage's own HydraPy worktree, venv and takes, and setups like
+    # `rm -rf hydrapy` (clearing the on-camera clone) would delete the HydraPy that Studio runs from.
+    sandbox = st.cfg.work / 'sandbox'
+    sandbox.mkdir(parents=True, exist_ok=True)
+    subprocess.run(arg, shell=True, check=True, env=st.env(), cwd=sandbox)
 
 
 @action('screenshot', 'name: save a stage screenshot into the take folder (for QC)')
