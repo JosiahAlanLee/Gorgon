@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" font-family="DejaVu Sans, sans-serif">
   <rect width="1920" height="1080" fill="#101014"/>
   <text x="120" y="130" font-size="44" fill="#f0ece4" font-weight="bold">Scenes: named chains a score can pick</text>
-  <text x="120" y="182" font-size="26" fill="#9c988f">patches/gorgon_scenes.py, in HydraPy</text>
+  <text x="120" y="182" font-size="26" fill="#9c988f">from HydraPy's tracker guide</text>
   <rect x="120" y="230" width="1100" height="560" rx="14" fill="#17171d" stroke="#3a3a44" stroke-width="2"/>
   <g font-family="DejaVu Sans Mono, monospace" font-size="34" xml:space="preserve">
     <text x="170" y="310" fill="#ffc733">@scene('drift')</text>

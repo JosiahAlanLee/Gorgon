@@ -12,7 +12,7 @@ shots:
       seconds: 14
     source: [Gorgon/README.md, hydrapy/patches/gorgon_corridor.py]
     narration: >
-      One score drives a picture, VCV Rack and a modular synthesizer from a single playhead.
+      One score drives a picture and VCV Rack from a single playhead, and it is built to drive a modular synthesizer too.
       This is Gorgon, a tracker inside HydraPy Studio, and the Rack modules it was built to play.
     verify:
       - "Gorgon README: one score, four 64-row patterns, picture + modular + Rack from one playhead"
@@ -23,5 +23,5 @@ shots:
     sub: HydraPy · Studio · the tracker · VCV Rack · OTIS · Vastish · Spoon Bender · Séance
     narration: >
       In this video: what each piece is, how to install them, how to write a score,
-      and how to patch it into Rack. Everything you see was recorded on one computer,
-      with no hardware attached.
+      and how to patch it into Rack. Everything you see was recorded inside one computer,
+      with no audio interface or modular synthesizer in use.

@@ -52,12 +52,14 @@ def build(cat, harvested, cfg=None):
     p.add('Fundamental', 'Scope', gap=2)
     out['rack-scope-start'] = p
 
-    # ch10 one lane into Vastish: Gorgon, two Splits, Vastish -> Audio
+    # ch10 one lane into Vastish: Gorgon's pitch and gates already split (on camera only Split -> Vastish is
+    # patched; four drags would outrun the narration), Vastish -> Audio
     p, g = base()
-    p.add('Fundamental', 'Split', gap=2)
-    p.add('Fundamental', 'Split')
+    sp = p.add('Fundamental', 'Split', gap=2)
+    sg = p.add('Fundamental', 'Split')
     v = p.add('VastishLab', 'Vastish', gap=2)
     a = audio_out(p)
+    p.cable(g, 'Pitch', sp, '#0').cable(g, 'Gates 1', sg, '#0')
     p.cable(v, 'Left audio', a, '#0').cable(v, 'Right audio', a, '#1')
     out['rack-voice-start'] = p
 

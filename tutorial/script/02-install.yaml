@@ -35,17 +35,19 @@ shots:
   - id: check
     title: Check it
     setup:
+      terminal: {}
       actions:
         - term.quiet: "cd hydrapy && . ../hydrapy-env/bin/activate"
     narration: >
-      hydrapy encoders lists the video encoders this machine can use. {enc}
+      hydrapy encoders tries each video encoder with a real frame and marks the ones that work. {enc}
       On an NVIDIA card, NVENC is the one to look for.
     actions:
       - at: enc
         term.run: {cmd: "hydrapy encoders", wait_for: 'nvenc|software'}
     hold: 2
     verify:
-      - "`hydrapy encoders` exists (cli.py subcommand) and names nvenc when available"
+      - "`hydrapy encoders` exists (cli.py subcommand), tries every encoder and marks OK or --; names nvenc when available"
+      - "FFmpeg paths it prints show ~, not the home folder (the terminal's hydrapy wrapper; QC OCR)"
   - id: plugins
     title: The Rack plugins
     source: [Gorgon/README.md#start, DSP_Emulation/docs/GETTING_STARTED.md#install, DSP_Emulation/docs/DEVELOPMENT.md]

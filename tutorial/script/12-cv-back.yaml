@@ -16,7 +16,7 @@ shots:
     narration: >
       The four CV inputs set the patch's named controls. Zero to ten volts spans the control's whole range.
       Patch a slow LFO into CV 1. {patch} By default each input takes the next control no tracker lane is driving.
-      A control bound to a lane follows the score while automation is on, and ignores CV until it's off. {menu}
+      {menu} A control bound to a lane follows the score while automation is on, and ignores CV until it's off.
       To choose, right-click: CV 1 drives. {watch} The picture now moves with the LFO.
     actions:
       - at: patch
