@@ -205,9 +205,14 @@ def _h_move(st, arg):
     st.hand.move(x + w * arg['x'], y + h * arg['y'], seconds=arg.get('seconds'))
 
 
-@action('shell', 'cmd: run a command off camera, with the stage environment')
+@action('shell', 'cmd: run a command off camera, with the stage environment, in the terminal\'s sandbox')
 def _shell(st, arg):
-    subprocess.run(arg, shell=True, check=True, env=st.env(), cwd=st.cfg.work)
+    # The same folder the on-camera terminal starts in (work/sandbox), so a path in a script means one thing.
+    # Not work/ itself: that holds the stage's own HydraPy worktree, venv and takes, and setups like
+    # `rm -rf hydrapy` (clearing the on-camera clone) would delete the HydraPy that Studio runs from.
+    sandbox = st.cfg.work / 'sandbox'
+    sandbox.mkdir(parents=True, exist_ok=True)
+    subprocess.run(arg, shell=True, check=True, env=st.env(), cwd=sandbox)
 
 
 @action('screenshot', 'name: save a stage screenshot into the take folder (for QC)')
