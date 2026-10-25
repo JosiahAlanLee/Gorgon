@@ -13,3 +13,5 @@ tests/studio_probe
 tests/module_test
 tests/pcm_test
 tests/pcm_tsan
+tests/bytebus_test
+tests/bytebus_asan

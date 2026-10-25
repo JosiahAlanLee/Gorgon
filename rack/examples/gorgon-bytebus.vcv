@@ -1,0 +1,168 @@
+{
+  "version": "2.6.4",
+  "modules": [
+    {
+      "id": 1,
+      "plugin": "GorgonBridge",
+      "model": "Gorgon",
+      "version": "2.2.0",
+      "pos": [
+        0,
+        0
+      ],
+      "params": [
+        {
+          "id": 0,
+          "value": 0.0
+        },
+        {
+          "id": 1,
+          "value": 0.0
+        },
+        {
+          "id": 2,
+          "value": 0.0
+        }
+      ],
+      "data": {
+        "ppqn": 4,
+        "gate": 0.5,
+        "outputHigh": 10,
+        "pitchZero": 60,
+        "busSource": 0,
+        "bindings": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "plugin": "ByteBusLab",
+      "model": "ClockedRegister",
+      "version": "2.2.0",
+      "pos": [
+        14,
+        0
+      ],
+      "params": [
+        {
+          "id": 0,
+          "value": 2.0
+        },
+        {
+          "id": 1,
+          "value": 3.0
+        },
+        {
+          "id": 2,
+          "value": 0.0
+        },
+        {
+          "id": 3,
+          "value": 0.0
+        }
+      ],
+      "data": {
+        "word": 0
+      }
+    },
+    {
+      "id": 3,
+      "plugin": "Fundamental",
+      "model": "Split",
+      "version": "2.6.4",
+      "pos": [
+        28,
+        0
+      ],
+      "params": []
+    },
+    {
+      "id": 4,
+      "plugin": "ByteBusLab",
+      "model": "Converter",
+      "version": "2.2.0",
+      "pos": [
+        35,
+        0
+      ],
+      "params": [
+        {
+          "id": 0,
+          "value": 1.0
+        },
+        {
+          "id": 1,
+          "value": 0.0
+        },
+        {
+          "id": 2,
+          "value": 0.0
+        },
+        {
+          "id": 3,
+          "value": 1.0
+        },
+        {
+          "id": 4,
+          "value": 0.0
+        },
+        {
+          "id": 5,
+          "value": 0.0
+        },
+        {
+          "id": 6,
+          "value": 0.0
+        },
+        {
+          "id": 7,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "plugin": "Core",
+      "model": "Notes",
+      "version": "2.6.4",
+      "pos": [
+        51,
+        0
+      ],
+      "params": [],
+      "data": {
+        "text": "NATIVE GORGON BYTEBUS\nStart HydraPy Studio with --tracker.\nEnable automation and press Play.\nGorgon BUS -> Register -> Split/DAC.\n\nRequires GorgonBridge 2.2.0,\nByteBusLab 2.2.0 and VCV Free.\n\nRight-click Gorgon: BUS source.\nDefault Z: 0-1 becomes 00-FF.\nAlso Roll, Feedback, Hit mask.\nZ key n/255 programs byte n.\nHit mask: bits 0-3 = lanes 1-4;\nAIR counts, muted/zero vel do not.\n\nRegister SOURCE = Bus CLK.\nSplit outputs 1-8 are data bits;\noutput 9 is publication clock.\nBoth cables have 9 channels.\nBUS always uses 0/10 V, even in\nGorgon's ordinary 5 V CV profile.\n\nRegister BUS OUT can also drive\nLookup, Vastish BUS IN or OTIS\nFRAME BUS (FRM mode). OTIS still\nneeds separate pitch and gates.\n\nDAC output is (byte-128)*5/128 V.\nAudio devices are not configured."
+      }
+    }
+  ],
+  "cables": [
+    {
+      "id": 1,
+      "outputModuleId": 1,
+      "outputId": 17,
+      "inputModuleId": 2,
+      "inputId": 0,
+      "color": "#80ddc7"
+    },
+    {
+      "id": 2,
+      "outputModuleId": 2,
+      "outputId": 0,
+      "inputModuleId": 3,
+      "inputId": 0,
+      "color": "#80ddc7"
+    },
+    {
+      "id": 3,
+      "outputModuleId": 2,
+      "outputId": 0,
+      "inputModuleId": 4,
+      "inputId": 2,
+      "color": "#80ddc7"
+    }
+  ]
+}
