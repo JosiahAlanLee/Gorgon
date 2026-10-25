@@ -56,6 +56,8 @@ def mutate(label, change):
 
 mutate('bpm 300', lambda d: d.__setitem__('bpm', 300))
 mutate('key 3', lambda d: d.__setitem__('key', 3))
+mutate('key false', lambda d: d.__setitem__('key', False))
+mutate('key true', lambda d: d.__setitem__('key', True))
 mutate('pattern 4', lambda d: d.__setitem__('pattern', 4))
 mutate('note H4', lambda d: d['patterns'][0]['audio'][0].__setitem__(0, {'note': 'H4', 'vel': 10}))
 mutate('note B#4', lambda d: d['patterns'][0]['audio'][0].__setitem__(0, {'note': 'B#4', 'vel': 10}))
