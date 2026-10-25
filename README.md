@@ -100,6 +100,11 @@ ES-40 expanders ([ES-40 setup](https://github.com/JosiahAlanLee/hydrapy/blob/mai
 
 <img src="rack/docs/panel-preview.png" alt="Gorgon Rack module panel" width="180">
 
+The coordinated preview is being prepared; this repository has no published
+release yet. The [preview release guide](docs/PREVIEW_RELEASE.md) describes the
+six-plugin bundles, exact source pins and remaining release blockers. Until it
+is published, build [`rack/`](rack) against the Rack SDK.
+
 1. Install the `GorgonBridge` plugin from this repository's
    [releases](https://github.com/JosiahAlanLee/Gorgon/releases) or build
    [`rack/`](rack) against the Rack SDK, then add **Gorgon** to a patch. It

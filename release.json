@@ -1,0 +1,10 @@
+{
+  "format": "gorgon-preview-1",
+  "tag": "preview-1",
+  "rack_sdk": "2.6.4",
+  "dsp_commit": "4587b48293929448419eff428126d6f8008b7872",
+  "blocked_by": [
+    "Merge and pin the explicit short-seek follower fix, including a regression test.",
+    "Merge and pin equivalent Breaks note spelling fixes in browser and native audio."
+  ]
+}

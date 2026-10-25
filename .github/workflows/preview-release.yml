@@ -1,0 +1,188 @@
+name: Gorgon preview bundles
+on:
+  pull_request:
+    paths: ['release.json', 'hydrapy.pin', 'tools/release_bundle.py', 'tests/test_release_bundle.py', '.github/workflows/preview-release.yml']
+  push:
+    tags: ['preview-*']
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Create a draft pre-release after all release blockers are resolved'
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  resolve:
+    runs-on: ubuntu-22.04
+    outputs:
+      hydrapy: ${{ steps.refs.outputs.hydrapy }}
+      dsp: ${{ steps.refs.outputs.dsp }}
+      sdk: ${{ steps.refs.outputs.sdk }}
+      tag: ${{ steps.refs.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends zstd
+      - run: python -m unittest discover -s tests -p 'test_release_bundle.py'
+      - run: python tools/release_bundle.py --check
+      - name: Refuse publication with unresolved blockers
+        if: github.ref_type == 'tag' || inputs.publish
+        run: python tools/release_bundle.py --publish-check
+      - id: refs
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          release = json.loads(Path('release.json').read_text())
+          if os.environ['GITHUB_REF_TYPE'] == 'tag' and os.environ['GITHUB_REF_NAME'] != release['tag']:
+              raise SystemExit('The pushed tag must match release.json')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              for key, value in dict(hydrapy=Path('hydrapy.pin').read_text().strip(),
+                                     dsp=release['dsp_commit'], sdk=release['rack_sdk'], tag=release['tag']).items():
+                  print(f'{key}={value}', file=output)
+          PY
+
+  # Use the existing conformance, real Studio, sanitizer and Rack API checks.
+  contract:
+    needs: resolve
+    uses: ./.github/workflows/rack.yml
+    with:
+      hydrapy_ref: ${{ needs.resolve.outputs.hydrapy }}
+
+  build:
+    needs: resolve
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            arch: lin-x64
+          - os: windows-latest
+            arch: win-x64
+          - os: macos-latest
+            arch: mac-arm64
+          - os: macos-latest
+            arch: mac-x64
+    runs-on: ${{ matrix.os }}
+    env:
+      RACK_SDK_VERSION: ${{ needs.resolve.outputs.sdk }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: JosiahAlanLee/hydrapy
+          ref: ${{ needs.resolve.outputs.hydrapy }}
+          path: .integration/hydrapy
+      - uses: actions/checkout@v4
+        with:
+          repository: JosiahAlanLee/DSP_Emulation
+          ref: ${{ needs.resolve.outputs.dsp }}
+          path: .integration/DSP_Emulation
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Build the pinned Python wheel and source distribution
+        shell: bash
+        run: |
+          python -m pip install build
+          python -m build .integration/hydrapy --outdir python-dist
+      - name: Linux build tools
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends zstd jq zip libjack-jackd2-0 libpulse0
+      - name: Windows build tools
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            make zip unzip jq rsync
+            mingw-w64-x86_64-gcc mingw-w64-x86_64-zstd
+      - name: macOS build tools
+        if: runner.os == 'macOS'
+        run: brew install zstd jq
+      - name: Build Linux/macOS plugins
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          arch='${{ matrix.arch }}'
+          curl --fail --location "https://vcvrack.com/downloads/Rack-SDK-${RACK_SDK_VERSION}-${arch}.zip" -o /tmp/rack-sdk.zip
+          unzip -q /tmp/rack-sdk.zip -d /tmp
+          cross=()
+          if [ "$arch" = mac-x64 ]; then cross=(CROSS_COMPILE=x86_64-apple-darwin); fi
+          for folder in rack .integration/DSP_Emulation/vcv/{otislab,vastish,spoonbender,seance,bytebus}; do
+            make -C "$folder" -j2 RACK_DIR=/tmp/Rack-SDK "${cross[@]}"
+            make -C "$folder" dist RACK_DIR=/tmp/Rack-SDK "${cross[@]}"
+            if [[ "$arch" = mac-* ]]; then
+              want=arm64; if [ "$arch" = mac-x64 ]; then want=x86_64; fi
+              test "$(lipo -archs "$folder/plugin.dylib")" = "$want"
+            fi
+          done
+      - name: Build Windows plugins
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: |
+          curl --fail --location "https://vcvrack.com/downloads/Rack-SDK-${RACK_SDK_VERSION}-win-x64.zip" -o /tmp/rack-sdk.zip
+          unzip -q /tmp/rack-sdk.zip -d /tmp
+          for folder in rack .integration/DSP_Emulation/vcv/{otislab,vastish,spoonbender,seance,bytebus}; do
+            make -C "$folder" -j2 RACK_DIR=/tmp/Rack-SDK
+            make -C "$folder" dist RACK_DIR=/tmp/Rack-SDK
+            if objdump -p "$folder/plugin.dll" | grep -Ei 'DLL Name: (libstdc|libgcc|libwinpthread)'; then
+              echo '::error::MinGW runtime DLL dependency'; exit 1
+            fi
+          done
+      - name: Linux instrument and bus checks
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          dsp="$GITHUB_WORKSPACE/.integration/DSP_Emulation/vcv"
+          make -C "$dsp/bytebus/tests" -j2 check tools-check RACK_DIR=/tmp/Rack-SDK
+          make -C "$dsp/otislab/tests" -j2 test bus-check RACK_DIR=/tmp/Rack-SDK
+          make -C "$dsp/seance/tests" -j2 engine_test module_test bridge-check RACK_DIR=/tmp/Rack-SDK
+          "$dsp/seance/tests/engine_test"
+          (cd "$dsp/seance" && tests/module_test)
+          make -C "$dsp/vastish/tests" -j2 engine_test sample_test adapter_test link_test RACK_DIR=/tmp/Rack-SDK
+          for test in engine_test sample_test adapter_test; do (cd "$dsp/vastish" && "tests/$test"); done
+          (cd "$dsp/vastish/tests" && ./link_test)
+          make -C "$dsp/spoonbender/tests" -j2 engine_test module_test RACK_DIR=/tmp/Rack-SDK
+          (cd "$dsp/spoonbender" && tests/engine_test && tests/module_test)
+      - name: Assemble Linux/macOS preview
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          python tools/release_bundle.py --dsp .integration/DSP_Emulation --hydrapy .integration/hydrapy --python-dist python-dist --arch '${{ matrix.arch }}'
+      - name: Assemble Windows preview
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $env:PATH = "C:\msys64\mingw64\bin;C:\msys64\usr\bin;$env:PATH"
+          & "$env:pythonLocation/python.exe" tools/release_bundle.py --dsp .integration/DSP_Emulation --hydrapy .integration/hydrapy --python-dist python-dist --arch win-x64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Gorgon-preview-${{ matrix.arch }}
+          path: release-dist/*.zip
+          if-no-files-found: error
+
+  publish:
+    if: github.ref_type == 'tag' || inputs.publish
+    needs: [resolve, contract, build]
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: Gorgon-preview-*
+          merge-multiple: true
+          path: out
+      - name: Create a draft pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.resolve.outputs.tag }}
+        run: |
+          python tools/release_bundle.py --publish-check
+          gh release create "$RELEASE_TAG" out/*.zip --draft --prerelease --target "$GITHUB_SHA" --title "Gorgon $RELEASE_TAG" --notes-file docs/PREVIEW_RELEASE.md
