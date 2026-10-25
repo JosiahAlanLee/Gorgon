@@ -19,7 +19,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-narration = ["kokoro>=0.9", "soundfile>=0.12", "faster-whisper>=1.0"]
+# preshed/cymem: newer releases break loading spaCy's English model, which Kokoro's phonemizer needs
+# (OverflowError in Tokenizer._flush_specials).
+narration = ["kokoro>=0.9", "soundfile>=0.12", "faster-whisper>=1.0", "preshed<3.0.11", "cymem<2.0.12"]
 test = ["pytest"]
 
 [project.scripts]

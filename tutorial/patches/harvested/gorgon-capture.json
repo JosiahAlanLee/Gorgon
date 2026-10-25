@@ -1,0 +1,20 @@
+{
+ "bindings": [
+  "",
+  "",
+  "",
+  ""
+ ],
+ "ppqn": 4.0,
+ "gate": 0.5,
+ "outputHigh": 10.0,
+ "audio": {
+  "driver": 4,
+  "deviceName": "HydraPy",
+  "sampleRate": 48000.0,
+  "blockSize": 256,
+  "inputOffset": 0,
+  "outputOffset": 0
+ },
+ "pitchZero": 60
+}
