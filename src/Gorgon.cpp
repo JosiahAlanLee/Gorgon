@@ -19,7 +19,7 @@ struct Gorgon : Module {
 	enum OutputIds {
 		CLOCK_OUTPUT, RESET_OUTPUT, RUN_OUTPUT, VEL_OUTPUT,
 		GATE1_OUTPUT, GATE2_OUTPUT, GATE3_OUTPUT, GATE4_OUTPUT,
-		Z_OUTPUT, ROLL_OUTPUT, FEEDBACK_OUTPUT, GATES_OUTPUT, NUM_OUTPUTS
+		Z_OUTPUT, ROLL_OUTPUT, FEEDBACK_OUTPUT, GATES_OUTPUT, PITCH_OUTPUT, NUM_OUTPUTS
 	};
 	enum LightIds { PLAY_LIGHT, LINK_LIGHT, CLOCK_LIGHT, NUM_LIGHTS };
 
@@ -29,12 +29,13 @@ struct Gorgon : Module {
 	bool haveSnapshot = false;
 	gorgon::Follower follower;
 	gorgon::Options options;
-	float heldVelocity[gorgon::AUDIO_LANES] = {};
+	gorgon::OutputState outputState;
 	dsp::SchmittTrigger playTrigger, resetTrigger;
 	dsp::BooleanTrigger playButton, resetButton;
 
 	// Set from the context menu (UI thread), read by process().
 	std::atomic<float> ppqn{4.f}, gateLength{.5f};
+	std::atomic<int> pitchZero{60};
 	// For the display (written by process()).
 	std::atomic<float> shownBeat{0.f};
 	std::atomic<bool> shownMoving{false};
@@ -59,6 +60,7 @@ struct Gorgon : Module {
 		configOutput(ROLL_OUTPUT, "Roll lane (±5 V for ±45°)");
 		configOutput(FEEDBACK_OUTPUT, "Feedback lane (0–10 V for 0–0.9)");
 		configOutput(GATES_OUTPUT, "Gates 1–4 (polyphonic)");
+		configOutput(PITCH_OUTPUT, "Pitch, lanes 1–4 (polyphonic, held, 1 V/oct)");
 		configLight(LINK_LIGHT, "Linked to Studio");
 		configLight(CLOCK_LIGHT, "Clock");
 		bridge.start();
@@ -81,10 +83,12 @@ struct Gorgon : Module {
 				bridge.setInput(i, inputs[CV1_INPUT + i].isConnected(), inputs[CV1_INPUT + i].getVoltage());
 			options.ppqn = ppqn.load(std::memory_order_relaxed);
 			options.gate = gateLength.load(std::memory_order_relaxed);
+				options.pitchZero = pitchZero.load(std::memory_order_relaxed);
 		}
 
 		bool moving = haveSnapshot && snapshot.playhead.moving() && follower.locked;
-		gorgon::Outputs o = gorgon::evaluate(snapshot.score, moving, follower.beat, options);
+			gorgon::Outputs o = outputState.render(snapshot.score, moving, follower.beat,
+			                                      snapshot.playhead.transportRevision, options, args.sampleTime);
 		follower.advance(snapshot.score, moving, args.sampleTime);
 
 		outputs[CLOCK_OUTPUT].setVoltage(o.clock);
@@ -92,12 +96,12 @@ struct Gorgon : Module {
 		outputs[RUN_OUTPUT].setVoltage(o.run);
 		outputs[VEL_OUTPUT].setChannels(gorgon::AUDIO_LANES);
 		outputs[GATES_OUTPUT].setChannels(gorgon::AUDIO_LANES);
+			outputs[PITCH_OUTPUT].setChannels(gorgon::AUDIO_LANES);
 		for (int l = 0; l < gorgon::AUDIO_LANES; l++) {
-			if (o.present[l])
-				heldVelocity[l] = o.velocity[l] * 10.f;
 			outputs[GATE1_OUTPUT + l].setVoltage(o.gate[l]);
 			outputs[GATES_OUTPUT].setVoltage(o.gate[l], l);
-			outputs[VEL_OUTPUT].setVoltage(heldVelocity[l], l);
+				outputs[VEL_OUTPUT].setVoltage(o.velocity[l] * 10.f, l);
+				outputs[PITCH_OUTPUT].setVoltage(o.pitch[l], l);
 		}
 		outputs[Z_OUTPUT].setVoltage(gorgon::laneVolts(gorgon::LANE_Z, o.lane[gorgon::LANE_Z]));
 		outputs[ROLL_OUTPUT].setVoltage(gorgon::laneVolts(gorgon::LANE_ROLL, o.lane[gorgon::LANE_ROLL]));
@@ -125,6 +129,7 @@ struct Gorgon : Module {
 		json_object_set_new(root, "bindings", b);
 		json_object_set_new(root, "ppqn", json_real(ppqn.load()));
 		json_object_set_new(root, "gate", json_real(gateLength.load()));
+			json_object_set_new(root, "pitchZero", json_integer(pitchZero.load()));
 		return root;
 	}
 
@@ -138,6 +143,8 @@ struct Gorgon : Module {
 			ppqn = clamp(float(json_number_value(p)), 1.f, 96.f);
 		if (json_t* g = json_object_get(root, "gate"))
 			gateLength = clamp(float(json_number_value(g)), .01f, 1.f);
+			if (json_t* p = json_object_get(root, "pitchZero"))
+				pitchZero = clamp(int(json_integer_value(p)), 0, 127);
 	}
 };
 
@@ -211,6 +218,7 @@ struct GorgonWidget : ModuleWidget {
 		const Jack outs[] = {
 			{L::JACK_CLOCK_X, L::JACK_CLOCK_Y, Gorgon::CLOCK_OUTPUT}, {L::JACK_RESET_OUT_X, L::JACK_RESET_OUT_Y, Gorgon::RESET_OUTPUT},
 			{L::JACK_RUN_X, L::JACK_RUN_Y, Gorgon::RUN_OUTPUT}, {L::JACK_VEL_X, L::JACK_VEL_Y, Gorgon::VEL_OUTPUT},
+			{L::JACK_PITCH_X, L::JACK_PITCH_Y, Gorgon::PITCH_OUTPUT},
 			{L::JACK_GATE1_X, L::JACK_GATE1_Y, Gorgon::GATE1_OUTPUT}, {L::JACK_GATE2_X, L::JACK_GATE2_Y, Gorgon::GATE2_OUTPUT},
 			{L::JACK_GATE3_X, L::JACK_GATE3_Y, Gorgon::GATE3_OUTPUT}, {L::JACK_GATE4_X, L::JACK_GATE4_Y, Gorgon::GATE4_OUTPUT},
 			{L::JACK_Z_X, L::JACK_Z_Y, Gorgon::Z_OUTPUT}, {L::JACK_ROLL_X, L::JACK_ROLL_Y, Gorgon::ROLL_OUTPUT},
@@ -255,6 +263,11 @@ struct GorgonWidget : ModuleWidget {
 			for (float g : {.25f, .5f, .75f, 1.f})
 				sub->addChild(createCheckMenuItem(string::f("%.0f%%", g * 100.f), "",
 					[=] { return module->gateLength.load() == g; }, [=] { module->gateLength = g; }));
+		}));
+		menu->addChild(createSubmenuItem("Pitch zero", string::f("MIDI %d", module->pitchZero.load()), [=](Menu* sub) {
+			for (int note : {48, 60})
+				sub->addChild(createCheckMenuItem(note == 60 ? "C4 = 0 V" : "C3 = 0 V", "",
+					[=] { return module->pitchZero.load() == note; }, [=] { module->pitchZero = note; }));
 		}));
 	}
 };

@@ -9,6 +9,7 @@ the patch's first free control, and that PLAY/stop from Studio is followed.
     make -C vcv/gorgon/tests e2e
 """
 import os
+import copy
 import subprocess
 import sys
 import tempfile
@@ -21,6 +22,74 @@ from hydrapy.studio import Session, advertise, make_server, withdraw
 PATCH = ("from hydrapy import *\n"
          "z = Param('Dolly Z', .35)\nroll = Param('Roll', 0, min=-45, max=45)\nwarp = Param('Warp', 0, min=-2, max=2)\n"
          "solid(z, 0, 0).out(o0)\n")
+
+
+def check_outputs(session, probe):
+    """The real API/parser/follower/output path, including cached transport updates."""
+    session.call('tracker_transport', enabled=True, playing=False, beat=0)
+    document = copy.deepcopy(session.tracker.document)
+    document.update(bpm=120, key=7, loop=False, pattern=0)
+    for pattern in document['patterns']:
+        pattern['audio'] = [[None] * 64 for _ in range(4)]
+    for row, (note, velocity) in enumerate([('C-4', 100), ('C-5', 100), ('AIR', 80), ('D-5', 0)]):
+        document['patterns'][0]['audio'][0][row] = dict(note=note, vel=velocity)
+    session.call('tracker_score', document=document, revision=session.tracker.revision)
+    # 20 ms lead skips the phase reset window; C3 is the chosen pitch reference.
+    proc = subprocess.Popen([probe, '3', '7.5', '20', '48'], stdout=subprocess.PIPE, text=True)
+    phase, seen = 0, set()
+    final_reset_samples = None
+    try:
+        for line in proc.stdout:
+            parts = line.split()
+            if parts[0] == 'reset_samples':
+                final_reset_samples = int(parts[1])
+            if parts[0] != 'out':
+                continue
+            beat, linked, moving, gate, vel, pitch, revision, edges = map(float, parts[1:])
+            if not linked:
+                continue
+            if phase == 0:
+                session.call('tracker_transport', playing=True, beat=0)
+                phase = 1
+            elif phase == 1 and moving:
+                if beat < .25:
+                    assert abs(pitch - 17/12) < 1e-5, (beat, pitch)
+                    seen.add('C4')
+                elif beat < .5:
+                    assert abs(pitch - 29/12) < 1e-5, (beat, pitch)
+                    seen.add('C5')
+                elif beat < .75:
+                    assert abs(pitch - 29/12) < 1e-5, (beat, pitch)
+                    seen.add('AIR')
+                elif beat < 1:
+                    assert gate == 0 and abs(pitch - 29/12) < 1e-5, (beat, gate, pitch)
+                    assert abs(vel - 80/127) < 1e-5, vel
+                    seen.add('silent')
+                else:
+                    assert edges == 1, edges
+                    session.call('tracker_transport', playing=False)
+                    phase = 2
+            elif phase == 2 and not moving:
+                assert gate == 0 and abs(pitch - 29/12) < 1e-5, (gate, pitch)
+                seen.add('pause')
+                session.call('tracker_transport', playing=True, beat=8)
+                phase = 3
+            elif phase == 3 and moving and beat >= 8:
+                assert pitch == 0 and vel == 0 and edges == 2, (pitch, vel, edges)
+                seen.add('seek')
+                # Editing the score must not re-latch RESET.
+                document['bpm'] = 121
+                session.call('tracker_score', document=document, revision=session.tracker.revision)
+                phase = 4
+            elif phase == 4:
+                assert edges == 2, edges
+        assert proc.wait(timeout=5) == 0
+        assert seen == {'C4', 'C5', 'AIR', 'silent', 'pause', 'seek'}, seen
+        assert final_reset_samples == 480, final_reset_samples  # two full 5 ms pulses
+    finally:
+        if proc.poll() is None:
+            proc.kill(); proc.wait()
+    print('real Studio outputs: pitch, key/reference, AIR, velocity zero, pause, seek and latched resets passed')
 
 
 def main(probe):
@@ -62,6 +131,7 @@ def main(probe):
             assert abs(warp - 1.0) < 1e-6, f'CV 1 at 7.5 V should set Warp to 1.0, got {warp}'
             assert info['status'].startswith('Linked'), info
             print('CV 1 7.5 V -> Warp', warp, '| status:', info['status'])
+            check_outputs(session, probe)
         finally:
             withdraw(path, token)
             server.shutdown(); server.server_close(); session.close()

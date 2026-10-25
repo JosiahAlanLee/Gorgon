@@ -44,13 +44,13 @@ lights = {'PLAY_LIGHT': (22, TRANSPORT_Y), 'LINK_LIGHT': (162, 58), 'CLOCK_LIGHT
 trimpots = {'OFFSET': (158, TRANSPORT_Y)}
 jacks_in = {'PLAY_IN': (56, TRANSPORT_Y), 'RESET_IN': (124, TRANSPORT_Y),
             'CV1': (COLUMNS[0], 200), 'CV2': (COLUMNS[1], 200), 'CV3': (COLUMNS[2], 200), 'CV4': (COLUMNS[3], 200)}
-jacks_out = {'CLOCK': (COLUMNS[0], 268), 'RESET_OUT': (COLUMNS[1], 268), 'RUN': (COLUMNS[2], 268), 'VEL': (COLUMNS[3], 268),
+jacks_out = {'CLOCK': (22, 268), 'RESET_OUT': (56, 268), 'RUN': (90, 268), 'VEL': (124, 268), 'PITCH': (158, 268),
              'GATE1': (COLUMNS[0], 310), 'GATE2': (COLUMNS[1], 310), 'GATE3': (COLUMNS[2], 310), 'GATE4': (COLUMNS[3], 310),
              'Z': (COLUMNS[0], 352), 'ROLL': (COLUMNS[1], 352), 'FEEDBACK': (COLUMNS[2], 352), 'GATES': (COLUMNS[3], 352)}
 transport_labels = {'PLAY': (22, 'PLAY'), 'PLAY_IN': (56, 'TRIG'), 'RESET': (90, 'RESET'), 'RESET_IN': (124, 'TRIG'),
                     'OFFSET': (158, 'OFFSET')}
 labels = {'CV1': 'CV 1', 'CV2': 'CV 2', 'CV3': 'CV 3', 'CV4': 'CV 4',
-          'CLOCK': 'CLOCK', 'RESET_OUT': 'RESET', 'RUN': 'RUN', 'VEL': 'VEL', 'GATE1': 'GATE 1', 'GATE2': 'GATE 2',
+          'CLOCK': 'CLOCK', 'RESET_OUT': 'RESET', 'RUN': 'RUN', 'VEL': 'VEL', 'PITCH': 'V/OCT', 'GATE1': 'GATE 1', 'GATE2': 'GATE 2',
           'GATE3': 'GATE 3', 'GATE4': 'GATE 4', 'Z': 'Z', 'ROLL': 'ROLL', 'FEEDBACK': 'FDBK', 'GATES': 'GATES'}
 
 p = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">',

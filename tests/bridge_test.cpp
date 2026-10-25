@@ -137,7 +137,7 @@ struct FakeStudio {
 			else if (req.compare(0, 16, "GET /api/bridge ") == 0 || req.compare(0, 16, "GET /api/bridge?") == 0) {
 				bool cached = req.find("?revision=" + std::to_string(revision) + " ") != std::string::npos;
 				body = "{\"revision\":" + std::to_string(revision) + ",\"enabled\":true,\"playing\":false,"
-				       "\"anchor_beat\":12.5,\"anchor_time\":3.0,\"clock_time\":3.0,\"wall\":100.0,\"server_now\":100.01,"
+				       "\"transport_revision\":23,\"anchor_beat\":12.5,\"anchor_time\":3.0,\"clock_time\":3.0,\"wall\":100.0,\"server_now\":100.01,"
 				       "\"controls\":[{\"name\":\"Dolly Z\",\"min\":0,\"max\":1,\"value\":0.35},"
 				       "{\"name\":\"Roll\",\"min\":-45,\"max\":45,\"value\":0},"
 				       "{\"name\":\"Warp\",\"min\":-2,\"max\":2,\"value\":0},"
@@ -179,6 +179,11 @@ static bool any(const std::vector<std::string>& rs, const std::string& needle) {
 }
 
 int main() {
+	CHECK(noteMidi("C4") == 60 && noteMidi("C-4") == 60 && noteMidi("D#4") == 63, "note spellings");
+	CHECK(noteMidi("C0") == 12 && noteMidi("G9") == 127, "pitch range");
+	for (const char* note : {"AIR", "B#4", "E#4", "C-", "H4", "G#9", "A-10"})
+		CHECK(noteMidi(note) == -1, "unpitched/invalid note %s", note);
+
 	char dir[] = "/tmp/gorgon-bridge-XXXXXX";
 	CHECK(::mkdtemp(dir) != nullptr, "mkdtemp");
 	std::string ad = std::string(dir) + "/studio.json";
@@ -201,7 +206,9 @@ int main() {
 	CHECK(waitFor([&] { return bridge.poll(seen, snap); }), "no snapshot");
 	CHECK(snap.playhead.valid && snap.playhead.enabled && !snap.playhead.playing, "playhead flags");
 	CHECK(snap.playhead.revision == 7 && snap.playhead.anchorBeat == 12.5, "playhead values");
+	CHECK(snap.playhead.transportRevision == 23, "transport revision reaches the audio thread");
 	CHECK(snap.score.bpm == 138. && snap.score.patterns[0].hit[0][4] && !snap.score.patterns[0].hit[1][4], "score");
+	CHECK(snap.score.patterns[0].pitched[0][4] && snap.score.patterns[0].midi[0][4] == 36, "parsed note");
 	CHECK(snap.score.patterns[2].lanes[LANE_Z].count == 1 && snap.score.patterns[2].lanes[LANE_ROLL].ease == EASE_LINEAR, "lanes");
 	CHECK(snap.clock.ready(), "clock estimate");
 	CHECK(waitFor([&] { return bridge.linked(); }), "linked");
@@ -211,6 +218,7 @@ int main() {
 	CHECK(waitFor([&] { return any(studio.take(), "GET /api/bridge?revision=7 HTTP/1.0"); }), "cached poll");
 	CHECK(waitFor([&] { return bridge.poll(seen, snap); }), "snapshot after cached poll");
 	CHECK(snap.score.bpm == 138. && snap.score.patterns[0].hit[0][4], "score kept across cached polls");
+	CHECK(snap.playhead.transportRevision == 23, "transport kept across cached polls");
 
 	// Automatic bindings skip controls on tracker lanes (Dolly Z, Roll).
 	CHECK(bridge.target(0) == "Warp" && bridge.target(1) == "Hue" && bridge.target(2).empty(), "auto targets");

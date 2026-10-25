@@ -37,6 +37,7 @@ int main() {
 		run(m, 4800, args);
 		assert(m.outputs[Gorgon::CLOCK_OUTPUT].getVoltage() == 0.f && m.outputs[Gorgon::RUN_OUTPUT].getVoltage() == 0.f);
 		assert(m.outputs[Gorgon::GATES_OUTPUT].getChannels() == 4 && m.outputs[Gorgon::VEL_OUTPUT].getChannels() == 4);
+		assert(m.outputs[Gorgon::PITCH_OUTPUT].getChannels() == 4);
 
 		// Inject what Studio would publish: playing from beat 0 at 120 BPM, with
 		// Studio's clock equal to the engine's block clock (which is 0 here).
@@ -44,9 +45,12 @@ int main() {
 		s.score.bpm = 120.;
 		s.score.patterns[0].hit[1][2] = true;           // lane 2, row 2 (beat 0.5)
 		s.score.patterns[0].velocity[1][2] = 63.5f;
+		s.score.patterns[0].pitched[1][2] = true;
+		s.score.patterns[0].midi[1][2] = 69;          // A4 = +0.75 V
 		s.score.patterns[0].lanes[gorgon::LANE_ROLL].count = 1;
 		s.score.patterns[0].lanes[gorgon::LANE_ROLL].keys[0] = {0, 22.5};
 		s.playhead.valid = s.playhead.enabled = s.playhead.playing = true;
+		s.playhead.transportRevision = 1;
 		s.playhead.anchorBeat = 0.;
 		s.playhead.anchorTime = 0.;
 		s.playhead.clockTime = 0.;
@@ -74,6 +78,7 @@ int main() {
 				assert(m.outputs[Gorgon::GATES_OUTPUT].getVoltage(1) == 10.f);
 				assert(m.outputs[Gorgon::GATES_OUTPUT].getVoltage(0) == 0.f);
 				assert(std::abs(m.outputs[Gorgon::VEL_OUTPUT].getVoltage(1) - 5.f) < 1e-4f);
+				assert(std::abs(m.outputs[Gorgon::PITCH_OUTPUT].getVoltage(1) - .75f) < 1e-4f);
 			}
 		}
 		std::cout << "clock edges " << edges.size() << ", first " << edges[0] << ", second " << edges[1]
@@ -87,24 +92,44 @@ int main() {
 		assert(std::abs(m.outputs[Gorgon::Z_OUTPUT].getVoltage() - 3.5f) < 1e-4f);      // default 0.35 → 3.5 V
 		// Velocity holds after the gate closes.
 		assert(std::abs(m.outputs[Gorgon::VEL_OUTPUT].getVoltage(1) - 5.f) < 1e-4f);
+		assert(std::abs(m.outputs[Gorgon::PITCH_OUTPUT].getVoltage(1) - .75f) < 1e-4f);
 
 		// Studio stops: outputs fall at the next correction, lanes keep their value.
 		m.snapshot.playhead.playing = false;
 		run(m, 64, args);
 		assert(m.outputs[Gorgon::CLOCK_OUTPUT].getVoltage() == 0.f && m.outputs[Gorgon::RUN_OUTPUT].getVoltage() == 0.f);
 		assert(std::abs(m.outputs[Gorgon::ROLL_OUTPUT].getVoltage() - 2.5f) < 1e-4f);
+		assert(std::abs(m.outputs[Gorgon::PITCH_OUTPUT].getVoltage(1) - .75f) < 1e-4f);
+
+		// Restart with 20 ms lookahead: don't miss the 5 ms reset window.
+		m.params[Gorgon::OFFSET_PARAM].setValue(20.f);
+		m.snapshot.playhead.playing = true;
+		m.snapshot.playhead.anchorTime = double(args.frame) * args.sampleTime;
+		m.snapshot.playhead.anchorBeat = 0.;
+		m.snapshot.playhead.transportRevision++;
+		int resets = 0;
+		for (int i = 0; i < 960; i++) {
+			run(m, 1, args);
+			resets += m.outputs[Gorgon::RESET_OUTPUT].getVoltage() > 1.f;
+		}
+		assert(resets == 240);
+		assert(m.outputs[Gorgon::PITCH_OUTPUT].getVoltage(1) == 0.f); // old note cleared on restart
 
 		// JSON: bindings and options survive a round trip.
 		m.bridge.bind(0, "Warp");
 		m.bridge.bind(2, "-");
 		m.ppqn = 24.f;
 		m.gateLength = .25f;
+		m.pitchZero = 48;
 		json_t* j = m.dataToJson();
 		Gorgon n;
 		n.dataFromJson(j);
 		json_decref(j);
 		assert(n.bridge.binding(0) == "Warp" && n.bridge.binding(1).empty() && n.bridge.binding(2) == "-");
 		assert(n.ppqn.load() == 24.f && n.gateLength.load() == .25f);
+		assert(n.pitchZero.load() == 48);
+		// The appended pitch port must not change existing patch cable IDs.
+		assert(Gorgon::GATES_OUTPUT == 11 && Gorgon::PITCH_OUTPUT == 12);
 	}
 	std::cout << "module_test: all passed\n";
 	return 0;

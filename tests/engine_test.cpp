@@ -28,12 +28,16 @@ static void fixture(const char* path) {
 	std::ifstream in(path);
 	CHECK(bool(in), "cannot open %s", path);
 	int scores = 0;
-	in >> scores;
+	std::string format;
+	in >> format >> scores;
+	CHECK(format == "GORGON_FIXTURE_2", "regenerate fixture with current HydraPy");
+	if (format != "GORGON_FIXTURE_2")
+		return;
 	long compared = 0;
 	for (int s = 0; s < scores; s++) {
 		Score score;
 		int loop;
-		in >> score.bpm >> loop >> score.pattern;
+		in >> score.bpm >> score.key >> loop >> score.pattern;
 		score.loop = loop;
 		for (int l = 0; l < AUDIO_LANES; l++) {
 			int m;
@@ -44,10 +48,12 @@ static void fixture(const char* path) {
 			int hits;
 			in >> hits;
 			for (int h = 0; h < hits; h++) {
-				int lane, row, vel;
-				in >> lane >> row >> vel;
+				int lane, row, vel, midi;
+				in >> lane >> row >> vel >> midi;
 				score.patterns[p].hit[lane][row] = true;
 				score.patterns[p].velocity[lane][row] = float(vel);
+				score.patterns[p].pitched[lane][row] = midi >= 0;
+				score.patterns[p].midi[lane][row] = midi;
 			}
 			for (int k = 0; k < AUTO_LANES; k++) {
 				int ease, count;
@@ -62,26 +68,32 @@ static void fixture(const char* path) {
 		int beats;
 		in >> beats;
 		Options o;
+		OutputState memory;
 		for (int b = 0; b < beats; b++) {
 			double beat;
 			int moving, clock, reset, run, gate[4];
-			double vel[4], lane[3];
-			in >> beat >> moving >> clock >> reset >> run;
+			int64_t transport;
+			double vel[4], lane[3], pitch[4];
+			in >> beat >> moving >> transport >> clock >> reset >> run;
 			for (int& g : gate)
 				in >> g;
 			for (double& v : vel)
 				in >> v;
 			for (double& v : lane)
 				in >> v;
-			Outputs out = evaluate(score, moving, beat, o);
+			for (double& v : pitch)
+				in >> v;
+			Outputs out = memory.render(score, moving, beat, transport, o, 1. / 48000.);
 			CHECK((out.clock > 0) == bool(clock), "score %d beat %.17g clock", s, beat);
 			CHECK((out.reset > 0) == bool(reset), "score %d beat %.17g reset", s, beat);
 			CHECK((out.run > 0) == bool(run), "score %d beat %.17g run", s, beat);
 			for (int l = 0; l < AUDIO_LANES; l++) {
 				CHECK((out.gate[l] > 0) == bool(gate[l]), "score %d beat %.17g gate %d", s, beat, l);
 				double expected = vel[l];
-				double got = out.present[l] ? out.velocity[l] : 0.;
+				double got = out.velocity[l];
 				CHECK(std::fabs(got - expected) < 1e-6, "score %d beat %.17g vel %d: %g vs %g", s, beat, l, got, expected);
+				CHECK(std::fabs(out.pitch[l] - pitch[l]) < 1e-6, "score %d beat %.17g pitch %d: %g vs %g",
+				      s, beat, l, out.pitch[l], pitch[l]);
 			}
 			for (int k = 0; k < AUTO_LANES; k++)
 				CHECK(std::fabs(out.lane[k] - lane[k]) < 1e-4 * (LANE_MAX[k] - LANE_MIN[k]),
@@ -91,6 +103,58 @@ static void fixture(const char* path) {
 	}
 	std::printf("fixture: %ld beats across %d scores compared with HydraPy\n", compared, scores);
 	CHECK(compared > 1000, "fixture too small");
+	CHECK(bool(in), "truncated fixture");
+}
+
+static void heldOutputsAndTransport() {
+	Score score;
+	score.bpm = 120.;
+	Options options;
+	OutputState memory;
+	// First packet arrives after the phase reset window, with 20 ms A/V lead.
+	int resetSamples = 0;
+	for (int i = 0; i < 960; i++) {
+		auto out = memory.render(score, true, .04 + 2. * i / 48000., 1, options, 1. / 48000.);
+		resetSamples += out.reset > 0;
+	}
+	CHECK(resetSamples == 240, "full delayed-start reset: %d samples", resetSamples);
+	// A fresh seek at the same moving state must produce another complete pulse.
+	resetSamples = 0;
+	for (int i = 0; i < 960; i++) {
+		auto out = memory.render(score, true, 8. + 2. * i / 48000., 2, options, 1. / 48000.);
+		resetSamples += out.reset > 0;
+	}
+	CHECK(resetSamples == 240, "seek reset: %d samples", resetSamples);
+	CHECK(memory.render(score, false, 8., 2, options, 1. / 48000.).reset == 0.f, "pause silences reset");
+	CHECK(memory.render(score, true, 8., 2, options, 1. / 48000.).reset == 10.f, "resume reset");
+	// Loop reset remains phase-based even without a new transport revision.
+	CHECK(memory.render(score, true, 63.9, 3, options, 1. / 48000.).reset == 10.f, "seek pulse");
+	for (int i = 0; i < 300; i++) memory.render(score, true, 63.9, 3, options, 1. / 48000.);
+	CHECK(memory.render(score, true, 0., 3, options, 1. / 48000.).reset == 10.f, "natural loop reset");
+
+	Pattern& p = score.patterns[0];
+	p.hit[1][0] = p.hit[1][1] = p.hit[1][2] = p.hit[1][3] = true;
+	p.pitched[1][0] = p.pitched[1][1] = p.pitched[1][3] = true;
+	p.midi[1][0] = 60; p.midi[1][1] = 72; p.midi[1][3] = 74;
+	p.velocity[1][0] = p.velocity[1][1] = p.velocity[1][2] = 100;
+	p.velocity[1][3] = 0;
+	score.key = 7; options.pitchZero = 48;
+	auto first = memory.render(score, true, 0., 4, options, 1. / 48000.);
+	auto octave = memory.render(score, true, .25, 4, options, 1. / 48000.);
+	auto air = memory.render(score, true, .5, 4, options, 1. / 48000.);
+	auto silent = memory.render(score, true, .75, 4, options, 1. / 48000.);
+	CHECK(std::fabs(first.pitch[1] - 17.f / 12) < 1e-6, "key and reference pitch");
+	CHECK(std::fabs(octave.pitch[1] - first.pitch[1] - 1.f) < 1e-6, "one volt per octave");
+	CHECK(air.pitch[1] == octave.pitch[1] && air.gate[1] == 10.f, "AIR holds pitch but triggers");
+	CHECK(silent.pitch[1] == octave.pitch[1] && silent.gate[1] == 0.f, "zero velocity holds pitch without gate");
+	CHECK(silent.velocity[1] == octave.velocity[1], "zero velocity holds previous velocity");
+	score.mutes[1] = true;
+	auto muted = memory.render(score, true, 0., 4, options, 1. / 48000.);
+	CHECK(muted.pitch[1] == octave.pitch[1] && muted.gate[1] == 0.f, "mute holds pitch without gate");
+	auto paused = memory.render(score, false, 0., 4, options, 1. / 48000.);
+	CHECK(paused.pitch[1] == octave.pitch[1] && paused.clock == 0.f, "pause holds pitch");
+	auto seek = memory.render(score, true, 1., 5, options, 1. / 48000.);
+	CHECK(seek.pitch[1] == 0.f && seek.velocity[1] == 0.f, "seek clears held notes");
 }
 
 // Studio at `bpm` on its clock; Rack's sample clock runs `ppm` fast, blocks are
@@ -218,6 +282,7 @@ static void details() {
 
 int main(int argc, char** argv) {
 	details();
+	heldOutputsAndTransport();
 	follower();
 	fixture(argc > 1 ? argv[1] : "tests/fixture.txt");
 	if (failures) {

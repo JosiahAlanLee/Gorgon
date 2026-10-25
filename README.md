@@ -1,6 +1,6 @@
 # Gorgon
 
-A bridge between VCV Rack 2 and the Gorgon tracker in [HydraPy](https://github.com/JosiahAlanLee/hydrapy) Studio. Gorgon is the master clock: its clock, reset, gates and automation lanes come out of the module, sample-accurate, and CV patched in goes back into the visuals' controls and transport.
+A bridge between VCV Rack 2 and the Gorgon tracker in [HydraPy](https://github.com/JosiahAlanLee/hydrapy) Studio. Gorgon is the master clock: its clock, reset, gates, held 1 V/oct pitches and automation lanes come out of the module, evaluated per sample, and CV patched in goes back into the visuals' controls and transport.
 
 See the [manual](docs/MANUAL.md).
 
@@ -27,4 +27,6 @@ make -C vcv/gorgon/tests e2e         # against a real HydraPy Studio (needs Hydr
 make -C vcv/gorgon/tests module_test RACK_DIR=/absolute/path/to/Rack-SDK && vcv/gorgon/tests/module_test
 ~~~
 
-The portable tests need jansson (`libjansson-dev`). `engine_test` compares the C++ engine with HydraPy at 4,576 beats across eight random scores, including every row and clock-pulse boundary, and runs the follower through clock drift, block-timing jitter, loops and seeks.
+The portable tests need jansson (`libjansson-dev`). `engine_test` compares the C++ engine with HydraPy at 4,192 beats across eight random scores, including row and pulse boundaries, pitch/key mapping, AIR and zero velocity. Stateful checks cover held outputs and delayed transport resets; the follower is tested through drift, block-timing jitter, loops and seeks.
+
+Linux CI regenerates the fixture with HydraPy's current `main`, compares it to the checked-in file, and runs the real Studio bridge end to end. This checks discovery, authentication, cached transport updates, control input, pitch, pause, seek and full reset pulses. Platform builds also exercise the module through Rack's API on Linux; physical audio/video latency still needs workstation testing.

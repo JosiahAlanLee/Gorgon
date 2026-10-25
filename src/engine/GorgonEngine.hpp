@@ -35,12 +35,15 @@ struct Lane {
 struct Pattern {
 	bool hit[AUDIO_LANES][ROWS] = {};
 	float velocity[AUDIO_LANES][ROWS] = {};
+	bool pitched[AUDIO_LANES][ROWS] = {};
+	int midi[AUDIO_LANES][ROWS] = {};
 	Lane lanes[AUTO_LANES];
 };
 
 // Trivially copyable on purpose: the audio thread copies it without allocating.
 struct Score {
 	double bpm = 120.;
+	int key = 2;  // the score's D-based notes transpose by key - 2
 	bool loop = false;
 	int pattern = 0;
 	bool mutes[AUDIO_LANES] = {};
@@ -86,6 +89,7 @@ struct Playhead {
 	bool playing = false;
 	double anchorBeat = 0., anchorTime = 0., clockTime = 0., wall = 0.;
 	int64_t revision = -1;
+	int64_t transportRevision = -1;
 
 	bool moving() const { return valid && enabled && playing; }
 	// Tracker.beat() at Studio monotonic time `serverTime`.
@@ -165,6 +169,7 @@ struct Options {
 	double gate = .5;          // gate length as a fraction of a row
 	double high = 10.;         // gate and clock voltage (Rack convention)
 	double resetSeconds = .005;
+	int pitchZero = 60;       // C4 = 0 V (1 V/oct)
 };
 
 struct Outputs {
@@ -172,6 +177,8 @@ struct Outputs {
 	float gate[AUDIO_LANES] = {};
 	bool present[AUDIO_LANES] = {};    // the current row has a hit (moving, lane not muted)
 	float velocity[AUDIO_LANES] = {};  // 0..1 from that hit; read only where present is set
+	bool pitched[AUDIO_LANES] = {};
+	float pitch[AUDIO_LANES] = {};     // volts, read only where pitched is set
 	float lane[AUTO_LANES] = {};       // in the lane's own units (z 0..1, roll degrees, feedback 0..0.9)
 };
 
@@ -192,10 +199,13 @@ inline Outputs evaluate(const Score& score, bool moving, double beat, const Opti
 		out.reset = (beat - score.cycleStart() < resetBeats) ? o.high : 0.f;
 		out.run = o.high;
 		for (int l = 0; l < AUDIO_LANES; l++) {
-			if (score.mutes[l] || !pattern.hit[l][row])
+			if (score.mutes[l] || !pattern.hit[l][row] || pattern.velocity[l][row] <= 0.f)
 				continue;
 			out.present[l] = true;
 			out.velocity[l] = pattern.velocity[l][row] / 127.f;
+			out.pitched[l] = pattern.pitched[l][row];
+			if (out.pitched[l])
+				out.pitch[l] = float(pattern.midi[l][row] + score.key - 2 - o.pitchZero) / 12.f;
 			if (rowPhase < o.gate)
 				out.gate[l] = o.high;
 		}
@@ -204,6 +214,43 @@ inline Outputs evaluate(const Score& score, bool moving, double beat, const Opti
 		out.lane[k] = float(laneValue(pattern.lanes[k], k, rowPos));
 	return out;
 }
+
+// Stateful part of TrackerCV.render. A transport update can arrive after the
+// phase-based 5 ms reset window, so deliver a full pulse on the first available
+// samples. Repeated snapshots and ordinary score edits must not retrigger it.
+struct OutputState {
+	int64_t transportRevision = -1;
+	bool wasMoving = false;
+	int resetRemaining = 0;
+	float velocity[AUDIO_LANES] = {}, pitch[AUDIO_LANES] = {};
+
+	Outputs render(const Score& score, bool moving, double beat, int64_t transport,
+	               const Options& options, double sampleTime) {
+		if (transport != transportRevision || (moving && !wasMoving)) {
+			resetRemaining = moving ? int(std::round(options.resetSeconds / sampleTime)) : 0;
+			std::fill(velocity, velocity + AUDIO_LANES, 0.f);
+			std::fill(pitch, pitch + AUDIO_LANES, 0.f);
+		}
+		if (!moving)
+			resetRemaining = 0;
+		transportRevision = transport;
+		wasMoving = moving;
+		Outputs out = evaluate(score, moving, beat, options);
+		if (resetRemaining > 0) {
+			out.reset = float(options.high);
+			resetRemaining--;
+		}
+		for (int l = 0; l < AUDIO_LANES; l++) {
+			if (out.present[l])
+				velocity[l] = out.velocity[l];
+			if (out.pitched[l])
+				pitch[l] = out.pitch[l];
+			out.velocity[l] = velocity[l];
+			out.pitch[l] = pitch[l];
+		}
+		return out;
+	}
+};
 
 // Lane units to Rack volts: z and feedback 0..10 V, roll ±5 V.
 inline float laneVolts(int lane, double value) {

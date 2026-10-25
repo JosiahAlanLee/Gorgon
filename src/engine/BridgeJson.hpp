@@ -30,6 +30,37 @@ inline double number(json_t* j, double fallback = 0.) {
 	return json_is_number(j) ? json_number_value(j) : fallback;
 }
 
+// Same spelling as studio_tracker.note_midi: C-4 is C4; AIR is unpitched.
+inline int noteMidi(const char* note) {
+	if (!note)
+		return -1;
+	std::string s(note);
+	if (s.size() != 2 && s.size() != 3)
+		return -1;
+	int semitone;
+	switch (s[0]) {
+		case 'C': semitone = 0; break;
+		case 'D': semitone = 2; break;
+		case 'E': semitone = 4; break;
+		case 'F': semitone = 5; break;
+		case 'G': semitone = 7; break;
+		case 'A': semitone = 9; break;
+		case 'B': semitone = 11; break;
+		default: return -1;
+	}
+	if (s.size() == 3) {
+		if (s[1] == '#' && s[0] != 'B' && s[0] != 'E')
+			semitone++;
+		else if (s[1] != '-')
+			return -1;
+	}
+	char octave = s.back();
+	if (octave < '0' || octave > '9')
+		return -1;
+	int midi = (octave - '0' + 1) * 12 + semitone;
+	return midi <= 127 ? midi : -1;
+}
+
 // The tracker document (hydrapy-tracker-1). Returns false if it isn't one.
 inline bool parseScore(json_t* d, Score& score) {
 	const char* format = json_string_value(json_object_get(d, "format"));
@@ -37,6 +68,7 @@ inline bool parseScore(json_t* d, Score& score) {
 		return false;
 	score = Score();
 	score.bpm = number(json_object_get(d, "bpm"), 120.);
+	score.key = int(number(json_object_get(d, "key"), 2.));
 	if (!(score.bpm >= 1.))
 		return false;
 	score.loop = json_is_true(json_object_get(d, "loop"));
@@ -59,6 +91,9 @@ inline bool parseScore(json_t* d, Score& score) {
 				if (json_is_object(hit)) {
 					pattern.hit[l][r] = true;
 					pattern.velocity[l][r] = float(number(json_object_get(hit, "vel"), 100.));
+					int midi = noteMidi(json_string_value(json_object_get(hit, "note")));
+					pattern.pitched[l][r] = midi >= 0;
+					pattern.midi[l][r] = midi;
 				}
 			}
 		}
@@ -97,6 +132,8 @@ inline bool parseBridge(const std::string& body, BridgeState& state, std::string
 		Playhead& h = state.playhead;
 		h.valid = true;
 		h.revision = json_integer_value(json_object_get(root, "revision"));
+		json_t* transport = json_object_get(root, "transport_revision");
+		h.transportRevision = json_is_integer(transport) ? json_integer_value(transport) : -1;
 		h.enabled = json_is_true(json_object_get(root, "enabled"));
 		h.playing = json_is_true(json_object_get(root, "playing"));
 		h.anchorBeat = number(json_object_get(root, "anchor_beat"));
