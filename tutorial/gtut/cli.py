@@ -302,6 +302,10 @@ def cmd_final(cfg, a):
     print(json.dumps(r, indent=1))
 
 
+# Commands that start JACK clients in this process or on the stage (see audio.reexec_with_libjack).
+JACK_COMMANDS = {'preflight', 'catalog', 'stage', 'serve', 'shoot', 'narrate'}
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(prog='gtut', description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('--config', help='config.yaml (default tutorial/config.yaml or $GTUT_CONFIG)')
@@ -347,6 +351,9 @@ def main(argv=None):
     sub.add_parser('final')
     a = p.parse_args(argv)
     cfg = config_mod.load(a.config)
+    if argv is None and a.cmd in JACK_COMMANDS:
+        from . import audio
+        audio.reexec_with_libjack(cfg, sys.argv[1:])
     fn = globals()[f"cmd_{a.cmd}"]
     return fn(cfg, a) or 0
 

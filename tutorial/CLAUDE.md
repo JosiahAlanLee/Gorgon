@@ -73,9 +73,14 @@ gtut preflight            # fix every FAIL; WARNs are judgement calls, write dow
 
 `paths.rack` must be **VCV Rack Free** 2.x (an unsigned Rack Pro processes no
 audio — Gorgon README). `paths.rack_sdk` must match its version. Preflight
-checks that Studio's GL context is the 4090 through EGL (not llvmpipe) and that
-`libjack` is real JACK (a PipeWire libjack would send the stage's clients to the
-desktop session).
+checks that Studio's GL context is the 4090 through EGL (not llvmpipe) and that a
+JACK client started the way the stage starts them cannot reach any server but the
+stage's. Where PipeWire's JACK libraries are the system default (this
+workstation), a client ignores `JACK_DEFAULT_SERVER` and joins the desktop session,
+and jackd1 cannot start; in `jackd` mode gtut links the real libjack and
+libjackserver into `work/stage/libjack`, puts that first on `LD_LIBRARY_PATH` for
+jackd and every stage process, and restarts itself under it (`audio.libjack`). The
+stage also refuses a server with any ports besides its dummy driver's.
 
 ### 1. Build what is filmed
 

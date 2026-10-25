@@ -54,14 +54,26 @@ def run(cfg) -> list[dict]:
         if shutil.which('nvidia-smi') else None
     check('NVIDIA GPU', bool(smi and smi.returncode == 0), smi.stdout.strip() if smi else 'nvidia-smi missing',
           fix='the 4090 driver; without it use libx264 and the cpu Studio backend', warn=True)
-    # libjack: a PipeWire libjack would send the stage's clients to the desktop session
-    lj = sh('ldconfig', '-p').stdout
-    lines = [l for l in lj.splitlines() if 'libjack.so.0' in l]
-    pw = any('pipewire' in l for l in lines)
-    check('libjack is real JACK', bool(lines) and (not pw or cfg['audio']['server'] == 'pipewire'),
-          '; '.join(l.strip() for l in lines),
-          fix='PipeWire has replaced libjack system-wide; either set audio.server: pipewire, or export '
-              'LD_LIBRARY_PATH to the real libjack directory before gtut')
+    # JACK isolation. Where PipeWire's libjack is the system default, a client ignores JACK_DEFAULT_SERVER and
+    # joins the desktop session. jackd mode links the real JACK libraries into work/stage/libjack (audio.libjack_dir);
+    # either way, a client started exactly as the stage starts them must fail to reach a server that isn't
+    # the stage's (a random name; for pipewire an empty runtime directory). The probe registers no ports.
+    from . import audio
+    if cfg['audio']['server'] == 'jackd':
+        lib = audio.real_libjack()
+        check('real libjack installed', bool(lib), lib or 'only a PipeWire libjack is installed',
+              fix='sudo apt install libjack0 (or libjack-jackd2-0); or set audio.server: pipewire')
+    try:
+        iso = audio.isolation_probe(cfg)
+    except Exception as exc:
+        iso = dict(error=f'{type(exc).__name__}: {exc}')
+    if 'error' in iso:
+        check('JACK clients cannot reach other servers', False, iso['error'], fix='pip install JACK-Client; see the detail')
+    else:
+        detail = f"loads {iso.get('libjack')}" + (f"; reached a server with {iso['ports']} ports, e.g. {iso['sample']}"
+                                                    if iso['connected'] else '; refused a server that is not the stage\'s')
+        check('JACK clients cannot reach other servers', not iso['connected'], detail,
+              fix='set audio.libjack to a real libjack.so.0 (jackd mode), or audio.server: pipewire with pw-jack installed')
     # Python side
     for mod, why in [('yaml', 'pip install pyyaml'), ('numpy', 'pip install numpy'), ('cv2', 'pip install opencv-python-headless'),
                      ('PIL', 'pip install pillow'), ('jack', 'pip install JACK-Client'), ('playwright', 'pip install playwright'),

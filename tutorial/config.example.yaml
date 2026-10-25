@@ -34,6 +34,11 @@ stage:
 audio:
   server: jackd                      # jackd (dummy driver, private server) | pipewire (pw-jack)
   server_name: gtut                  # JACK_DEFAULT_SERVER; never your studio's server
+  # jackd mode: the real JACK libraries jackd and every stage client load (linked into work/stage/libjack, first
+  # on LD_LIBRARY_PATH). auto: the first non-PipeWire libjack/libjackserver in `ldconfig -p`; or a path to a
+  # libjack.so.0 (its siblings from the same folder). A PipeWire libjack ignores server_name and joins the
+  # desktop session. system: leave the loader alone (only where the system libraries are JACK's own).
+  libjack: auto
   rate: 48000
   period: 256
   # JACK output ports recorded with every take, as the programme's left and right.
