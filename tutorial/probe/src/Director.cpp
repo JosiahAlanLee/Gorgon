@@ -612,6 +612,18 @@ struct DirectorWidget : app::ModuleWidget {
 			APP->scene->addChild(agent);
 		}
 	}
+
+	// In a rack the panel and its shadow are not drawn, so the probe never shows on camera.
+	// Rack keeps the view within about a window of the modules, so on an empty rack it
+	// cannot be scrolled out of sight. The agent draws the overlays; the browser preview
+	// still shows the panel.
+	void draw(const DrawArgs& args) override {
+		if (!module) ModuleWidget::draw(args);
+	}
+
+	void drawLayer(const DrawArgs& args, int layer) override {
+		if (!module) ModuleWidget::drawLayer(args, layer);
+	}
 };
 
 Model* modelDirector = createModel<Director, DirectorWidget>("Director");
