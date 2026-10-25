@@ -76,14 +76,15 @@ the GATE 1 pulse for the same row:
 | Server period | Breaks after GATE 1 | OFFSET to line up a voice played from the gates |
 | --- | --- | --- |
 | 256 frames | 16–22 ms (about 21.5 ms in five runs of six) | about −20 ms |
-| 1024 frames (the desktop PipeWire default here) | 67–74 ms | about −70 ms |
+| 1024 frames (the desktop PipeWire default here) | 65–74 ms | about −70 ms |
 
 Negative OFFSET is counterclockwise (later). Measure your own setup by patching
 GATE 1 and BRK L into a scope. Audio conversion follows Rack's engine sample
 rate. The bounded queue drops excess backlog rather than growing latency
 indefinitely; disconnect/underrun produces silence. At 1024-frame periods the
-queue ran dry once in each test run, inserting 1–5 ms of silence, and then held
-steady. Counters are in the context menu.
+queue ran dry up to twice in a test run, mostly in the first two seconds,
+inserting 1–5 ms of silence each time, and then held steady. Counters are in
+the context menu.
 
 Keep any ES-40 encoded S/PDIF route separate from this listening-audio path;
 never resample/mix/gain it through these jacks. Studio's per-pair polarity
