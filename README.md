@@ -44,6 +44,13 @@ Chromium, and real JACK and PipeWire daemons), and here the Rack module's
 engine against HydraPy's own outputs, the bridge against a real Studio,
 sanitizers, Rack's API, and Windows/macOS builds.
 
+The same Linux checks also pass on the workstation (2026-10-25: Ubuntu 22.04,
+Rack SDK 2.6.6, HydraPy at the pin). The fixture is byte-identical, the follower
+stays within 0.05 ms of a real Studio, and the schema check accepts all 202 scores.
+The packaged plugin also loads in VCV Rack Pro 2.6.6, headless, where a patch ran
+for 15 seconds with no errors in Rack's log. That run had no window, audio device
+or capture input.
+
 What is **not** validated: physical interfaces on the workstation, the ES-40
 digital path end to end, display and device latency, and the Windows/macOS
 plugins inside Rack. The plugin is not in the VCV Library yet.
