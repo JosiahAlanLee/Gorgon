@@ -62,15 +62,23 @@ class Terminal:
 
     def run(self, cmd: str, wait_for: str | None = None, timeout: float = 600, cps: float = 16,
             enter_pause: float = 0.35):
+        self.type(cmd, cps, enter_pause)
+        if wait_for:
+            self.wait(wait_for, timeout)
+
+    def type(self, cmd: str, cps: float = 16, enter_pause: float = 0.35):
+        """Type a command and press Enter; output from here on is what wait() searches."""
         display.focus(self.cfg, self.window)
-        mark = len(self.text())
+        self.since = len(self.text())
         self.hand.type(cmd, cps=cps, window=self.window)
         time.sleep(enter_pause)
         self.hand.key('Return', window=self.window)
-        if wait_for:
-            pattern = re.compile(wait_for, re.M)
-            wait_until(lambda: pattern.search(self.text()[mark:]), timeout, interval=0.25,
-                       what=f'terminal output matching {wait_for!r}')
+
+    def wait(self, wait_for: str, timeout: float = 600):
+        """Wait for output of the last typed command to match a regex."""
+        pattern, since = re.compile(wait_for, re.M), getattr(self, 'since', 0)
+        wait_until(lambda: pattern.search(self.text()[since:]), timeout, interval=0.25,
+                   what=f'terminal output matching {wait_for!r}')
 
     def quiet(self, cmd: str):
         """Run without typing on camera (setup between takes): pasted, then cleared."""
