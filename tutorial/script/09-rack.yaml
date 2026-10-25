@@ -41,8 +41,9 @@ shots:
       Clock is sixteenths by default. {clock} Reset fires on start, on a seek and at the loop boundary. {reset}
       Run is high while Gorgon plays. {pitch} Pitch, velocity and gates carry the four audio lanes as polyphonic cables,
       in lane order: Breaks, FM hits, Sub, Texture. Gates one to four are the same gates on separate jacks. {lanes}
-      Z, Roll and Feedback are the visual lanes as control voltage, {audio} and the last four jacks carry audio from Studio;
-      chapter thirteen covers them.
+      Z, Roll and Feedback are the visual lanes as control voltage. {audio} The next four jacks carry audio from Studio;
+      chapter thirteen covers them. {bus} The last, BUS, sends one byte on every clock, over one cable,
+      to the byte-bus inputs in DSP Emulation. By default the byte follows Dolly Z.
     actions:
       - at: clock
         rack.highlight: {ref: Gorgon.out.Clock, label: CLOCK, seconds: 2.5}
@@ -64,9 +65,13 @@ shots:
         rack.highlight: {ref: Gorgon.out.Feedback, label: FDBK, seconds: 2.5}
       - at: audio
         rack.highlight: {ref: Gorgon.out.Optical audio left, label: 'OPT · BRK', seconds: 3}
+      - at: bus
+        rack.highlight: {ref: Gorgon.out.ByteBus, label: 'BUS · 9 ch', seconds: 3}
     verify:
       - "port order and meanings from MANUAL Outputs table and configOutput names"
       - "lane order Breaks, FM hits, Sub, Texture (walkthrough §7.3)"
+      - "BUS (GorgonBridge 2.2.0, Gorgon #12) is the last output: bits 0-7 on channels 1-8, the word clock on 9, one word per CLOCK rising edge (MANUAL ByteBus, configOutput, catalog)"
+      - "BUS patches to ByteBusLab Register and Lookup, Vastish BUS IN and OTIS FRAME BUS (MANUAL ByteBus); the default source is Z (BusSource::Z)"
   - id: scope
     title: Clock and a gate on a scope
     frames:

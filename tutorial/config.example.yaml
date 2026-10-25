@@ -96,6 +96,7 @@ narration:
     '\bOTIS\b(?![''’])': '[OTIS](/ˈOtɪs/)'                  # one word, the name Otis
     'ACT OUT': act out                                    # otherwise spelled A-C-T
     'MASK IN': mask in                                    # "IN." before a full stop reads as I-N
+    '\bBUS\b': bus                                        # otherwise spelled B-U-S
     kHz: kilohertz
     '1 V/oct': one volt per octave
     V/OCT: volt per octave
