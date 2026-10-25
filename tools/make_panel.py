@@ -44,29 +44,30 @@ lights = {'PLAY_LIGHT': (22, TRANSPORT_Y), 'LINK_LIGHT': (162, 58), 'CLOCK_LIGHT
 trimpots = {'OFFSET': (158, TRANSPORT_Y)}
 jacks_in = {'PLAY_IN': (56, TRANSPORT_Y), 'RESET_IN': (124, TRANSPORT_Y),
             'CV1': (COLUMNS[0], 200), 'CV2': (COLUMNS[1], 200), 'CV3': (COLUMNS[2], 200), 'CV4': (COLUMNS[3], 200)}
-jacks_out = {'CLOCK': (22, 268), 'RESET_OUT': (56, 268), 'RUN': (90, 268), 'VEL': (124, 268), 'PITCH': (158, 268),
-             'GATE1': (COLUMNS[0], 310), 'GATE2': (COLUMNS[1], 310), 'GATE3': (COLUMNS[2], 310), 'GATE4': (COLUMNS[3], 310),
-             'Z': (COLUMNS[0], 352), 'ROLL': (COLUMNS[1], 352), 'FEEDBACK': (COLUMNS[2], 352), 'GATES': (COLUMNS[3], 352)}
+jacks_out = {'CLOCK': (22, 246), 'RESET_OUT': (56, 246), 'RUN': (90, 246), 'VEL': (124, 246), 'PITCH': (158, 246),
+             'GATE1': (COLUMNS[0], 280), 'GATE2': (COLUMNS[1], 280), 'GATE3': (COLUMNS[2], 280), 'GATE4': (COLUMNS[3], 280),
+             'Z': (COLUMNS[0], 314), 'ROLL': (COLUMNS[1], 314), 'FEEDBACK': (COLUMNS[2], 314), 'GATES': (COLUMNS[3], 314),
+             'OPTICAL_L': (COLUMNS[0], 350), 'OPTICAL_R': (COLUMNS[1], 350), 'BREAKS_L': (COLUMNS[2], 350), 'BREAKS_R': (COLUMNS[3], 350)}
 transport_labels = {'PLAY': (22, 'PLAY'), 'PLAY_IN': (56, 'TRIG'), 'RESET': (90, 'RESET'), 'RESET_IN': (124, 'TRIG'),
                     'OFFSET': (158, 'OFFSET')}
 labels = {'CV1': 'CV 1', 'CV2': 'CV 2', 'CV3': 'CV 3', 'CV4': 'CV 4',
           'CLOCK': 'CLOCK', 'RESET_OUT': 'RESET', 'RUN': 'RUN', 'VEL': 'VEL', 'PITCH': 'V/OCT', 'GATE1': 'GATE 1', 'GATE2': 'GATE 2',
-          'GATE3': 'GATE 3', 'GATE4': 'GATE 4', 'Z': 'Z', 'ROLL': 'ROLL', 'FEEDBACK': 'FDBK', 'GATES': 'GATES'}
+          'GATE3': 'GATE 3', 'GATE4': 'GATE 4', 'Z': 'Z', 'ROLL': 'ROLL', 'FEEDBACK': 'FDBK', 'GATES': 'GATES', 'OPTICAL_L': 'OPT L', 'OPTICAL_R': 'OPT R', 'BREAKS_L': 'BRK L', 'BREAKS_R': 'BRK R'}
 
 p = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">',
      f'<rect width="{W}" height="{H}" fill="#161d22"/>',
      f'<rect x="1" y="1" width="{W-2}" height="{H-2}" fill="none" stroke="#5c6d74"/>',
-     f'<rect x="6" y="238" width="{W-12}" height="136" rx="4" fill="#0e1417"/>',            # outputs block
+     f'<rect x="6" y="226" width="{W-12}" height="148" rx="4" fill="#0e1417"/>',            # outputs block
      f'<rect x="{display[0]}" y="{display[1]}" width="{display[2]}" height="{display[3]}" rx="3" fill="#0a0f11" stroke="#41545c"/>']
 p += [text('Gorgon', 12, 30, 20, OUT, 'start'),
       text('BRIDGE', 12 + width('Gorgon', 20) + 8, 30, 8, LABEL, 'start')]
 # XI Reflexive loop (the map moves it): Rack follows Gorgon's clock and moves it back.
 p.append(glyph(11, W - 26, 22, 26, LABEL, ACCENT))
 p += [text('LINK', 154, 61, 6, DIM, 'end'), text('CLK', 154, 77, 6, DIM, 'end')]
-for y in (106, 168, 232):
+for y in (106, 168, 224):
     p.append(f'<path d="M12 {y}H{W-12}" stroke="#41545c"/>')
 p += [text('TRANSPORT', 12, 117, 7, ACCENT, 'start'), text('TO GORGON', 12, 180, 7, ACCENT, 'start'),
-      text('FROM GORGON', 12, 250, 7, OUT, 'start')]
+      text('FROM GORGON', 12, 233, 6, OUT, 'start')]
 for name, (x, label) in transport_labels.items():
     p.append(text(label, x, TRANSPORT_Y + 23, 6.5))
 for name, (x, y) in jacks_in.items():

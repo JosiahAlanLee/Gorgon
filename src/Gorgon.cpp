@@ -10,6 +10,7 @@
 #include "plugin.hpp"
 #include "Layout.hpp"
 #include "engine/Bridge.hpp"
+#include "AudioInput.hpp"
 
 namespace L = gorgon_layout;
 
@@ -19,7 +20,8 @@ struct Gorgon : Module {
 	enum OutputIds {
 		CLOCK_OUTPUT, RESET_OUTPUT, RUN_OUTPUT, VEL_OUTPUT,
 		GATE1_OUTPUT, GATE2_OUTPUT, GATE3_OUTPUT, GATE4_OUTPUT,
-		Z_OUTPUT, ROLL_OUTPUT, FEEDBACK_OUTPUT, GATES_OUTPUT, PITCH_OUTPUT, NUM_OUTPUTS
+			Z_OUTPUT, ROLL_OUTPUT, FEEDBACK_OUTPUT, GATES_OUTPUT, PITCH_OUTPUT,
+		OPTICAL_L_OUTPUT, OPTICAL_R_OUTPUT, BREAKS_L_OUTPUT, BREAKS_R_OUTPUT, NUM_OUTPUTS
 	};
 	enum LightIds { PLAY_LIGHT, LINK_LIGHT, CLOCK_LIGHT, NUM_LIGHTS };
 
@@ -30,12 +32,14 @@ struct Gorgon : Module {
 	gorgon::Follower follower;
 	gorgon::Options options;
 	gorgon::OutputState outputState;
+	GorgonAudioInput audioInput{this};
 	dsp::SchmittTrigger playTrigger, resetTrigger;
 	dsp::BooleanTrigger playButton, resetButton;
 
 	// Set from the context menu (UI thread), read by process().
 	std::atomic<float> ppqn{4.f}, gateLength{.5f};
 	std::atomic<int> pitchZero{60};
+	std::atomic<float> outputHigh{10.f};
 	// For the display (written by process()).
 	std::atomic<float> shownBeat{0.f};
 	std::atomic<bool> shownMoving{false};
@@ -56,17 +60,21 @@ struct Gorgon : Module {
 		configOutput(VEL_OUTPUT, "Velocity, lanes 1–4 (polyphonic, held)");
 		for (int i = 0; i < gorgon::AUDIO_LANES; i++)
 			configOutput(GATE1_OUTPUT + i, string::f("Gate %d", i + 1));
-		configOutput(Z_OUTPUT, "Dolly Z lane (0–10 V)");
+		configOutput(Z_OUTPUT, "Dolly Z lane (0 to selected CV level)");
 		configOutput(ROLL_OUTPUT, "Roll lane (±5 V for ±45°)");
-		configOutput(FEEDBACK_OUTPUT, "Feedback lane (0–10 V for 0–0.9)");
+		configOutput(FEEDBACK_OUTPUT, "Feedback lane (0 to selected CV level for 0–0.9)");
 		configOutput(GATES_OUTPUT, "Gates 1–4 (polyphonic)");
 		configOutput(PITCH_OUTPUT, "Pitch, lanes 1–4 (polyphonic, held, 1 V/oct)");
+		configOutput(OPTICAL_L_OUTPUT, "Optical audio left (audio device input 1)");
+		configOutput(OPTICAL_R_OUTPUT, "Optical audio right (audio device input 2)");
+		configOutput(BREAKS_L_OUTPUT, "Breaks audio left (audio device input 3)");
+		configOutput(BREAKS_R_OUTPUT, "Breaks audio right (audio device input 4)");
 		configLight(LINK_LIGHT, "Linked to Studio");
 		configLight(CLOCK_LIGHT, "Clock");
 		bridge.start();
 	}
 
-	~Gorgon() override { bridge.stop(); }
+	~Gorgon() override { audioInput.setDriverId(-1); bridge.stop(); }
 
 	void process(const ProcessArgs& args) override {
 		if (args.frame % 32 == 0) {
@@ -83,12 +91,13 @@ struct Gorgon : Module {
 				bridge.setInput(i, inputs[CV1_INPUT + i].isConnected(), inputs[CV1_INPUT + i].getVoltage());
 			options.ppqn = ppqn.load(std::memory_order_relaxed);
 			options.gate = gateLength.load(std::memory_order_relaxed);
-				options.pitchZero = pitchZero.load(std::memory_order_relaxed);
+			options.high = outputHigh.load(std::memory_order_relaxed);
+			options.pitchZero = pitchZero.load(std::memory_order_relaxed);
 		}
 
 		bool moving = haveSnapshot && snapshot.playhead.moving() && follower.locked;
-			gorgon::Outputs o = outputState.render(snapshot.score, moving, follower.beat,
-			                                      snapshot.playhead.transportRevision, options, args.sampleTime);
+		gorgon::Outputs o = outputState.render(snapshot.score, moving, follower.beat,
+		                                      snapshot.playhead.transportRevision, options, args.sampleTime);
 		follower.advance(snapshot.score, moving, args.sampleTime);
 
 		outputs[CLOCK_OUTPUT].setVoltage(o.clock);
@@ -96,16 +105,19 @@ struct Gorgon : Module {
 		outputs[RUN_OUTPUT].setVoltage(o.run);
 		outputs[VEL_OUTPUT].setChannels(gorgon::AUDIO_LANES);
 		outputs[GATES_OUTPUT].setChannels(gorgon::AUDIO_LANES);
-			outputs[PITCH_OUTPUT].setChannels(gorgon::AUDIO_LANES);
+		outputs[PITCH_OUTPUT].setChannels(gorgon::AUDIO_LANES);
 		for (int l = 0; l < gorgon::AUDIO_LANES; l++) {
 			outputs[GATE1_OUTPUT + l].setVoltage(o.gate[l]);
 			outputs[GATES_OUTPUT].setVoltage(o.gate[l], l);
-				outputs[VEL_OUTPUT].setVoltage(o.velocity[l] * 10.f, l);
-				outputs[PITCH_OUTPUT].setVoltage(o.pitch[l], l);
+			outputs[VEL_OUTPUT].setVoltage(o.velocity[l] * options.high, l);
+			outputs[PITCH_OUTPUT].setVoltage(o.pitch[l], l);
 		}
-		outputs[Z_OUTPUT].setVoltage(gorgon::laneVolts(gorgon::LANE_Z, o.lane[gorgon::LANE_Z]));
+		outputs[Z_OUTPUT].setVoltage(gorgon::laneVolts(gorgon::LANE_Z, o.lane[gorgon::LANE_Z]) * options.high / 10.f);
 		outputs[ROLL_OUTPUT].setVoltage(gorgon::laneVolts(gorgon::LANE_ROLL, o.lane[gorgon::LANE_ROLL]));
-		outputs[FEEDBACK_OUTPUT].setVoltage(gorgon::laneVolts(gorgon::LANE_FEEDBACK, o.lane[gorgon::LANE_FEEDBACK]));
+		outputs[FEEDBACK_OUTPUT].setVoltage(gorgon::laneVolts(gorgon::LANE_FEEDBACK, o.lane[gorgon::LANE_FEEDBACK]) * options.high / 10.f);
+		gorgon::AudioFrame audio;
+		bool received = audioInput.read(audio);
+		for (int c = 0; c < 4; ++c) outputs[OPTICAL_L_OUTPUT + c].setVoltage(received ? audio.samples[c] * 10.f : 0.f);
 
 		if (playButton.process(params[PLAY_PARAM].getValue() > 0.f) |
 		    playTrigger.process(inputs[PLAY_INPUT].getVoltage(), .1f, 1.f))
@@ -129,11 +141,15 @@ struct Gorgon : Module {
 		json_object_set_new(root, "bindings", b);
 		json_object_set_new(root, "ppqn", json_real(ppqn.load()));
 		json_object_set_new(root, "gate", json_real(gateLength.load()));
-			json_object_set_new(root, "pitchZero", json_integer(pitchZero.load()));
+		json_object_set_new(root, "outputHigh", json_real(outputHigh.load()));
+		json_object_set_new(root, "audio", audioInput.toJson());
+		json_object_set_new(root, "pitchZero", json_integer(pitchZero.load()));
 		return root;
 	}
 
 	void dataFromJson(json_t* root) override {
+		if (json_t* a = json_object_get(root, "audio")) audioInput.fromJson(a);
+		if (json_t* h = json_object_get(root, "outputHigh")) outputHigh = json_number_value(h) == 5. ? 5.f : 10.f;
 		json_t* b = json_object_get(root, "bindings");
 		for (int i = 0; i < gorgon::INPUTS; i++) {
 			const char* name = json_string_value(json_array_get(b, size_t(i)));
@@ -143,8 +159,8 @@ struct Gorgon : Module {
 			ppqn = clamp(float(json_number_value(p)), 1.f, 96.f);
 		if (json_t* g = json_object_get(root, "gate"))
 			gateLength = clamp(float(json_number_value(g)), .01f, 1.f);
-			if (json_t* p = json_object_get(root, "pitchZero"))
-				pitchZero = clamp(int(json_integer_value(p)), 0, 127);
+		if (json_t* p = json_object_get(root, "pitchZero"))
+			pitchZero = clamp(int(json_integer_value(p)), 0, 127);
 	}
 };
 
@@ -223,6 +239,8 @@ struct GorgonWidget : ModuleWidget {
 			{L::JACK_GATE3_X, L::JACK_GATE3_Y, Gorgon::GATE3_OUTPUT}, {L::JACK_GATE4_X, L::JACK_GATE4_Y, Gorgon::GATE4_OUTPUT},
 			{L::JACK_Z_X, L::JACK_Z_Y, Gorgon::Z_OUTPUT}, {L::JACK_ROLL_X, L::JACK_ROLL_Y, Gorgon::ROLL_OUTPUT},
 			{L::JACK_FEEDBACK_X, L::JACK_FEEDBACK_Y, Gorgon::FEEDBACK_OUTPUT}, {L::JACK_GATES_X, L::JACK_GATES_Y, Gorgon::GATES_OUTPUT},
+			{L::JACK_OPTICAL_L_X, L::JACK_OPTICAL_L_Y, Gorgon::OPTICAL_L_OUTPUT}, {L::JACK_OPTICAL_R_X, L::JACK_OPTICAL_R_Y, Gorgon::OPTICAL_R_OUTPUT},
+			{L::JACK_BREAKS_L_X, L::JACK_BREAKS_L_Y, Gorgon::BREAKS_L_OUTPUT}, {L::JACK_BREAKS_R_X, L::JACK_BREAKS_R_Y, Gorgon::BREAKS_R_OUTPUT},
 		};
 		for (const Jack& j : outs)
 			addOutput(createOutputCentered<DarkPJ301MPort>(Vec(j.x, j.y), module, j.id));
@@ -233,6 +251,15 @@ struct GorgonWidget : ModuleWidget {
 		menu->addChild(new MenuSeparator);
 		menu->addChild(createMenuLabel("Studio: " + module->bridge.status()));
 		menu->addChild(createMenuLabel("Reads " + module->bridge.advertisementFile()));
+		menu->addChild(createMenuLabel("Audio: inputs 1/2 optical, 3/4 breaks"));
+		app::appendAudioMenu(menu, &module->audioInput);
+		menu->addChild(createMenuLabel(string::f("Audio underrun samples: %llu; backlog drops: %llu; overruns: %llu",
+			(unsigned long long)module->audioInput.underruns.load(), (unsigned long long)module->audioInput.discarded.load(),
+			(unsigned long long)module->audioInput.queue.overruns.load())));
+		menu->addChild(createSubmenuItem("CV output levels", string::f("%.0f V", module->outputHigh.load()), [=](Menu* sub) {
+			for (float level : {5.f, 10.f}) sub->addChild(createCheckMenuItem(level == 5.f ? "5 V (match direct CV)" : "10 V (Rack default)", "",
+				[=]{return module->outputHigh.load() == level;}, [=]{module->outputHigh = level;}));
+		}));
 
 		for (int i = 0; i < gorgon::INPUTS; i++) {
 			std::string current = module->bridge.target(i);

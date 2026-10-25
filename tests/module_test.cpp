@@ -10,6 +10,24 @@
 #include <iostream>
 Plugin* pluginInstance = nullptr;
 
+// Exercise Rack's actual Port/Device dispatch and sample-rate conversion.
+struct CaptureDevice : audio::Device {
+	float rate = 48000.f;
+	int getNumInputs() override { return 4; }
+	float getSampleRate() override { return rate; }
+	int getBlockSize() override { return 128; }
+};
+struct CaptureDriver : audio::Driver {
+	CaptureDevice device;
+	std::vector<int> getDeviceIds() override { return {0}; }
+	int getDefaultDeviceId() override { return 0; }
+	int getDeviceNumInputs(int) override { return 4; }
+	std::string getName() override { return "Test PCM capture"; }
+	std::string getDeviceName(int) override { return "Four channels"; }
+	audio::Device* subscribe(int, audio::Port* port) override { device.subscribe(port); return &device; }
+	void unsubscribe(int, audio::Port* port) override { device.unsubscribe(port); }
+};
+
 static void run(Gorgon& m, int n, Module::ProcessArgs& a) {
 	for (int i = 0; i < n; i++) {
 		m.process(a);
@@ -24,6 +42,8 @@ int main() {
 	Context context;
 	context.engine = new engine::Engine;
 	contextSet(&context);
+	auto* capture = new CaptureDriver;
+	audio::addDriver(10000, capture);
 	const float sr = 48000.f;
 	Module::ProcessArgs args;
 	args.sampleRate = sr;
@@ -94,6 +114,15 @@ int main() {
 		assert(std::abs(m.outputs[Gorgon::VEL_OUTPUT].getVoltage(1) - 5.f) < 1e-4f);
 		assert(std::abs(m.outputs[Gorgon::PITCH_OUTPUT].getVoltage(1) - .75f) < 1e-4f);
 
+		// The 5 V profile changes gate/velocity/unipolar lanes, preserving pitch and roll.
+		m.outputHigh = 5.f;
+		run(m, 64, args);
+		assert(m.outputs[Gorgon::RUN_OUTPUT].getVoltage() == 5.f);
+		assert(std::abs(m.outputs[Gorgon::VEL_OUTPUT].getVoltage(1) - 2.5f) < 1e-4f);
+		assert(std::abs(m.outputs[Gorgon::Z_OUTPUT].getVoltage() - 1.75f) < 1e-4f);
+		assert(std::abs(m.outputs[Gorgon::ROLL_OUTPUT].getVoltage() - 2.5f) < 1e-4f);
+		assert(std::abs(m.outputs[Gorgon::PITCH_OUTPUT].getVoltage(1) - .75f) < 1e-4f);
+
 		// Studio stops: outputs fall at the next correction, lanes keep their value.
 		m.snapshot.playhead.playing = false;
 		run(m, 64, args);
@@ -128,8 +157,39 @@ int main() {
 		assert(n.bridge.binding(0) == "Warp" && n.bridge.binding(1).empty() && n.bridge.binding(2) == "-");
 		assert(n.ppqn.load() == 24.f && n.gateLength.load() == .25f);
 		assert(n.pitchZero.load() == 48);
+		assert(n.outputHigh.load() == 5.f);
 		// The appended pitch port must not change existing patch cable IDs.
 		assert(Gorgon::GATES_OUTPUT == 11 && Gorgon::PITCH_OUTPUT == 12);
+		assert(Gorgon::OPTICAL_L_OUTPUT == 13 && Gorgon::NUM_OUTPUTS == 17);
+
+		// Device PCM -1..1 maps to -10..10 V, independent of the CV level profile.
+		settings::sampleRate = sr;
+		context.engine->setSampleRate(sr);
+		context.engine->addModule(&m);
+		m.audioInput.setDriverId(10000);
+		m.audioInput.setDeviceId(0);
+		capture->device.onStartStream();
+		std::array<float, 128 * 4> pcm;
+		for (size_t i = 0; i < pcm.size(); i += 4) {
+			pcm[i] = .1f; pcm[i + 1] = -.2f; pcm[i + 2] = .3f; pcm[i + 3] = -.4f;
+		}
+		capture->device.processBuffer(pcm.data(), 4, nullptr, 0, 128);
+		for (int c = 0; c < 4; c++)
+			assert(std::abs(m.outputs[Gorgon::OPTICAL_L_OUTPUT + c].getVoltage() - pcm[c] * 10.f) < 1e-5f);
+		for (float deviceRate : {48000.f, 44100.f, 96000.f}) {
+			capture->device.onStopStream();
+			capture->device.rate = deviceRate;
+			capture->device.onStartStream();
+			for (int i = 0; i < 40; i++) capture->device.processBuffer(pcm.data(), 4, nullptr, 0, 128);
+			for (int c = 0; c < 4; c++)
+				assert(std::abs(m.outputs[Gorgon::OPTICAL_L_OUTPUT + c].getVoltage() - pcm[c] * 10.f) < .01f);
+		}
+		// A disconnected stream must not repeat the last sample or play a stale queue.
+		capture->device.onStopStream();
+		run(m, 64, args);
+		for (int c = 0; c < 4; c++) assert(m.outputs[Gorgon::OPTICAL_L_OUTPUT + c].getVoltage() == 0.f);
+		m.audioInput.setDriverId(-1);
+		context.engine->removeModule(&m);
 	}
 	std::cout << "module_test: all passed\n";
 	return 0;

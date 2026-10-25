@@ -9,7 +9,7 @@ Gorgon connects VCV Rack to the Gorgon tracker in [HydraPy](https://github.com/J
 1. Start Studio on the same computer: `hydrapy studio patches/gorgon_corridor.py --tracker`. On start Studio writes its port and session token to `~/.hydrapy/studio.json`, readable only by you, and removes it on exit.
 2. Add Gorgon to a Rack patch. The display shows **Linked** and the tempo once it finds Studio, usually within a second. If Studio restarts, Gorgon finds it again.
 
-There is nothing to configure. To point Gorgon at a different file, set `HYDRAPY_STUDIO_FILE` before starting Rack. Studio only listens on 127.0.0.1, so Rack and Studio must run on the same machine.
+The score/CV bridge discovers Studio automatically. To point it at a different file, set `HYDRAPY_STUDIO_FILE` before starting Rack. Studio only listens on 127.0.0.1, so Rack and Studio must run on the same machine. Audio capture has a separate setup below.
 
 ## Outputs: from Gorgon
 
@@ -25,6 +25,8 @@ There is nothing to configure. To point Gorgon at a different file, set `HYDRAPY
 | Z | Dolly Z lane, 0–1 as 0–10 V |
 | ROLL | Roll lane, ±45° as ±5 V |
 | FDBK | Feedback lane, 0–0.9 as 0–10 V |
+| OPT L / OPT R | Optical Soundtrack audio from capture channels 1/2, PCM −1…1 as −10…10 V |
+| BRK L / BRK R | Synthesized Breaks kit from capture channels 3/4, PCM −1…1 as −10…10 V |
 
 When Gorgon is paused or its automation is off, clock, reset, run and gates stop. The lanes hold their current value.
 
@@ -35,8 +37,38 @@ and direct CV. AIR opens a gate and updates velocity while keeping the previous
 pitch. Velocity zero opens no gate and preserves both held values. Muting a lane
 also keeps its held values. Start/resume/seek clear held values before the next hit.
 
-These follow Studio's `--cv-device` signals. Gates, clock, run and unipolar lanes
-use 10 V instead of 5 V; pitch remains 1 V/oct and roll remains ±5 V.
+**CV output levels** in the context menu selects 10 V (existing Rack default)
+or 5 V (matching Studio's direct CV). It scales clock, reset, run, gates, held
+velocity, Z and feedback together. Pitch remains 1 V/oct, roll remains ±5 V,
+and the audio jacks retain their separate scaling. The setting is saved with
+the Rack patch. Existing port IDs are preserved; the four audio outputs are
+appended after V/OCT.
+
+## JACK / PipeWire audio
+
+1. Install HydraPy's `jack` extra, start the audio server, and enable **JACK /
+   PipeWire audio** under the tracker's **Output routing**.
+2. Right-click Gorgon and select the JACK audio driver, capture device and
+   input channel group exposing four channels. With PipeWire, run both Studio
+   and Rack through `pw-jack` when required by the distribution.
+3. In the patchbay, connect Studio's displayed `optical_L`, `optical_R`,
+   `breaks_L`, `breaks_R` ports to Rack's corresponding capture channels 1–4.
+   Connect the module's four audio jacks to a mixer/processor and an ordinary
+   Rack Audio output module. Gorgon itself only captures audio.
+
+Optical reads the patch's first two Soundtracks (one is duplicated, none is
+silent). Breaks is the first tracker's synthesized kick/snare/hat kit, not
+recorded break samples. Browser Sound remains an independent audition path.
+Studio's software buffer lead adds latency; **OFFSET** changes the score/CV
+timing, not received PCM. Audio conversion follows Rack's engine sample rate.
+The bounded queue drops excess backlog rather than growing latency indefinitely;
+disconnect/underrun produces silence. Counters are in the context menu.
+
+Keep any ES-40 encoded S/PDIF route separate from this listening-audio path;
+never resample/mix/gain it through these jacks. Its polarity compensation lives
+in Studio's Output routing, per digital pair. See HydraPy's
+[audio guide](https://github.com/JosiahAlanLee/hydrapy/blob/main/docs/gorgon-audio.md)
+and [ES-40 guide](https://github.com/JosiahAlanLee/hydrapy/blob/main/docs/es40.md).
 
 ## Inputs: to Gorgon
 

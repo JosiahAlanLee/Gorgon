@@ -1,7 +1,7 @@
 {
   "slug": "GorgonBridge",
   "name": "GorgonBridge",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "license": "BSD-3-Clause",
   "brand": "GorgonBridge",
   "author": "DSP_Emulation contributors",
@@ -9,7 +9,7 @@
   "modules": [{
     "slug": "Gorgon",
     "name": "Gorgon",
-    "description": "Bridge to HydraPy Studio's Gorgon tracker: clock, pitch, gates and automation lanes out, CV back into the visuals' controls and transport.",
+    "description": "HydraPy tracker bridge: optical and Breaks audio, clock, pitch, gates and automation out; CV back into the visuals and transport.",
     "tags": ["Clock generator", "Sequencer", "Controller", "Visual", "Polyphonic"]
   }]
 }

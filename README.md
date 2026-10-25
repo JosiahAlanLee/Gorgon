@@ -13,6 +13,7 @@ Requires a HydraPy Studio with the bridge endpoint (`GET /api/bridge`), on the s
 | `src/engine/GorgonEngine.hpp` | Score, playhead, clock follower and output evaluation. No Rack dependency. |
 | `src/engine/Bridge.hpp`, `LoopbackHttp.hpp`, `BridgeJson.hpp` | The link to Studio: discovery, a small loopback HTTP client, parsing. |
 | `src/Gorgon.cpp` | The Rack module and widget. |
+| `src/AudioInput.hpp`, `src/engine/PcmQueue.hpp` | Four-channel audio capture, sample-rate conversion and bounded PCM transfer. |
 | `tools/make_panel.py` | Generates `res/Gorgon.svg` and `src/Layout.hpp` from one table. |
 | `tools/make_fixture.py` | Generates `tests/fixture.txt` from HydraPy's own `TrackerCV`. |
 
@@ -29,4 +30,4 @@ make -C vcv/gorgon/tests module_test RACK_DIR=/absolute/path/to/Rack-SDK && vcv/
 
 The portable tests need jansson (`libjansson-dev`). `engine_test` compares the C++ engine with HydraPy at 4,192 beats across eight random scores, including row and pulse boundaries, pitch/key mapping, AIR and zero velocity. Stateful checks cover held outputs and delayed transport resets; the follower is tested through drift, block-timing jitter, loops and seeks.
 
-Linux CI regenerates the fixture with HydraPy's current `main`, compares it to the checked-in file, and runs the real Studio bridge end to end. This checks discovery, authentication, cached transport updates, control input, pitch, pause, seek and full reset pulses. Platform builds also exercise the module through Rack's API on Linux; physical audio/video latency still needs workstation testing.
+Linux CI regenerates the fixture with a pinned HydraPy commit, compares it to the checked-in file, and runs the real Studio bridge end to end. A manual `hydrapy_ref` input can check another version. Tests cover discovery, authentication, transport, controls, pitch, pause, seek and reset pulses, plus concurrent PCM channel ordering and Rack capture at 44.1/48/96 kHz. Physical audio/video latency still needs workstation testing.
