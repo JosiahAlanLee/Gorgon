@@ -57,7 +57,11 @@ appended after V/OCT.
    with Studio already running. If Studio restarts while Rack is running, the
    connections are not remade and OPT/BRK fall silent: connect the four ports
    to Rack's capture channels in the patchbay. With any other capture device,
-   connect them by hand.
+   connect them by hand. Under PipeWire, Rack can occasionally open the wrong
+   JACK device while a patch loads: it finds the device by name in one list and
+   opens it from another, and a client that has just closed can reorder the
+   second. If HydraPy's ports are not connected to Rack, select the device
+   again or reload the patch.
 4. Connect the module's four audio jacks to a mixer/processor and an ordinary
    Rack Audio output module. Gorgon itself only captures audio.
 
@@ -65,14 +69,21 @@ Optical reads the patch's first two Soundtracks (one is duplicated, none is
 silent). Breaks is the first tracker's synthesized kick/snare/hat kit, not
 recorded break samples. Browser Sound remains an independent audition path.
 Studio's software buffer lead adds latency; **OFFSET** changes the score/CV
-timing, not received PCM. At 48 kHz with 256-frame periods and the default
-lead, a Breaks hit reached BRK 16–22 ms after the GATE 1 pulse for the same
-row (about 21.5 ms in four test runs of five). To line up a Rack voice played
-from the gates with Breaks, set OFFSET to about −20 ms (counterclockwise,
-later). Measure your own setup by patching GATE 1 and BRK L into a scope.
-Audio conversion follows Rack's engine sample rate.
-The bounded queue drops excess backlog rather than growing latency indefinitely;
-disconnect/underrun produces silence. Counters are in the context menu.
+timing, not received PCM, and the delay grows with the server's period. In
+tests at 48 kHz with the default lead, a Breaks hit reached BRK this long after
+the GATE 1 pulse for the same row:
+
+| Server period | Breaks after GATE 1 | OFFSET to line up a voice played from the gates |
+| --- | --- | --- |
+| 256 frames | 16–22 ms (about 21.5 ms in five runs of six) | about −20 ms |
+| 1024 frames (the desktop PipeWire default here) | 67–74 ms | about −70 ms |
+
+Negative OFFSET is counterclockwise (later). Measure your own setup by patching
+GATE 1 and BRK L into a scope. Audio conversion follows Rack's engine sample
+rate. The bounded queue drops excess backlog rather than growing latency
+indefinitely; disconnect/underrun produces silence. At 1024-frame periods the
+queue ran dry once in each test run, inserting 1–5 ms of silence, and then held
+steady. Counters are in the context menu.
 
 Keep any ES-40 encoded S/PDIF route separate from this listening-audio path;
 never resample/mix/gain it through these jacks. Studio's per-pair polarity
