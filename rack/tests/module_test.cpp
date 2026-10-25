@@ -58,6 +58,8 @@ int main() {
 		assert(m.outputs[Gorgon::CLOCK_OUTPUT].getVoltage() == 0.f && m.outputs[Gorgon::RUN_OUTPUT].getVoltage() == 0.f);
 		assert(m.outputs[Gorgon::GATES_OUTPUT].getChannels() == 4 && m.outputs[Gorgon::VEL_OUTPUT].getChannels() == 4);
 		assert(m.outputs[Gorgon::PITCH_OUTPUT].getChannels() == 4);
+		assert(m.outputs[Gorgon::BUS_OUTPUT].getChannels() == 9);
+		for (int bit = 0; bit < 9; ++bit) assert(m.outputs[Gorgon::BUS_OUTPUT].getVoltage(bit) == 0.f);
 
 		// Inject what Studio would publish: playing from beat 0 at 120 BPM, with
 		// Studio's clock equal to the engine's block clock (which is 0 here).
@@ -91,6 +93,9 @@ int main() {
 			float c = m.outputs[Gorgon::CLOCK_OUTPUT].getVoltage();
 			if (c > 1.f && last <= 1.f)
 				edges.push_back(i);
+			assert(m.outputs[Gorgon::BUS_OUTPUT].getVoltage(8) == ((c > 1.f && last <= 1.f) ? 10.f : 0.f));
+			for (int bit = 0; bit < 8; ++bit)
+				assert(m.outputs[Gorgon::BUS_OUTPUT].getVoltage(bit) == ((89 & (1 << bit)) ? 10.f : 0.f));
 			last = c;
 			if (!gateSeen && m.outputs[Gorgon::GATE2_OUTPUT].getVoltage() > 1.f) {
 				gateSeen = true;
@@ -113,6 +118,8 @@ int main() {
 		// Velocity holds after the gate closes.
 		assert(std::abs(m.outputs[Gorgon::VEL_OUTPUT].getVoltage(1) - 5.f) < 1e-4f);
 		assert(std::abs(m.outputs[Gorgon::PITCH_OUTPUT].getVoltage(1) - .75f) < 1e-4f);
+		for (int bit = 0; bit < 8; ++bit)
+			assert(m.outputs[Gorgon::BUS_OUTPUT].getVoltage(bit) == ((89 & (1 << bit)) ? 10.f : 0.f));
 
 		// The 5 V profile changes gate/velocity/unipolar lanes, preserving pitch and roll.
 		m.outputHigh = 5.f;
@@ -120,6 +127,8 @@ int main() {
 		assert(m.outputs[Gorgon::RUN_OUTPUT].getVoltage() == 5.f);
 		assert(std::abs(m.outputs[Gorgon::VEL_OUTPUT].getVoltage(1) - 2.5f) < 1e-4f);
 		assert(std::abs(m.outputs[Gorgon::Z_OUTPUT].getVoltage() - 1.75f) < 1e-4f);
+		for (int bit = 0; bit < 8; ++bit)
+			assert(m.outputs[Gorgon::BUS_OUTPUT].getVoltage(bit) == ((89 & (1 << bit)) ? 10.f : 0.f));
 		assert(std::abs(m.outputs[Gorgon::ROLL_OUTPUT].getVoltage() - 2.5f) < 1e-4f);
 		assert(std::abs(m.outputs[Gorgon::PITCH_OUTPUT].getVoltage(1) - .75f) < 1e-4f);
 
@@ -127,6 +136,8 @@ int main() {
 		m.snapshot.playhead.playing = false;
 		run(m, 64, args);
 		assert(m.outputs[Gorgon::CLOCK_OUTPUT].getVoltage() == 0.f && m.outputs[Gorgon::RUN_OUTPUT].getVoltage() == 0.f);
+		assert(m.outputs[Gorgon::BUS_OUTPUT].getVoltage(8) == 0.f);
+		assert(m.shownBusWord.load() == 89);
 		assert(std::abs(m.outputs[Gorgon::ROLL_OUTPUT].getVoltage() - 2.5f) < 1e-4f);
 		assert(std::abs(m.outputs[Gorgon::PITCH_OUTPUT].getVoltage(1) - .75f) < 1e-4f);
 
@@ -150,6 +161,7 @@ int main() {
 		m.ppqn = 24.f;
 		m.gateLength = .25f;
 		m.pitchZero = 48;
+		m.busSource = int(gorgon::BusSource::HitMask);
 		json_t* j = m.dataToJson();
 		Gorgon n;
 		n.dataFromJson(j);
@@ -158,9 +170,22 @@ int main() {
 		assert(n.ppqn.load() == 24.f && n.gateLength.load() == .25f);
 		assert(n.pitchZero.load() == 48);
 		assert(n.outputHigh.load() == 5.f);
+		assert(n.busSource.load() == int(gorgon::BusSource::HitMask));
+		assert(n.busOutput.held.word == 0 && !n.busOutput.held.strobe);
+		for (json_int_t invalid : {-1LL, 4LL, 9223372036854775807LL}) {
+			json_t* bad = json_object();
+			json_object_set_new(bad, "busSource", json_integer(invalid));
+			n.dataFromJson(bad); json_decref(bad);
+			assert(n.busSource.load() == int(gorgon::BusSource::Z));
+		}
+		json_t* old = json_object(); // old patches have no BUS option
+		n.busSource = int(gorgon::BusSource::Roll);
+		n.dataFromJson(old); json_decref(old);
+		assert(n.busSource.load() == int(gorgon::BusSource::Z));
 		// The appended pitch port must not change existing patch cable IDs.
 		assert(Gorgon::GATES_OUTPUT == 11 && Gorgon::PITCH_OUTPUT == 12);
-		assert(Gorgon::OPTICAL_L_OUTPUT == 13 && Gorgon::NUM_OUTPUTS == 17);
+		assert(Gorgon::OPTICAL_L_OUTPUT == 13 && Gorgon::BREAKS_R_OUTPUT == 16);
+		assert(Gorgon::BUS_OUTPUT == 17 && Gorgon::NUM_OUTPUTS == 18);
 
 		// Device PCM -1..1 maps to -10..10 V, independent of the CV level profile.
 		settings::sampleRate = sr;

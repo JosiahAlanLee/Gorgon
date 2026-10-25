@@ -45,14 +45,14 @@ trimpots = {'OFFSET': (158, TRANSPORT_Y)}
 jacks_in = {'PLAY_IN': (56, TRANSPORT_Y), 'RESET_IN': (124, TRANSPORT_Y),
             'CV1': (COLUMNS[0], 200), 'CV2': (COLUMNS[1], 200), 'CV3': (COLUMNS[2], 200), 'CV4': (COLUMNS[3], 200)}
 jacks_out = {'CLOCK': (22, 246), 'RESET_OUT': (56, 246), 'RUN': (90, 246), 'VEL': (124, 246), 'PITCH': (158, 246),
-             'GATE1': (COLUMNS[0], 280), 'GATE2': (COLUMNS[1], 280), 'GATE3': (COLUMNS[2], 280), 'GATE4': (COLUMNS[3], 280),
-             'Z': (COLUMNS[0], 314), 'ROLL': (COLUMNS[1], 314), 'FEEDBACK': (COLUMNS[2], 314), 'GATES': (COLUMNS[3], 314),
-             'OPTICAL_L': (COLUMNS[0], 350), 'OPTICAL_R': (COLUMNS[1], 350), 'BREAKS_L': (COLUMNS[2], 350), 'BREAKS_R': (COLUMNS[3], 350)}
+             'GATE1': (COLUMNS[0], 278), 'GATE2': (COLUMNS[1], 278), 'GATE3': (COLUMNS[2], 278), 'GATE4': (COLUMNS[3], 278),
+             'Z': (COLUMNS[0], 310), 'ROLL': (COLUMNS[1], 310), 'FEEDBACK': (COLUMNS[2], 310), 'GATES': (COLUMNS[3], 310),
+             'OPTICAL_L': (26, 342), 'OPTICAL_R': (58, 342), 'BREAKS_L': (90, 342), 'BREAKS_R': (122, 342), 'BUS': (154, 342)}
 transport_labels = {'PLAY': (22, 'PLAY'), 'PLAY_IN': (56, 'TRIG'), 'RESET': (90, 'RESET'), 'RESET_IN': (124, 'TRIG'),
                     'OFFSET': (158, 'OFFSET')}
 labels = {'CV1': 'CV 1', 'CV2': 'CV 2', 'CV3': 'CV 3', 'CV4': 'CV 4',
           'CLOCK': 'CLOCK', 'RESET_OUT': 'RESET', 'RUN': 'RUN', 'VEL': 'VEL', 'PITCH': 'V/OCT', 'GATE1': 'GATE 1', 'GATE2': 'GATE 2',
-          'GATE3': 'GATE 3', 'GATE4': 'GATE 4', 'Z': 'Z', 'ROLL': 'ROLL', 'FEEDBACK': 'FDBK', 'GATES': 'GATES', 'OPTICAL_L': 'OPT L', 'OPTICAL_R': 'OPT R', 'BREAKS_L': 'BRK L', 'BREAKS_R': 'BRK R'}
+          'GATE3': 'GATE 3', 'GATE4': 'GATE 4', 'Z': 'Z', 'ROLL': 'ROLL', 'FEEDBACK': 'FDBK', 'GATES': 'GATES', 'OPTICAL_L': 'OPT L', 'OPTICAL_R': 'OPT R', 'BREAKS_L': 'BRK L', 'BREAKS_R': 'BRK R', 'BUS': 'BUS'}
 
 p = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">',
      f'<rect width="{W}" height="{H}" fill="#161d22"/>',
@@ -74,7 +74,7 @@ for name, (x, y) in jacks_in.items():
     if name.startswith('CV'):
         p.append(text(labels[name], x, y + 22, 6.5))
 for name, (x, y) in jacks_out.items():
-    p.append(text(labels[name], x, y + 21, 6.5, OUT))
+    p.append(text(labels[name], x, y + 19, 6.5, ACCENT if name == 'BUS' else OUT))
 panel = ''.join(p) + '</svg>'
 (root / 'res').mkdir(exist_ok=True)
 (root / 'res/Gorgon.svg').write_text(panel)

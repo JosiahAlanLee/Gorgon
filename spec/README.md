@@ -11,6 +11,7 @@ here, and the fixture checks that they agree.
 | [bridge-api.md](bridge-api.md) | How a follower finds Studio, authenticates, reads the playhead and score, and sends control values and transport | Normative |
 | [cv-semantics.md](cv-semantics.md) | What every output signal does at every beat: clock, reset, run, gates, pitch, velocity, automation lanes, levels | Normative; checked by the fixture |
 | [audio-ports.md](audio-ports.md) | The JACK/PipeWire listening-audio ports Studio publishes and the Rack module captures | Informative |
+| [bytebus-output.md](bytebus-output.md) | Rack's nine-channel encoding of existing lanes and hit state for DSP_Emulation ByteBus modules | Normative; Rack-side connector only |
 
 ## What is and isn't the contract
 

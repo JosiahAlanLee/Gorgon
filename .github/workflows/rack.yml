@@ -104,7 +104,7 @@ jobs:
           unzip -q /tmp/rack-sdk.zip -d /tmp
       - name: Engine test
         working-directory: rack
-        run: make -C tests engine_test && tests/engine_test tests/fixture.txt
+        run: make -C tests engine_test bytebus_test && tests/engine_test tests/fixture.txt && tests/bytebus_test
       - name: Build plugin
         working-directory: rack
         run: |
@@ -138,7 +138,7 @@ jobs:
         # The runner is Apple Silicon, so only the native arm64 test runs.
         if: matrix.arch == 'arm64'
         working-directory: rack
-        run: make -C tests engine_test CXX=clang++ && tests/engine_test tests/fixture.txt
+        run: make -C tests engine_test bytebus_test CXX=clang++ && tests/engine_test tests/fixture.txt && tests/bytebus_test
       - name: Build plugin
         working-directory: rack
         run: |

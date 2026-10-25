@@ -27,6 +27,7 @@ The score/CV bridge discovers Studio automatically. To point it at a different f
 | FDBK | Feedback lane, 0–0.9 as 0–10 V |
 | OPT L / OPT R | Optical Soundtrack audio from capture channels 1/2, PCM −1…1 as −10…10 V |
 | BRK L / BRK R | Synthesized Breaks kit from capture channels 3/4, PCM −1…1 as −10…10 V |
+| BUS | One clocked byte: channels 1–8 are bits 0–7, channel 9 is the publication clock; all lines exactly 0/10 V |
 
 When Gorgon is paused or its automation is off, clock, reset, run and gates stop. The lanes hold their current value.
 
@@ -40,9 +41,54 @@ also keeps its held values. Start/resume/seek clear held values before the next 
 **CV output levels** in the context menu selects 10 V (existing Rack default)
 or 5 V (matching Studio's direct CV). It scales clock, reset, run, gates, held
 velocity, Z and feedback together. Pitch remains 1 V/oct, roll remains ±5 V,
-and the audio jacks retain their separate scaling. The setting is saved with
+and the audio jacks retain their separate scaling. BUS always uses 0/10 V.
+The setting is saved with
 the Rack patch. Existing port IDs are preserved; the four audio outputs are
-appended after V/OCT.
+appended after V/OCT, and BUS is appended after the audio outputs.
+
+## ByteBus
+
+Patch **BUS** directly to a ByteBusLab **Clocked Register**, **Lookup**,
+Vastish **BUS IN**, or OTIS **FRAME BUS**. One polyphonic cable carries the
+whole byte and its clock. Use VCV Free **Split** to inspect the eight bits and
+the ninth clock channel individually. The included
+[example patch](../examples/gorgon-bytebus.vcv) has a register, Split and DAC.
+
+Right-click **BUS source** to choose what it sends. The menu also shows the
+held word in hexadecimal.
+
+| Source | Mapping |
+| --- | --- |
+| Z (default) | 0–1 → 00–FF |
+| Roll | −45° to +45° → 00–FF; 0° → 80 |
+| Feedback | 0–0.9 → 00–FF |
+| Hit mask (lanes 1–4) | Bits 0–3 indicate the current cell's unmuted hits; bits 4–7 stay zero |
+
+Automation values round to the nearest byte, half up, after clamping. To
+program a particular word `n` from Z, set a held Z key to `n/255`. Hit mask
+counts AIR, ignores muted/zero-velocity cells, and uses the hit's presence
+rather than its gate pulse: Gate length does not change it. At 4 PPQN, it
+publishes one rhythm word per sixteenth; other Clock settings sample the
+current cell more or less often.
+
+BUS samples and holds on CLOCK's rising edge, publishing a one-engine-sample
+strobe on channel 9. It publishes every acquisition, even if the word repeats.
+Data and clock travel together. Start/resume/seek also publish the current
+source if the update arrives between clock edges. Every strobe has a low
+sample after it; a seek arriving immediately after a strobe waits through
+that low sample. Changing source waits for the next acquisition. Pause or
+disabled automation holds the byte and stops publication, with no fallback
+clock. A new/reloaded module starts at 00 until playback; source selection
+is saved, the held word is not.
+
+For **OTIS**, select FRM mode. The byte chooses a frame across its region;
+pitch, gates and polyphony still come from separate inputs. For **Lookup**,
+BUS is the lookup address, not a family selector. Its table can remap the
+sequence before another bus destination.
+
+The [connector contract](../../spec/bytebus-output.md) defines levels and
+transport details. BUS is generated on Rack's sample clock. It adds no
+Strudel dependency and uses existing HydraPy scores unchanged.
 
 ## JACK / PipeWire audio
 
