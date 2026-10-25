@@ -7,7 +7,6 @@
 #pragma once
 #include <atomic>
 #include <chrono>
-#include <condition_variable>
 #include <cstdint>
 #include <cstdio>
 #include <functional>
@@ -54,11 +53,7 @@ public:
 		worker = std::thread([this] { loop(); });
 	}
 	void stop() {
-		{
-			std::lock_guard<std::mutex> lock(wakeMutex);
-			running = false;
-		}
-		wake.notify_all();
+		running = false;
 		if (worker.joinable())
 			worker.join();
 	}
@@ -80,8 +75,10 @@ public:
 		connected[i].store(isConnected, std::memory_order_relaxed);
 		volts[i].store(v, std::memory_order_relaxed);
 	}
-	void requestPlayToggle() { playToggle = true; wake.notify_all(); }
-	void requestRestart() { restart = true; wake.notify_all(); }
+	// Plain atomic stores: the worker notices within a couple of milliseconds,
+	// and the audio thread never makes a system call here.
+	void requestPlayToggle() { playToggle = true; }
+	void requestRestart() { restart = true; }
 
 	// -- UI thread ------------------------------------------------------------
 	std::string status() {
@@ -117,8 +114,6 @@ private:
 	LoopbackHttp http;
 	std::thread worker;
 	std::atomic<bool> running{false}, playToggle{false}, restart{false}, linkedFlag{false};
-	std::mutex wakeMutex;
-	std::condition_variable wake;
 
 	std::mutex snapshotMutex;
 	Snapshot latest;
@@ -181,11 +176,10 @@ private:
 			pollStudio(working);
 			sendTransport(working);
 			sendInputs();
-			std::unique_lock<std::mutex> lock(wakeMutex);
-			double wait = period - (now() - started);
-			if (wait > 0.)
-				wake.wait_for(lock, std::chrono::duration<double>(wait),
-				              [this] { return !running || playToggle || restart; });
+			// Sleep in short slices so stop() and transport presses are prompt
+			// without a condition variable (see the note on requestPlayToggle).
+			while (running && !playToggle && !restart && now() - started < period)
+				std::this_thread::sleep_for(std::chrono::milliseconds(2));
 		}
 	}
 
