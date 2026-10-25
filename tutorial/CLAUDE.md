@@ -96,26 +96,37 @@ tested against. Record the DSP_Emulation commit you build (`work/plugins.json`).
 ### 2. Harvest GUI-only state, then build patches
 
 Some module state is only reliably set from Rack's GUI: the Audio 2 module's JACK
-driver and device, and Gorgon's capture device. Set it once and keep the JSON:
+driver and device, and Gorgon's capture device. The results for this stage are in
+`patches/harvested/` (Audio 2 on the stage server's `system` device; Gorgon on
+Studio's client `HydraPy`, inputs 1–4), and `gtut patches` uses them. To redo them:
 
 ```sh
 gtut serve &                                  # holds a stage; `gtut do` drives it
-gtut patches                                  # builds work/patches/harvest.vcv among others
-gtut do '{"rack.load": "harvest"}'
-gtut do '{"rack.menu": {"ref": "AudioInterface2", "path": ["JACK"]}}'   # then the device; read item texts:
-curl -s -X POST localhost:8791/layout -d '{}' | python -m json.tool | less   # "menu": open items and their centres
+gtut do '{"studio.api": {"action": "jack_audio", "enabled": true}}'   # Studio's ports, for Gorgon
+gtut patches && gtut do '{"rack.load": "harvest"}'
+# Audio 2: click its display (the "No device" line), not its context menu, which has no
+# driver items: a driver/device menu opens. Choose JACK, click the display again, choose "system".
+curl -s -X POST localhost:8791/layout -d '{}' | python -m json.tool | less   # "menu": open items and centres
+gtut do '{"rack.menu": {"ref": "Gorgon", "path": ["Audio device", "JACK"]}}'
+gtut do '{"rack.menu": {"ref": "Gorgon", "path": ["Audio device", "HydraPy"]}}'
 gtut do '{"rack.save": "work/harvest-saved.vcv"}'
 gtut harvest work/harvest-saved.vcv Core AudioInterface2 audio-jack
 gtut harvest work/harvest-saved.vcv GorgonBridge Gorgon gorgon-capture
 gtut patches                                  # again, with the harvested blocks
 ```
 
-Menu item texts are whatever Rack and the modules print — read them from the
-layout dump rather than guessing. Studio must have its JACK ports enabled
-(`{"studio.api": {"action": "jack_audio", "enabled": true}}`) before Gorgon's
-capture device can be chosen. Read every `work/patches/*.cables.txt`: each line is
-a cable with the port names it resolved to. If a name in `patches/10-rack.py` is
-wrong the build fails and lists what exists; fix the builder.
+Menu item texts are whatever Rack and the modules print; read them from the
+layout dump rather than guessing, and only after a moment, since menus take a few
+frames to appear. Rack lists each JACK client in 4-channel groups, so a device
+menu can be taller than the Rack window; items below its bottom edge can't be
+clicked. The harvested JSON is plain (`driver` 4 is JACK, `deviceName`,
+`inputOffset`), so writing it by hand is equivalent. Loading a patch shows
+whether it worked: `LD_LIBRARY_PATH=work/stage/libjack JACK_DEFAULT_SERVER=gtut jack_lsp -c`.
+The stage's Rack also lists the desktop's ALSA and PulseAudio devices (on the
+workstation, the Digi 003): every stage patch keeps the JACK driver. Read every
+`work/patches/*.cables.txt`: each line is a cable with the port names it resolved
+to. If a name in `patches/10-rack.py` is wrong the build fails and lists what
+exists; fix the builder.
 
 ### 3. Verify the script
 
@@ -208,24 +219,22 @@ Rack references: `Gorgon`, `Vastish#2`, `Gorgon.out.Clock`, `Gorgon.in.CV 1`,
 `Scope.in#0`, `Gorgon.param.Timing offset` — names are Rack's own port and param
 names, matched case-insensitively: exact, then prefix, then substring.
 
-## Things nobody has checked yet
+## Checked on the workstation, and still to check
 
-The harness was exercised on a CPU-only container (Xvfb, JACK dummy, Studio on
-the CPU backend, Chromium, xterm, ffmpeg x11grab + JACK, compose and QC, the
-cards and stills). These were **not** run there, so expect to fix them first:
+Checked (2026-10-25, Rack Free 2.6.6, Xvfb, jackd1):
 
-- the probe plugin (`probe/`): it compiles against the Rack 2.6.4 headers, but
-  has never been loaded into Rack. Build it, load `work/patches/blank.vcv`, and
-  check `layout.json` coordinates against a screenshot before anything else;
-- everything that drives Rack: cable drags, menus, `rack.add` (whether Enter adds
-  the browser's top result), knob ramps, the view animation;
-- Fundamental and Core port names and indices used in `patches/10-rack.py`
-  (Scope, Split, LFO, VCMixer, Audio 2) — check the `.cables.txt` files;
-- Rack's JACK client and port names (`audio.record: auto` looks for "Rack" or
-  "RtApi" in the client name; with a stage up, `JACK_DEFAULT_SERVER=gtut jack_lsp` shows the truth);
-- NVENC, EGL, Kokoro and faster-whisper (none on that machine);
-- the scene column's accessible name (assumed "Scene, row NN"), the `+12`
-  button's name, `#duplicateTarget`'s option values.
+- the probe loads in Rack, and `layout.json` matches a screenshot exactly (module
+  boxes, ports, knobs); Rack drew a 1080p window at about 60 fps on Xvfb's software GL;
+- Fundamental and Core port names and indices in `patches/10-rack.py` (catalog);
+- Rack's JACK client is `VCV Rack`, ports `inport N` / `outport N` (`audio.record: auto` finds it);
+- context menus and submenus (`rack.menu` slides into submenus in straight lines;
+  Gorgon's audio device list is a submenu since GorgonBridge 2.1.1);
+- Kokoro on the GPU (with the spaCy pins in `pyproject.toml`); faster-whisper falls
+  back to the CPU when CUDA 12's cuBLAS is missing (PyTorch here is CUDA 13).
+
+Still to check in takes: cable drags, `rack.add` (whether Enter adds the browser's
+top result), knob ramps, the view animation, NVENC in a take, and the tracker
+selectors in chapters 3–8.
 
 ## Where things are when something fails
 

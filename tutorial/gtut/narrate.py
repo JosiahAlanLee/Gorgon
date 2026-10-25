@@ -131,9 +131,14 @@ def _whisper_words(path: Path):
         from faster_whisper import WhisperModel
     except ImportError:
         return None
-    model = WhisperModel('small.en', device='auto', compute_type='auto')
-    segs, _ = model.transcribe(str(path), word_timestamps=True, language='en')
-    return [(w.word, w.start) for s in segs for w in (s.words or [])]
+    def words(device, compute):
+        model = WhisperModel('small.en', device=device, compute_type=compute)
+        segs, _ = model.transcribe(str(path), word_timestamps=True, language='en')
+        return [(w.word, w.start) for s in segs for w in (s.words or [])]
+    try:
+        return words('auto', 'auto')
+    except RuntimeError:  # CTranslate2's GPU path needs CUDA 12 libraries (libcublas.so.12) the venv may lack
+        return words('cpu', 'int8')
 
 
 def _cue_times_whisper(text: str, voice: Path, cue_word_index: dict[str, int]):

@@ -7,21 +7,32 @@ here="$(cd "$(dirname "$0")" && pwd)"
 cd "$here"
 [ -f config.yaml ] || { cp config.example.yaml config.yaml; echo "wrote config.yaml: edit paths, then re-run"; exit 0; }
 
+# Only what is missing: suggesting jackd2 where jackd1 works would replace it.
+declare -A pkg=([Xvfb]=xvfb [xdotool]=xdotool [xdpyinfo]=x11-utils [xsetroot]=x11-xserver-utils [openbox]=openbox
+  [xterm]=xterm [ffmpeg]=ffmpeg [jackd]=jackd2 [rsvg-convert]=librsvg2-bin [tesseract]=tesseract-ocr
+  [espeak-ng]=espeak-ng [fc-match]=fontconfig [git]=git [make]=build-essential)
 need=()
-for exe in Xvfb xdotool xdpyinfo xsetroot openbox xterm ffmpeg jackd rsvg-convert tesseract espeak-ng fc-match git make; do
-  command -v "$exe" >/dev/null || need+=("$exe")
+for exe in "${!pkg[@]}"; do
+  command -v "$exe" >/dev/null || need+=("${pkg[$exe]}")
 done
 if [ ${#need[@]} -gt 0 ]; then
-  echo "missing: ${need[*]}"
-  echo "sudo apt install xvfb xdotool x11-utils x11-xserver-utils openbox xterm ffmpeg jackd2 librsvg2-bin tesseract-ocr espeak-ng fonts-dejavu-core build-essential"
-  echo "(jackd2 asks about realtime priority: either answer is fine, the stage runs --no-realtime)"
+  echo "missing: sudo apt install ${need[*]}"
+  if [[ " ${need[*]} " == *" jackd2 "* ]]; then
+    echo "(jackd2 asks about realtime priority: either answer is fine, the stage runs --no-realtime)"
+  fi
 fi
 
+# paths.work, with PyYAML if this python3 has it, otherwise read from the file directly.
 work="$(python3 - <<'PY'
-import yaml, os, pathlib
-c = yaml.safe_load(open('config.yaml'))
-w = (c.get('paths') or {}).get('work') or './work'
-p = pathlib.Path(os.path.expanduser(w))
+import os, pathlib, re
+text = open('config.yaml').read()
+try:
+    import yaml
+    w = ((yaml.safe_load(text) or {}).get('paths') or {}).get('work')
+except ImportError:
+    m = re.search(r'^paths:\n(?:[ \t]+.*\n)*?[ \t]+work:[ \t]*([^#\n]+)', text, re.M)
+    w = m.group(1).strip().strip('"\'') if m else None
+p = pathlib.Path(os.path.expanduser(w or './work'))
 print((p if p.is_absolute() else pathlib.Path('.').resolve() / p).resolve())
 PY
 )"

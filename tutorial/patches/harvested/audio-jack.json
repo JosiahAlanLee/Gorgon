@@ -1,0 +1,11 @@
+{
+ "audio": {
+  "driver": 4,
+  "deviceName": "system",
+  "sampleRate": 48000.0,
+  "blockSize": 256,
+  "inputOffset": 0,
+  "outputOffset": 0
+ },
+ "dcFilter": true
+}
