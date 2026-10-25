@@ -8,6 +8,7 @@ mouse itself is real (xinput.Hand).
 from __future__ import annotations
 
 import json
+import math
 import re
 import shutil
 import time
@@ -193,6 +194,25 @@ def find_module(layout: dict, ref: str) -> dict:
     return hits[i]
 
 
+def blank_point(mod: dict) -> tuple[float, float]:
+    """A point on the module's panel, along its top or bottom edge, clear of every control and jack, for a
+    right-click that should open the module's own menu. The middle of the top edge is a control on some
+    panels (Vastish), and right-clicking a control opens that control's menu instead."""
+    x, y, w, h = mod['box']
+    boxes = [q['box'] for q in mod.get('params', []) if q.get('box')]
+    centres = [q['centre'] for q in mod.get('ports', []) + mod.get('params', []) if q.get('centre')]
+    best, clearance = (x + w / 2, y + 10), -1.0
+    for dy in (10, 6, h - 10, h - 6):
+        for i in range(1, 12):
+            px, py = x + w * i / 12, y + dy
+            if any(bx <= px <= bx + bw and by <= py <= by + bh for bx, by, bw, bh in boxes):
+                continue
+            d = min((math.hypot(px - cx, py - cy) for cx, cy in centres), default=1e9)
+            if d > clearance:
+                best, clearance = (px, py), d
+    return best
+
+
 def resolve(layout: dict, ref: str) -> tuple[dict, dict | None, str | None]:
     """'Module[#n][.in|.out|.param[.name|#i]]' -> (module, item, kind)."""
     m = re.match(r'^([^.]+?)(?:\.(in|out|input|output|param)(?:[.](.+)|(#\d+))?)?$', ref)
@@ -223,8 +243,7 @@ class RackDriver:
         mod, item, _ = resolve(self.probe.fresh(), ref)
         if item:
             return tuple(item['centre'])
-        x, y, w, h = mod['box']
-        return x + w / 2, y + 10  # the panel's top edge: blank on every module here
+        return blank_point(mod)
 
     def focus(self):
         display.focus(self.cfg, self.window)

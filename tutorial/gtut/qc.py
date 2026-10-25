@@ -141,8 +141,8 @@ def text_scan(cfg, paths: list[Path]) -> list[dict]:
 
 def take_report(cfg, take_dir: Path) -> dict:
     take = json.loads((take_dir / 'take.json').read_text())
-    from .compose import find_slate
-    slate = find_slate(take_dir / 'take.mkv', take.get('slate_wall'))
+    from .compose import find_slate, slate_region
+    slate = find_slate(take_dir / 'take.mkv', take.get('slate_wall'), region=slate_region(take, cfg))
     problems = []
     log = (take_dir / 'take.ffmpeg.log').read_text(errors='replace') if (take_dir / 'take.ffmpeg.log').exists() else ''
     xruns = log.count('xrun')

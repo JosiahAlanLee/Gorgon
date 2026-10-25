@@ -229,6 +229,7 @@ class Stage:
             time.sleep(self.cfg['capture']['preroll'])
             t0 = time.time()
             info['slate_method'] = self.flash(shot)
+            info['slate_rect'] = self.cfg['stage']['windows'].get(info['slate_method'])
             info['slate_wall'] = t0 - take.started
             for a in shot.actions:
                 self.do(a, t0, meta.get('cues', {}), log)

@@ -132,10 +132,32 @@ def font(cfg, size: int, mono: bool = False):
 
 # slate ------------------------------------------------------------------------
 
-def find_slate(take: Path, hint: float | None = None, search: float = 4.0) -> dict:
+def slate_region(take: dict, cfg=None):
+    """Where in the take the slate flashed, as fractions (x, y, w, h) of the frame: the window that flashed
+    (take.json slate_rect, or slate_method's window in the stage config), or None for the whole frame."""
+    rect, flashed = take.get('rect'), take.get('slate_rect')
+    if flashed is None and cfg is not None and take.get('slate_method'):
+        flashed = cfg['stage']['windows'].get(take['slate_method'])
+    if not rect or not flashed or list(flashed) == list(rect):
+        return None
+    return ((flashed[0] - rect[0]) / rect[2], (flashed[1] - rect[1]) / rect[3], flashed[2] / rect[2], flashed[3] / rect[3])
+
+
+def _cells(f: np.ndarray, region=None) -> np.ndarray:
+    """Mean colour of a 3x4 grid over the frame, or over region (fractions of the frame)."""
+    if region:
+        h, w = f.shape[:2]
+        x0, y0 = int(round(region[0] * w)), int(round(region[1] * h))
+        f = f[y0:y0 + max(3, int(round(region[3] * h))), x0:x0 + max(4, int(round(region[2] * w)))]
+    return np.array([[c.mean(axis=(0, 1)) for c in np.array_split(r, 4, axis=1)] for r in np.array_split(f, 3, axis=0)])
+
+
+def find_slate(take: Path, hint: float | None = None, search: float = 4.0, region=None) -> dict:
     """Video time of the first white frame and audio time of the click, in the take.
 
     hint: when the runner fired the slate (take.json slate_wall), seconds into the take.
+    region: where the flash shows (slate_region); a take framing several windows flashes only one of them,
+    which is half or a quarter of the frame and would never pass the whole-frame test.
     """
     lo = max(0.0, (hint or 0.0) - 1.5)
     hi = (hint or 0.0) + search if hint is not None else 12.0
@@ -146,7 +168,7 @@ def find_slate(take: Path, hint: float | None = None, search: float = 4.0) -> di
         f = fr.read()
         if f is None:
             break
-        cells = f.reshape(3, 30, 4, 40, 3).mean(axis=(1, 3, 4))  # 3x4 grid of cell means
+        cells = _cells(f, region)
         if base is None:
             base = cells
         if ((cells > FLASH_LUMA) & ((cells - base) > 110)).mean() > 0.5:
@@ -385,7 +407,7 @@ class Composer:
         if take['narration'].get('digest') != meta.get('digest'):
             raise ComposeError(f'{shot.key}: the narration changed after this take was shot, so its cues no '
                                f'longer match the actions; reshoot it (gtut shoot {shot.chapter}:{shot.id})')
-        slate = find_slate(take_path, take.get('slate_wall'))
+        slate = find_slate(take_path, take.get('slate_wall'), region=slate_region(take, self.cfg))
         (take_dir / 'slate.json').write_text(json.dumps(slate, indent=1))
         if slate['video'] is None:
             raise ComposeError(f'{shot.key}: no slate flash in the take; check {take_dir}')
