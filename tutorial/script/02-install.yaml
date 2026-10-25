@@ -63,11 +63,9 @@ shots:
       - at: dsp
         term.run: {cmd: "git clone --depth 1 https://github.com/JosiahAlanLee/DSP_Emulation.git", wait_for: '\$ $|done\.', timeout: 300}
       - at: build
-        mark: build-start
-        term.run:
-          cmd: "for d in Gorgon/rack DSP_Emulation/vcv/{otislab,vastish,spoonbender,seance,bytebus}; do make -s -C $d RACK_DIR=$RACK_SDK -j8 dist; done"
-          wait_for: 'ByteBusLab-[0-9.]+-lin-x64\.vcvplugin'
-          timeout: 1800
+        term.type: {cmd: "for d in Gorgon/rack DSP_Emulation/vcv/{otislab,vastish,spoonbender,seance,bytebus}; do make -s -C $d RACK_DIR=$RACK_SDK -j8 dist; done"}
+      - mark: build-start                 # typed at normal speed; only the build is fast-forwarded
+        term.wait: {wait_for: 'ByteBusLab-[0-9.]+-lin-x64\.vcvplugin', timeout: 1800}
       - wait: 0.5
         mark: build-done
     speed:
