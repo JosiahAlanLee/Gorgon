@@ -2,7 +2,8 @@
 
 Output is logged so actions can wait for it. Nothing personal reaches the screen:
 the prompt is bare, history is off, and `show_safe()` filters the session token
-and home directory out of anything a command prints.
+and home directory out of anything a command prints; `hydrapy` and `pip` are
+wrapped in it, so they can be typed plainly on camera.
 """
 from __future__ import annotations
 
@@ -22,6 +23,10 @@ export HISTSIZE=0
 export PIP_DISABLE_PIP_VERSION_CHECK=1
 export PYTHONUNBUFFERED=1
 show_safe() { "$@" 2>&1 | sed -u -E -e 's/#[A-Za-z0-9_-]{20,}/#<session token>/g' -e "s#$HOME#~#g"; }
+# The commands filmed most print paths (pip's "Obtaining file:///home/...", hydrapy's FFmpeg paths) or Studio's
+# token: filter them in place, so what is typed on camera is the plain command a viewer would type.
+hydrapy() { show_safe command hydrapy "$@"; }
+pip() { show_safe command pip "$@"; }
 clear
 """
 
