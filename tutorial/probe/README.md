@@ -8,6 +8,9 @@ Put a Director anywhere in a patch (the tutorial's generated patches park one fa
 right). The first one installs an agent in Rack's scene that outlives patch loads,
 so one Rack session can be driven through many patches.
 
+In a rack the Director draws nothing, not even its panel, so it never shows on camera;
+its box is still there (and in `layout.json`). The module browser shows its panel.
+
 ## Files
 
 The folder is `$GTUT_PROBE_DIR`, or `<Rack user folder>/gtut-probe`.
