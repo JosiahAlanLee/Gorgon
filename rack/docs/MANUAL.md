@@ -48,8 +48,9 @@ appended after V/OCT.
 
 1. Install HydraPy's `jack` extra, start the audio server, and enable **JACK /
    PipeWire audio** under the tracker's **Output routing**.
-2. Right-click Gorgon, select the JACK audio driver, and choose Studio's client
-   (`HydraPy`) as the capture device, channels 1–4. With PipeWire, run both
+2. Right-click Gorgon, open **Audio device**, select the JACK driver, then open
+   **Audio device** again and choose Studio's client (`HydraPy`) as the capture
+   device, channels 1–4. With PipeWire, run both
    Studio and Rack through `pw-jack` when required by the distribution.
 3. When Rack opens that device it connects Studio's `optical_L`, `optical_R`,
    `breaks_L`, `breaks_R` ports to capture channels 1–4 itself, in that order;
