@@ -1,0 +1,15 @@
+build/
+dist/
+*.so
+*.dll
+*.dylib
+*.vcvplugin
+tests/engine_test
+tests/bridge_test
+tests/bridge_tsan
+tests/bridge_asan
+tests/engine_asan
+tests/studio_probe
+tests/module_test
+tests/pcm_test
+tests/pcm_tsan
