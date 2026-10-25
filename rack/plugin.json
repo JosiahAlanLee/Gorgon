@@ -1,0 +1,15 @@
+{
+  "slug": "GorgonBridge",
+  "name": "GorgonBridge",
+  "version": "2.1.0",
+  "license": "BSD-3-Clause",
+  "brand": "GorgonBridge",
+  "author": "Gorgon contributors",
+  "sourceUrl": "https://github.com/JosiahAlanLee/Gorgon",
+  "modules": [{
+    "slug": "Gorgon",
+    "name": "Gorgon",
+    "description": "HydraPy tracker bridge: optical and Breaks audio, clock, pitch, gates and automation out; CV back into the visuals and transport.",
+    "tags": ["Clock generator", "Sequencer", "Controller", "Visual", "Polyphonic"]
+  }]
+}

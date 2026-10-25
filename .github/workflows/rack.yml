@@ -1,0 +1,153 @@
+name: Rack module
+# Linux runs the full validation against the HydraPy commit in hydrapy.pin:
+# portable engine/bridge tests, fixture regeneration, the real Studio end to end,
+# sanitizers, the module through Rack's API, and the .vcvplugin build.
+# Windows and macOS compile the plugin and run the portable engine test; nobody
+# has run those builds inside Rack yet.
+on:
+  push:
+    paths: ['rack/**', 'hydrapy.pin', '.github/workflows/rack.yml']
+  pull_request:
+    paths: ['rack/**', 'hydrapy.pin', '.github/workflows/rack.yml']
+  workflow_dispatch:
+    inputs:
+      hydrapy_ref:
+        description: 'HydraPy ref to validate against (default: hydrapy.pin)'
+        type: string
+        required: false
+  workflow_call:
+    inputs:
+      hydrapy_ref:
+        type: string
+        required: false
+permissions:
+  contents: read
+env:
+  RACK_SDK_VERSION: 2.6.4
+jobs:
+  linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resolve the HydraPy ref
+        id: pin
+        run: echo "ref=${{ inputs.hydrapy_ref }}" | sed "s/ref=$/ref=$(tr -d '[:space:]' < hydrapy.pin)/" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          repository: JosiahAlanLee/hydrapy
+          ref: ${{ steps.pin.outputs.ref }}
+          path: .integration/hydrapy
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install libRack runtime dependencies and jansson
+        # libRack.so needs JACK and PulseAudio client libraries to load, even headless.
+        # jansson is for the portable bridge tests, which don't link libRack.
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libjack-jackd2-0 libpulse0 zstd jq libjansson-dev
+      - name: Fetch pinned Rack SDK
+        run: |
+          curl --fail --location "https://vcvrack.com/downloads/Rack-SDK-${RACK_SDK_VERSION}-lin-x64.zip" -o /tmp/rack-sdk.zip
+          unzip -q /tmp/rack-sdk.zip -d /tmp
+      - name: Build and validate
+        run: |
+          step() { local log=/tmp/step.log rc=0; ( "$@" ) > "$log" 2>&1 || rc=$?; if [ $rc -ne 0 ]; then echo "::error::FAILED (exit $rc): $*"; tail -n 12 "$log" | while IFS= read -r l; do echo "::error::$l"; done; exit 1; fi; grep -E "fixture|follower|clock edges" "$log" | while IFS= read -r l; do echo "::notice::$l"; done; tail -n 2 "$log"; }
+          v=$(jq -r .version rack/plugin.json); case "$v" in 2.*) ;; *) echo "::error::rack/plugin.json version $v must start with 2. for Rack 2"; exit 1;; esac
+          step make -C rack -j2 RACK_DIR=/tmp/Rack-SDK
+          # Portable engine and bridge tests (the engine against HydraPy's own outputs).
+          step make -C rack/tests test
+          # The contract: regenerate the fixture from the pinned HydraPy and compare.
+          step python -m pip install -e .integration/hydrapy
+          echo "::notice::HydraPy $(git -C .integration/hydrapy rev-parse HEAD)"
+          python rack/tools/make_fixture.py > /tmp/gorgon-current-fixture.txt
+          if ! cmp rack/tests/fixture.txt /tmp/gorgon-current-fixture.txt; then
+            echo "::error::rack/tests/fixture.txt differs from what HydraPy ${{ steps.pin.outputs.ref }} produces. A signal-semantics change needs spec/cv-semantics.md, spec/CHANGELOG.md and a regenerated fixture in the same pull request."
+            exit 1
+          fi
+          step rack/tests/engine_test /tmp/gorgon-current-fixture.txt
+          step make -C rack/tests e2e
+          sudo sysctl -w vm.mmap_rnd_bits=28   # ThreadSanitizer on newer runner kernels
+          step make -C rack/tests sanitize
+          # The real module through Rack's API, without a GUI; sanitizers first for stack traces.
+          step g++ -std=c++17 -O1 -g -pthread -fsanitize=address,undefined -fno-omit-frame-pointer -I/tmp/Rack-SDK/include -I/tmp/Rack-SDK/dep/include -Irack/src rack/tests/module_test.cpp -L/tmp/Rack-SDK -Wl,-rpath,/tmp/Rack-SDK -lRack -Wl,--allow-shlib-undefined -o /tmp/gorgon_module_asan
+          step env ASAN_OPTIONS=detect_leaks=0 /tmp/gorgon_module_asan
+          step make -C rack/tests module_test RACK_DIR=/tmp/Rack-SDK
+          step rack/tests/module_test
+          step make -C rack dist RACK_DIR=/tmp/Rack-SDK
+      - name: Validate the score schema against HydraPy's scores
+        run: |
+          python -m pip install jsonschema
+          python tools/check_schema.py
+      - name: Upload plugin
+        uses: actions/upload-artifact@v4
+        with:
+          name: GorgonBridge-lin-x64
+          path: rack/dist/*.vcvplugin
+          if-no-files-found: error
+
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            make zip unzip jq rsync
+            mingw-w64-x86_64-gcc mingw-w64-x86_64-zstd
+      - name: Fetch Rack SDK
+        run: |
+          curl --fail --location "https://vcvrack.com/downloads/Rack-SDK-${RACK_SDK_VERSION}-win-x64.zip" -o /tmp/rack-sdk.zip
+          unzip -q /tmp/rack-sdk.zip -d /tmp
+      - name: Engine test
+        working-directory: rack
+        run: make -C tests engine_test && tests/engine_test tests/fixture.txt
+      - name: Build plugin
+        working-directory: rack
+        run: |
+          report() { tail -n 15 "$1" | while IFS= read -r line; do echo "::error::$line"; done; exit 1; }
+          make -j2 RACK_DIR=/tmp/Rack-SDK > /tmp/build.log 2>&1 || report /tmp/build.log
+          make dist RACK_DIR=/tmp/Rack-SDK > /tmp/dist.log 2>&1 || report /tmp/dist.log
+          # The DLL must not depend on MinGW runtime DLLs that Rack does not ship.
+          objdump -p plugin.dll | grep "DLL Name" | tee /tmp/deps.log
+          if grep -Ei "(libstdc|libgcc|libwinpthread)" /tmp/deps.log; then echo "::error::plugin.dll depends on a MinGW runtime DLL"; exit 1; fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GorgonBridge-win-x64
+          path: rack/dist/*.vcvplugin
+          if-no-files-found: error
+
+  macos:
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [arm64, x64]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: brew install zstd jq
+      - name: Fetch Rack SDK
+        run: |
+          curl --fail --location "https://vcvrack.com/downloads/Rack-SDK-${RACK_SDK_VERSION}-mac-${{ matrix.arch }}.zip" -o /tmp/rack-sdk.zip
+          unzip -q /tmp/rack-sdk.zip -d /tmp
+      - name: Engine test
+        # The runner is Apple Silicon, so only the native arm64 test runs.
+        if: matrix.arch == 'arm64'
+        working-directory: rack
+        run: make -C tests engine_test CXX=clang++ && tests/engine_test tests/fixture.txt
+      - name: Build plugin
+        working-directory: rack
+        run: |
+          if [ "${{ matrix.arch }}" = x64 ]; then CROSS="CROSS_COMPILE=x86_64-apple-darwin"; fi
+          make -j3 RACK_DIR=/tmp/Rack-SDK $CROSS
+          make dist RACK_DIR=/tmp/Rack-SDK $CROSS
+          test "$(lipo -archs plugin.dylib)" = "$( [ ${{ matrix.arch }} = x64 ] && echo x86_64 || echo arm64 )"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GorgonBridge-mac-${{ matrix.arch }}
+          path: rack/dist/*.vcvplugin
+          if-no-files-found: error
