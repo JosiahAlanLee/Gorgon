@@ -32,13 +32,13 @@ class Hand:
         vals = dict(line.split('=', 1) for line in out.splitlines() if '=' in line)
         return int(vals['X']), int(vals['Y'])
 
-    def _path(self, start, end, seconds: float, fps: int = 90):
+    def _path(self, start, end, seconds: float, fps: int = 90, straight: bool = False):
         (x0, y0), (x1, y1) = start, end
         n = max(2, int(seconds * fps))
         # a slight arc, as a wrist makes
         dx, dy = x1 - x0, y1 - y0
         dist = math.hypot(dx, dy)
-        bend = self.rng.uniform(-0.08, 0.08) * dist
+        bend = 0.0 if straight else self.rng.uniform(-0.08, 0.08) * dist
         nx, ny = (-dy / dist, dx / dist) if dist else (0, 0)
         pts = []
         for i in range(1, n + 1):
@@ -53,13 +53,13 @@ class Hand:
         # Fitts-like: quick for short hops, ~0.9 s across a 1080p window
         return (0.18 + 0.25 * math.log2(1 + dist / 40)) / self.speed
 
-    def move(self, x: float, y: float, seconds: float | None = None):
+    def move(self, x: float, y: float, seconds: float | None = None, straight: bool = False):
         start = self.position()
         end = (round(x), round(y))
         if start == end:
             return
         seconds = self._travel_time(start, end) if seconds is None else seconds
-        pts, dt = self._path(start, end, seconds)
+        pts, dt = self._path(start, end, seconds, straight=straight)
         chain: list = []
         for px, py in pts:
             chain += ['mousemove', px, py, 'sleep', f'{dt:.4f}']

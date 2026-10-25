@@ -308,13 +308,14 @@ class RackDriver:
                 raise RackError(f'menu item {text!r} is disabled')
             x, y = item['centre']
             if row is not None:
-                # Into a submenu along the parent's row, as a hand does: a diagonal path crosses the
-                # parent menu's later items and opens their submenus instead.
-                self.hand.move(x, row)
+                # Into a submenu along the parent's row, as a hand does, and in straight lines: a diagonal
+                # or arcing path crosses the parent menu's other items and opens their submenus instead.
+                self.hand.move(x, row, straight=True)
             if i < len(path) - 1:
-                self.hand.move(x, y)  # submenus open on hover
+                self.hand.move(x, y, straight=row is not None)  # submenus open on hover
                 row = y
             else:
+                self.hand.move(x, y, straight=row is not None)
                 self.hand.click(x, y)
         time.sleep(pause)
 
