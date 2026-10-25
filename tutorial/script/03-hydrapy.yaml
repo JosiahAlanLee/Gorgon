@@ -36,7 +36,7 @@ shots:
     title: What it rendered
     render:
       name: quickstart
-      patch: ../sandbox/hydrapy/patch.py
+      patch: renders/quickstart.py                # the same patch the shot above writes on camera
       seconds: 8
     narration: >
       Every float argument can take a signal, or another chain, per pixel.

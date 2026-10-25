@@ -24,12 +24,7 @@ shots:
       - at: venv
         term.run: {cmd: "python3 -m venv ../hydrapy-env && . ../hydrapy-env/bin/activate", wait_for: '\(hydrapy-env\)|\$ $', cps: 32}
       - at: pip
-        mark: pip-start
         term.run: {cmd: "pip install -e \".[gpu,video,jack]\"", wait_for: 'Successfully installed', timeout: 900}
-      - wait: 0.5
-        mark: pip-done
-    speed:
-      - {from: pip-start, to: pip-done, factor: 12}
     hold: 1.5
     verify:
       - "extras gpu, video and jack exist in hydrapy pyproject.toml"
@@ -60,8 +55,8 @@ shots:
     narration: >
       The Rack plugins come from two repositories. The Gorgon module is in Gorgon, under rack. {gorgon}
       OTIS, Vastish, Spoon Bender, Séance and ByteBusLab are in DSP Emulation, under vcv. {dsp}
-      Each builds against the Rack SDK with make dist, which writes a vcvplugin file. {build}
-      Build them from source: DSP Emulation's current release predates Séance.
+      Each builds against the Rack SDK with make dist, which writes a vcvplugin file.
+      Build them from source: DSP Emulation's current release predates Séance. {build}
     actions:
       - at: gorgon
         term.run: {cmd: "git clone --depth 1 https://github.com/JosiahAlanLee/Gorgon.git", wait_for: '\$ $|done\.', timeout: 300}
