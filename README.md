@@ -47,13 +47,19 @@ sanitizers, Rack's API, and Windows/macOS builds.
 The same Linux checks also pass on the workstation (2026-10-25: Ubuntu 22.04,
 Rack SDK 2.6.6, HydraPy at the pin). The fixture is byte-identical, the follower
 stays within 0.05 ms of a real Studio, and the schema check accepts all 202 scores.
-The packaged plugin also loads in VCV Rack Pro 2.6.6, headless, where a patch ran
-for 15 seconds with no errors in Rack's log. That run had no window, audio device
-or capture input.
+The whole chain also runs in VCV Rack Free 2.6.6 on private JACK1 and PipeWire 1.0.7
+servers at 48 kHz/256. Studio drives Gorgon and Gorgon plays a Vastish voice on every
+gate. The clock holds 138 BPM to within 0.01 ms. The four captured channels match
+Studio's ports sample for sample, to within float rounding, arriving 10.7 ms later
+(16 ms in one JACK run).
+An earlier headless run in Rack Pro showed only that the plugin loads: that copy of
+Rack Pro was not signed in to a VCV account, and an unsigned Rack Pro processed no
+audio in a later test.
 
-What is **not** validated: physical interfaces on the workstation, the ES-40
-digital path end to end, display and device latency, and the Windows/macOS
-plugins inside Rack. The plugin is not in the VCV Library yet.
+What is **not** validated: physical interfaces on the workstation, the desktop's
+own PipeWire session, a signed-in Rack Pro, the ES-40 digital path end to end,
+display and device latency, and the Windows/macOS plugins inside Rack. The plugin
+is not in the VCV Library yet.
 
 ## Working on it
 

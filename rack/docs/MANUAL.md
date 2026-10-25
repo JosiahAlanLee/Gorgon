@@ -48,19 +48,29 @@ appended after V/OCT.
 
 1. Install HydraPy's `jack` extra, start the audio server, and enable **JACK /
    PipeWire audio** under the tracker's **Output routing**.
-2. Right-click Gorgon and select the JACK audio driver, capture device and
-   input channel group exposing four channels. With PipeWire, run both Studio
-   and Rack through `pw-jack` when required by the distribution.
-3. In the patchbay, connect Studio's displayed `optical_L`, `optical_R`,
-   `breaks_L`, `breaks_R` ports to Rack's corresponding capture channels 1–4.
-   Connect the module's four audio jacks to a mixer/processor and an ordinary
+2. Right-click Gorgon, select the JACK audio driver, and choose Studio's client
+   (`HydraPy`) as the capture device, channels 1–4. With PipeWire, run both
+   Studio and Rack through `pw-jack` when required by the distribution.
+3. When Rack opens that device it connects Studio's `optical_L`, `optical_R`,
+   `breaks_L`, `breaks_R` ports to capture channels 1–4 itself, in that order;
+   check them in the patchbay. This happens again whenever the patch is loaded
+   with Studio already running. If Studio restarts while Rack is running, the
+   connections are not remade and OPT/BRK fall silent: connect the four ports
+   to Rack's capture channels in the patchbay. With any other capture device,
+   connect them by hand.
+4. Connect the module's four audio jacks to a mixer/processor and an ordinary
    Rack Audio output module. Gorgon itself only captures audio.
 
 Optical reads the patch's first two Soundtracks (one is duplicated, none is
 silent). Breaks is the first tracker's synthesized kick/snare/hat kit, not
 recorded break samples. Browser Sound remains an independent audition path.
 Studio's software buffer lead adds latency; **OFFSET** changes the score/CV
-timing, not received PCM. Audio conversion follows Rack's engine sample rate.
+timing, not received PCM. At 48 kHz with 256-frame periods and the default
+lead, a Breaks hit reached BRK 16–22 ms after the GATE 1 pulse for the same
+row (about 21.5 ms in four test runs of five). To line up a Rack voice played
+from the gates with Breaks, set OFFSET to about −20 ms (counterclockwise,
+later). Measure your own setup by patching GATE 1 and BRK L into a scope.
+Audio conversion follows Rack's engine sample rate.
 The bounded queue drops excess backlog rather than growing latency indefinitely;
 disconnect/underrun produces silence. Counters are in the context menu.
 
