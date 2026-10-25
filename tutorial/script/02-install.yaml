@@ -18,7 +18,7 @@ shots:
       gpu for the OpenGL renderer, video for MP4 export, and jack for audio ports Rack can record.
     actions:
       - at: clone
-        term.run: {cmd: "git clone https://github.com/JosiahAlanLee/hydrapy.git && cd hydrapy", wait_for: '\$ $|Resolving deltas.*done', timeout: 300}
+        term.run: {cmd: "git clone --depth 1 https://github.com/JosiahAlanLee/hydrapy.git && cd hydrapy", wait_for: '\$ $|Resolving deltas.*done', timeout: 300}
       - at: venv
         term.run: {cmd: "python3 -m venv ../hydrapy-env && . ../hydrapy-env/bin/activate", wait_for: '\(hydrapy-env\)|\$ $'}
       - at: pip
@@ -39,11 +39,11 @@ shots:
       actions:
         - term.quiet: "cd hydrapy && . ../hydrapy-env/bin/activate"
     narration: >
-      hydrapy encoders tries each video encoder with a real frame and marks the ones that work. {enc}
-      On an NVIDIA card, NVENC is the one to look for.
+      hydrapy encoders tries each video encoder with a real frame and marks the ones that work OK;
+      here only those are shown. {enc} On an NVIDIA card, NVENC is the one to look for.
     actions:
       - at: enc
-        term.run: {cmd: "hydrapy encoders", wait_for: 'nvenc|software'}
+        term.run: {cmd: "hydrapy encoders | grep OK", wait_for: 'nvenc|software'}
     hold: 2
     verify:
       - "`hydrapy encoders` exists (cli.py subcommand), tries every encoder and marks OK or --; names nvenc when available"
@@ -99,7 +99,7 @@ shots:
       rack: {patch: blank}
     narration: >
       Start Rack and right-click empty space to open the module browser. {search}
-      Search for Gorgon, then for the others. {add} Each plugin appears under its own brand.
+      Search for Gorgon, then for the others. Each plugin appears under its own brand. {add}
     actions:
       - at: search
         rack.add: {query: Gorgon, fallback: rack-gorgon}

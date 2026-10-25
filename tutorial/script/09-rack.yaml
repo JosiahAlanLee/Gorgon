@@ -74,8 +74,8 @@ shots:
     setup:
       rack: {patch: rack-scope-start, view: {modules: [Gorgon, Scope]}}
     narration: >
-      Patch {clock} Clock into a scope, and {gate} gate two, the FM hits lane, into the second channel.
-      {play} Play in Studio. The clock is Gorgon's tempo on Rack's own sample clock,
+      Patch {clock} Clock into a scope, and gate two, the FM hits lane, {gate} into the second channel,
+      then play in Studio. {play} The clock is Gorgon's tempo on Rack's own sample clock,
       so pulses land on exact samples; the module nudges its tempo by at most half a percent to stay with Studio.
     actions:
       - at: clock

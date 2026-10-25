@@ -19,13 +19,12 @@ shots:
         studio.press: Space
       - at: route
         studio.select: {target: '#programMode', value: o2}
-      - after: 2.5
-        studio.select: {target: '#programMode', value: o0}
       - at: blackout
         studio.click: '#blackoutBtn'
       - after: 1.5
         studio.click: '#blackoutBtn'
-      - after: 1
+      - studio.select: {target: '#programMode', value: o0}
+      - after: 0.5
         studio.press: Space
     frames:
       - {window: studio}

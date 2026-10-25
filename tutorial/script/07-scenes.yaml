@@ -21,15 +21,15 @@ shots:
     title: The scene column
     narration: >
       Enter on an empty scene cell writes the next scene after the one above it, {enter}
-      so repeated entries step through the patch. Set a fade, {fade} and play. {play}
+      so repeated entries step through the patch. Set a fade, {fade} then press play. {play}
       Every scene draws into the same output, so feedback carries across the change.
     actions:
       - studio.click: {selector: '#trackerRows [aria-label^="Scene, row 00"]'}
       - at: enter
         studio.press: Enter                 # row 00: nothing above, so the first scene (drift)
-      - after: 0.6
-        studio.click: {selector: '#trackerRows [aria-label^="Scene, row 10"]'}
       - after: 0.3
+        studio.click: {selector: '#trackerRows [aria-label^="Scene, row 10"]'}
+      - after: 0.2
         studio.press: Enter                 # row 10: the next scene after drift (fracture), so the fade shows
       - at: fade
         studio.fill: {target: '#sceneFade', text: '8'}
