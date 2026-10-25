@@ -67,10 +67,10 @@ class Stage:
                 self.up_services.add(out)
         if 'rack' in needs and 'rack' not in self.up_services:
             blank = self.cfg.work / 'patches' / 'blank.vcv'
-            if not blank.exists():
-                blank.parent.mkdir(parents=True, exist_ok=True)
-                blank.write_text(json.dumps(dict(version='2.6.6', cables=[], modules=[
-                    dict(id=1, plugin='GorgonTutorialProbe', model='Director', version='2.0.0', pos=[0, 0], params=[])])))
+            blank.parent.mkdir(parents=True, exist_ok=True)
+            blank.write_text(json.dumps(dict(version='2.6.6', cables=[], modules=[
+                # far right, as in every built patch: the probe is a filming aid, not on camera
+                dict(id=1, plugin='GorgonTutorialProbe', model='Director', version='2.0.0', pos=[400, 0], params=[])])))
             wid, probe = rack.launch(self.cfg, self.procs, blank)
             self.rack = rack.RackDriver(self.cfg, probe, self.hand, wid)
             self.up_services.add('rack')
