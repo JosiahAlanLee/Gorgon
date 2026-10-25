@@ -65,8 +65,13 @@ The bounded queue drops excess backlog rather than growing latency indefinitely;
 disconnect/underrun produces silence. Counters are in the context menu.
 
 Keep any ES-40 encoded S/PDIF route separate from this listening-audio path;
-never resample/mix/gain it through these jacks. Its polarity compensation lives
-in Studio's Output routing, per digital pair. See HydraPy's
+never resample/mix/gain it through these jacks. Studio's per-pair polarity
+setting (Output routing) applies only when HydraPy's own encoder drives the
+ES-40. When Rack's 8GT/8CV and ES-4(0) encoders feed the S/PDIF pair through an
+Audio module, that setting has no effect on the stream. Diagnose that path with
+`hydrapy es40-check`, whose WAV bypasses every encoder. Connect exactly one
+source to the S/PDIF playback pair: JACK sums multiple connections to a port,
+which corrupts encoded words. See HydraPy's
 [audio guide](https://github.com/JosiahAlanLee/hydrapy/blob/main/docs/gorgon-audio.md)
 and [ES-40 guide](https://github.com/JosiahAlanLee/hydrapy/blob/main/docs/es40.md).
 
