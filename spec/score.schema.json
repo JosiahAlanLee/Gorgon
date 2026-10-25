@@ -4,92 +4,325 @@
   "title": "Gorgon tracker score (hydrapy-tracker-1)",
   "description": "The score document exchanged between the tracker editor, HydraPy Studio and bridge followers such as the VCV Rack module. Normative reference: spec/score.md. Validation in the reference implementation: hydrapy/studio_tracker.py validate().",
   "type": "object",
-  "required": ["format", "bpm", "key", "pattern", "loop", "sound", "mutes", "modes", "bindings", "patterns"],
+  "required": [
+    "format",
+    "bpm",
+    "key",
+    "pattern",
+    "loop",
+    "sound",
+    "mutes",
+    "modes",
+    "bindings",
+    "patterns"
+  ],
   "properties": {
-    "format": { "const": "hydrapy-tracker-1" },
-    "bpm": { "type": "number", "minimum": 60, "maximum": 200, "description": "Quarter notes per minute. A row is a sixteenth." },
-    "key": { "enum": [0, 2, 5, 7], "description": "Semitone of the key's root: C, D, F or G. Pitched notes are transposed by key - 2 (D is the reference key)." },
-    "pattern": { "type": "integer", "minimum": 0, "maximum": 3, "description": "The selected pattern; the one that plays when loop is true." },
-    "loop": { "type": "boolean", "description": "true: cycle the selected pattern (16 beats). false: cycle all four patterns in order (64 beats)." },
-    "sound": { "type": "boolean", "description": "Browser audition synth on/off. Editor state; followers ignore it." },
+    "format": {
+      "const": "hydrapy-tracker-1"
+    },
+    "bpm": {
+      "type": "number",
+      "minimum": 60,
+      "maximum": 200,
+      "description": "Quarter notes per minute. A row is a sixteenth."
+    },
+    "key": {
+      "enum": [
+        0,
+        2,
+        5,
+        7
+      ],
+      "description": "Semitone of the key's root: C, D, F or G. Pitched notes are transposed by key - 2 (D is the reference key)."
+    },
+    "pattern": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3,
+      "description": "The selected pattern; the one that plays when loop is true."
+    },
+    "loop": {
+      "type": "boolean",
+      "description": "true: cycle the selected pattern (16 beats). false: cycle all four patterns in order (64 beats)."
+    },
+    "sound": {
+      "type": "boolean",
+      "description": "Browser audition synth on/off. Editor state; followers ignore it."
+    },
     "mutes": {
-      "type": "array", "minItems": 4, "maxItems": 4, "items": { "type": "boolean" },
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "boolean"
+      },
       "description": "One per audio lane. A muted lane sends no gates or hits and does not update its held pitch or velocity."
     },
     "modes": {
-      "type": "object", "required": ["program", "aux"], "additionalProperties": false,
-      "properties": { "program": { "$ref": "#/$defs/output" }, "aux": { "$ref": "#/$defs/output" } },
+      "type": "object",
+      "required": [
+        "program",
+        "aux"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "program": {
+          "$ref": "#/$defs/output"
+        },
+        "aux": {
+          "$ref": "#/$defs/output"
+        }
+      },
       "description": "Which Studio output each monitor shows. Program also selects Studio's displayed/recorded output."
     },
     "bindings": {
-      "type": "object", "required": ["z", "roll", "feedback"], "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "z",
+        "roll",
+        "feedback"
+      ],
+      "additionalProperties": false,
       "properties": {
-        "z": { "$ref": "#/$defs/controlName" },
-        "roll": { "$ref": "#/$defs/controlName" },
-        "feedback": { "$ref": "#/$defs/controlName" }
+        "z": {
+          "$ref": "#/$defs/controlName"
+        },
+        "roll": {
+          "$ref": "#/$defs/controlName"
+        },
+        "feedback": {
+          "$ref": "#/$defs/controlName"
+        }
       },
       "description": "The patch control each automation lane drives, by name. An empty string disconnects the lane. Non-empty names must be distinct."
     },
-    "patterns": { "type": "array", "minItems": 4, "maxItems": 4, "items": { "$ref": "#/$defs/pattern" } }
+    "patterns": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/pattern"
+      }
+    }
   },
   "$defs": {
-    "output": { "enum": ["o0", "o1", "o2", "o3"] },
-    "controlName": { "type": "string", "maxLength": 120 },
-    "row": { "type": "integer", "minimum": 0, "maximum": 63, "description": "Sixteenth-note row within the pattern." },
+    "output": {
+      "enum": [
+        "o0",
+        "o1",
+        "o2",
+        "o3"
+      ]
+    },
+    "controlName": {
+      "type": "string",
+      "maxLength": 120
+    },
+    "row": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 63,
+      "description": "Sixteenth-note row within the pattern."
+    },
     "note": {
       "type": "string",
-      "pattern": "^([A-G][-#]?[0-9]|AIR)$",
-      "description": "C0-G9 with an optional separator or sharp: 'C-4' and 'C4' both mean MIDI 60; 'D#4' is MIDI 63. B# and E# are rejected; notes above G9 (MIDI 127) are rejected. 'AIR' is an unpitched event: it opens a gate and updates velocity but leaves the held pitch unchanged."
+      "pattern": "^(([A-G]-?|[ACDFG]#)[0-8]|([C-G]-?|[CDF]#)9|AIR)$",
+      "description": "C0-G9 with an optional separator or sharp: 'C-4' and 'C4' both mean MIDI 60; 'D#4' is MIDI 63. B# and E# are rejected, as is anything above G9 (MIDI 127). 'AIR' is an unpitched event: it opens a gate and updates velocity but leaves the held pitch unchanged."
     },
     "hit": {
-      "type": ["object", "null"],
-      "required": ["note", "vel"], "additionalProperties": true,
+      "type": [
+        "object",
+        "null"
+      ],
+      "required": [
+        "note",
+        "vel"
+      ],
+      "additionalProperties": true,
       "properties": {
-        "note": { "$ref": "#/$defs/note" },
-        "vel": { "type": "number", "minimum": 0, "maximum": 127, "description": "Velocity 0-127. Zero is silent: no gate, no hit, held values unchanged." }
+        "note": {
+          "$ref": "#/$defs/note"
+        },
+        "vel": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 127,
+          "description": "Velocity 0-127. Zero is silent: no gate, no hit, held values unchanged."
+        }
       }
     },
-    "easing": { "enum": ["hold", "linear", "smooth"], "description": "Interpolation between automation keys: step at the key row, linear, or smoothstep (t*t*(3-2t))." },
+    "easing": {
+      "enum": [
+        "hold",
+        "linear",
+        "smooth"
+      ],
+      "description": "Interpolation between automation keys: step at the key row, linear, or smoothstep (t*t*(3-2t))."
+    },
     "pattern": {
       "type": "object",
-      "required": ["name", "audio", "keys", "easing"],
+      "required": [
+        "name",
+        "audio",
+        "keys",
+        "easing"
+      ],
       "properties": {
-        "name": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
         "audio": {
-          "type": "array", "minItems": 4, "maxItems": 4,
-          "items": { "type": "array", "minItems": 64, "maxItems": 64, "items": { "$ref": "#/$defs/hit" } },
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "array",
+            "minItems": 64,
+            "maxItems": 64,
+            "items": {
+              "$ref": "#/$defs/hit"
+            }
+          },
           "description": "Four audio lanes of 64 cells; null is an empty cell."
         },
         "keys": {
-          "type": "object", "required": ["z", "roll", "feedback"], "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "z",
+            "roll",
+            "feedback"
+          ],
+          "additionalProperties": false,
           "properties": {
-            "z": { "$ref": "#/$defs/keysZ" },
-            "roll": { "$ref": "#/$defs/keysRoll" },
-            "feedback": { "$ref": "#/$defs/keysFeedback" }
+            "z": {
+              "$ref": "#/$defs/keysZ"
+            },
+            "roll": {
+              "$ref": "#/$defs/keysRoll"
+            },
+            "feedback": {
+              "$ref": "#/$defs/keysFeedback"
+            }
           },
           "description": "Automation keys per lane, sorted by row with unique rows, at most 64 per lane. Lane ranges: z 0-1 (default 0.35), roll -45-45 degrees (default 0), feedback 0-0.9 (default 0.25)."
         },
         "easing": {
-          "type": "object", "required": ["z", "roll", "feedback"],
-          "properties": { "z": { "$ref": "#/$defs/easing" }, "roll": { "$ref": "#/$defs/easing" }, "feedback": { "$ref": "#/$defs/easing" } }
+          "type": "object",
+          "required": [
+            "z",
+            "roll",
+            "feedback"
+          ],
+          "properties": {
+            "z": {
+              "$ref": "#/$defs/easing"
+            },
+            "roll": {
+              "$ref": "#/$defs/easing"
+            },
+            "feedback": {
+              "$ref": "#/$defs/easing"
+            }
+          }
         },
         "scenes": {
-          "type": "array", "maxItems": 64, "default": [],
+          "type": "array",
+          "maxItems": 64,
+          "default": [],
           "items": {
-            "type": "object", "required": ["r", "name"], "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "r",
+              "name"
+            ],
+            "additionalProperties": false,
             "properties": {
-              "r": { "$ref": "#/$defs/row" },
-              "name": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,24}$", "description": "A scene the patch declares. A name the patch does not declare is kept in the score and ignored when playing." },
-              "fade": { "type": "integer", "minimum": 0, "maximum": 64, "default": 0, "description": "Crossfade length in rows from the previous scene on the same output. Clipped to the gap before the next change." }
+              "r": {
+                "$ref": "#/$defs/row"
+              },
+              "name": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{1,24}$",
+                "description": "A scene the patch declares. A name the patch does not declare is kept in the score and ignored when playing."
+              },
+              "fade": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 64,
+                "default": 0,
+                "description": "Crossfade length in rows from the previous scene on the same output. Clipped to the gap before the next change."
+              }
             }
           },
           "description": "Scene changes, sorted by row with unique rows. Optional: scores saved before scenes existed load unchanged. Visual side only; CV followers ignore this field."
         }
       }
     },
-    "keysZ": { "type": "array", "maxItems": 64, "items": { "type": "object", "required": ["r", "v"], "properties": { "r": { "$ref": "#/$defs/row" }, "v": { "type": "number", "minimum": 0, "maximum": 1 } } } },
-    "keysRoll": { "type": "array", "maxItems": 64, "items": { "type": "object", "required": ["r", "v"], "properties": { "r": { "$ref": "#/$defs/row" }, "v": { "type": "number", "minimum": -45, "maximum": 45 } } } },
-    "keysFeedback": { "type": "array", "maxItems": 64, "items": { "type": "object", "required": ["r", "v"], "properties": { "r": { "$ref": "#/$defs/row" }, "v": { "type": "number", "minimum": 0, "maximum": 0.9 } } } }
+    "keysZ": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "required": [
+          "r",
+          "v"
+        ],
+        "properties": {
+          "r": {
+            "$ref": "#/$defs/row"
+          },
+          "v": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      }
+    },
+    "keysRoll": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "required": [
+          "r",
+          "v"
+        ],
+        "properties": {
+          "r": {
+            "$ref": "#/$defs/row"
+          },
+          "v": {
+            "type": "number",
+            "minimum": -45,
+            "maximum": 45
+          }
+        }
+      }
+    },
+    "keysFeedback": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "required": [
+          "r",
+          "v"
+        ],
+        "properties": {
+          "r": {
+            "$ref": "#/$defs/row"
+          },
+          "v": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 0.9
+          }
+        }
+      }
+    }
   },
   "x-notes": [
     "Unknown top-level and pattern-level keys are tolerated and preserved by the reference implementation (the shipped demo score carries 'version' and 'scene'); implementations must ignore keys they do not know.",
