@@ -122,7 +122,8 @@ def renders(cfg, chapters) -> list[Path]:
             continue
         dst.parent.mkdir(parents=True, exist_ok=True)
         patch = Path(r['patch'])
-        patch = patch if patch.is_absolute() else tree / patch
+        if not patch.is_absolute():  # a file in the kit (tutorial/...) first, then the HydraPy tree
+            patch = cfg.root / patch if (cfg.root / patch).exists() else tree / patch
         argv = [hydrapy, 'render', patch, '-o', dst, '--gpu', '--seconds', r.get('seconds', 10),
                 '--size', f"{r.get('size', [w, h])[0]}x{r.get('size', [w, h])[1]}", '--fps', cfg['output']['fps'],
                 '--encoder', 'nvenc' if 'nvenc' in cfg['output']['encoder'] else 'auto', *r.get('args', [])]
