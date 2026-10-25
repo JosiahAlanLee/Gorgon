@@ -66,8 +66,21 @@ def install_plugins(cfg, packages: list[Path]):
         shutil.copy2(pkg, d / pkg.name)
 
 
+def set_aside_log(cfg) -> Path | None:
+    """Rack ends log.txt with an END line when it quits cleanly; at launch, a log without it means "crashed",
+    and Rack blocks on a dialog asking to clear the patch, which nobody on the stage answers. The stage stops
+    Rack with a signal, so the line is usually missing: keep the previous log as log.prev.txt instead."""
+    log = user_dir(cfg) / 'log.txt'
+    if not log.exists():
+        return None
+    prev = log.with_name('log.prev.txt')
+    log.replace(prev)
+    return prev
+
+
 def launch(cfg, procs: Procs, patch: Path):
     write_settings(cfg)
+    set_aside_log(cfg)
     rack = cfg.path('rack')
     if not rack or not rack.exists():
         raise RackError(f'paths.rack {rack} does not exist')
