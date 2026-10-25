@@ -293,16 +293,27 @@ class RackDriver:
     def menu(self, ref: str, path: list[str], pause: float = 0.5):
         """Right-click a module (or a port/param) and walk a context-menu path by item text."""
         self.focus()
-        self.hand.right_click(*self._point(ref))
+        point = self._point(ref)
+        self.hand.right_click(*point)
+        row = None  # y of the item whose submenu is open
         for i, text in enumerate(path):
             time.sleep(pause)
             items = [m for m in self.probe.fresh().get('menu', []) if 'text' in m]
+            if not items and i == 0:  # the first click after a load can be taken by window focus
+                self.hand.right_click(*point)
+                time.sleep(pause)
+                items = [m for m in self.probe.fresh().get('menu', []) if 'text' in m]
             item = _match(items, 'text', text, f'menu item under {ref}')
             if item.get('disabled'):
                 raise RackError(f'menu item {text!r} is disabled')
             x, y = item['centre']
+            if row is not None:
+                # Into a submenu along the parent's row, as a hand does: a diagonal path crosses the
+                # parent menu's later items and opens their submenus instead.
+                self.hand.move(x, row)
             if i < len(path) - 1:
                 self.hand.move(x, y)  # submenus open on hover
+                row = y
             else:
                 self.hand.click(x, y)
         time.sleep(pause)
