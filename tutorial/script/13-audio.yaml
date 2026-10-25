@@ -13,8 +13,8 @@ shots:
       studio: {patch: patches/gorgon_corridor.py, transport: stop, jack: false}
       rack: {patch: rack-audio, view: {modules: [Gorgon, VCMixer]}}
     narration: >
-      Studio can publish two stereo sources as JACK or PipeWire ports: an optical soundtrack read from the picture,
-      and a synthesized breaks kit from the first tracker lane. Enable them in Output routing. {enable}
+      Studio can publish two sources, each on a pair of JACK or PipeWire ports: an optical soundtrack read from the picture,
+      and a synthesized drum kit playing the first tracker lane, called Breaks. Enable them in Output routing. {enable}
       In Rack, Gorgon captures them when its audio device is Studio's client. {capture}
       They come out of OPT and BRK; Gorgon only captures, so send them on to a mixer and an Audio module. {play}
     actions:
@@ -32,11 +32,13 @@ shots:
       - {at: capture, window: rack}
     mix: {programme: -9}
     verify:
-      - "optical reads first two Soundtracks; breaks is synthesized, not samples (MANUAL JACK/PipeWire audio)"
+      - "optical reads first two Soundtracks; breaks is synthesized, not samples, and the same mono kit on both ports (MANUAL JACK/PipeWire audio; hydrapy docs/gorgon-audio.md)"
       - "Gorgon's capture device harvested as JACK 'HydraPy' channels 1-4 (patches/harvested/gorgon-capture.json)"
       - "ports appear as HydraPy:optical_L etc."
   - id: offset
     title: Lining up with OFFSET
+    frames:
+      - {window: rack}
     setup:
       rack: {patch: rack-offset, view: {modules: [Gorgon, Scope]}}
     narration: >

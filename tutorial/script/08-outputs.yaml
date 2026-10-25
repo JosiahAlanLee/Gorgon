@@ -4,14 +4,14 @@ title: Outputs and saving
 defaults:
   needs: [controller]
   setup:
-    studio: {patch: patches/gorgon_corridor.py, transport: stop}
+    studio: {patch: patches/gorgon_corridor.py, score: scores/demo.json, transport: stop}
 shots:
   - id: program
     title: Program and Auxiliary
     needs: [controller, program]
     source: [hydrapy/docs/gorgon-editor-walkthrough.md#6-use-separate-output-displays]
     narration: >
-      Program opens the main output in its own window, for a second monitor; {play} press F there for fullscreen.
+      {play} Program opens the main output in its own window, for a second monitor; press F there for fullscreen.
       Auxiliary is a second, independent window. Output routing chooses which of the four outputs each one shows. {route}
       Blackout darkens the browser monitors only. {blackout} Rendering, recordings and exports carry on.
     actions:
@@ -19,13 +19,12 @@ shots:
         studio.press: Space
       - at: route
         studio.select: {target: '#programMode', value: o2}
-      - after: 2.5
-        studio.select: {target: '#programMode', value: o0}
       - at: blackout
         studio.click: '#blackoutBtn'
       - after: 1.5
         studio.click: '#blackoutBtn'
-      - after: 1
+      - studio.select: {target: '#programMode', value: o0}
+      - after: 0.5
         studio.press: Space
     frames:
       - {window: studio}

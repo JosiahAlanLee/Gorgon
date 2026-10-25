@@ -4,7 +4,7 @@ title: Notes and blocks
 defaults:
   needs: [controller]
   setup:
-    studio: {patch: patches/gorgon_corridor.py, transport: stop}
+    studio: {patch: patches/gorgon_corridor.py, score: scores/demo.json, transport: stop}
 shots:
   - id: one-note
     title: One note
@@ -59,7 +59,7 @@ shots:
       With Piano keys off, Enter on an empty cell adds a hit, {enter} and Enter again removes it.
       Undo and Redo walk back through the last hundred edits in this controller. {undo}
     actions:
-      - studio.click: {selector: '#trackerRows [data-row="40"][data-col="0"]'}
+      - studio.click: {selector: '#trackerRows [data-row="41"][data-col="0"]'}
       - at: enter
         studio.press: Enter
       - after: 0.8

@@ -8,20 +8,22 @@ defaults:
 shots:
   - id: vastish
     title: Vastish from the FM hits lane
+    frames:
+      - {window: rack}
     source: [DSP_Emulation/vcv/vastish/docs/MANUAL.md, hydrapy/docs/gorgon-editor-walkthrough.md#7-connect-rack]
     setup:
       rack: {patch: rack-voice-start, view: {modules: [Gorgon, Split, Split#2, Vastish]}}
     narration: >
       Vastish is an eight-voice synthesizer in the style of Kurzweil VAST. To play it from one lane,
-      split Gorgon's pitch and gates, {split} and take channel two, FM hits. {patch}
-      Play. {play} Vastish's first program is Ladder Bass; click the program name to try the others. {program}
+      Gorgon's pitch and gates go through two Splits. {split} {patch} Take channel two of each, the FM hits lane,
+      into Vastish's pitch and gate. Then play. {play} Vastish's first program is Ladder Bass;
+      {program} click the program name to try the others.
     actions:
       - at: split
-        rack.cable: {from: Gorgon.out.Pitch, to: 'Split.in#0'}
-      - rack.cable: {from: 'Gorgon.out.Gates 1', to: 'Split#2.in#0'}
+        rack.highlight: {ref: Split, label: 'Pitch, split', seconds: 2}
       - at: patch
-        rack.cable: {from: 'Split.out#1', to: Vastish.in.Pitch}
-      - rack.cable: {from: 'Split#2.out#1', to: Vastish.in.Gate}
+        rack.cable: {from: 'Split.out#1', to: Vastish.in.Pitch, seconds: 0.7}
+      - rack.cable: {from: 'Split#2.out#1', to: Vastish.in.Gate, seconds: 0.7}
       - at: play
         studio.press: Space
       - rack.view: {modules: [Vastish], seconds: 1.2}
@@ -36,6 +38,8 @@ shots:
       - "Vastish audio reaches the recorder (Audio 2 on the stage JACK server)"
   - id: poly
     title: All four lanes at once
+    frames:
+      - {window: rack}
     setup:
       rack: {patch: rack-voice-poly, view: {modules: [Gorgon, Vastish]}}
     narration: >
@@ -52,15 +56,17 @@ shots:
       - "AIR keeps held pitch; velocity 0 opens no gate (MANUAL Outputs)"
   - id: chain
     title: Spoon Bender, OTIS, Vastish
+    frames:
+      - {window: rack}
     source: [DSP_Emulation/docs/GETTING_STARTED.md#connect-the-sample-sharing-chain]
     setup:
       rack: {patch: rack-chain, view: {modules: [SpoonBender, OtisSampler, Vastish]}}
     narration: >
       Side by side, in this order, Spoon Bender, OTIS and Vastish share samples. {order}
-      In OTIS, follow Spoon Bender captures; {otis} in Vastish, follow OTIS on the left. {vast}
+      In OTIS's menu, {otis} turn on Follow Spoon Bender captures; then OTIS imports each capture.
+      In Vastish's menu, {vast} turn on Follow OTIS on the left; Vastish then plays OTIS's sample as its oscillator.
       Play into Spoon Bender, {play} and press Capture after a phrase you want to keep. {capture}
-      OTIS takes the capture, and Vastish takes OTIS's sample as its oscillator. Audio still travels on cables;
-      only the finished samples move between the modules.
+      Audio still travels on cables; only the finished samples move between the modules.
     actions:
       - at: order
         rack.highlight: {ref: SpoonBender, label: Spoon Bender → OTIS → Vastish, seconds: 3}

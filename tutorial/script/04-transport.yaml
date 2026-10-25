@@ -4,7 +4,7 @@ title: Playing and editing are separate
 defaults:
   needs: [controller]
   setup:
-    studio: {patch: patches/gorgon_corridor.py, transport: stop}
+    studio: {patch: patches/gorgon_corridor.py, score: scores/demo.json, transport: stop}
 shots:
   - id: tour
     title: The workspace
@@ -13,7 +13,7 @@ shots:
       Four patterns, each sixty-four sixteenth-note rows, run left to right along the top. {cards}
       Below is the selected pattern: four audio lanes, then the visual lanes, Dolly Z, Roll and Feedback, and the scene column. {grid}
       Row numbers are hexadecimal, so 0F comes before 10, and 3F is the last row. {rows}
-      On the right, a preview of the program output and the patch's controls.
+      On the right are the Program monitor, the automation sliders and the patch bindings.
     actions:
       - at: cards
         studio.point: {selector: '#patterns .pattern-card[data-pattern="1"]'}

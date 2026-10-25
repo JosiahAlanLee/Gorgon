@@ -3,6 +3,7 @@ and installed into the stage's Rack, the catalog, patches and offline renders.""
 from __future__ import annotations
 
 import importlib.util
+import inspect
 import json
 import subprocess
 import sys
@@ -94,7 +95,9 @@ def build_patches(cfg) -> list[Path]:
         spec = importlib.util.spec_from_file_location(src.stem.replace('-', '_'), src)
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
-        for name, patch in mod.build(cat, harvested).items():
+        # Builders that take a third argument get the config (paths, e.g. DSP_Emulation's example patches).
+        args = (cat, harvested, cfg) if len(inspect.signature(mod.build).parameters) > 2 else (cat, harvested)
+        for name, patch in mod.build(*args).items():
             path = patch.save(cfg.work / 'patches' / f'{name}.vcv')
             path.with_suffix('.cables.txt').write_text('\n'.join(patch.explain()) + '\n')
             built.append(path)

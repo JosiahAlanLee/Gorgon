@@ -4,7 +4,7 @@ title: Automating the picture
 defaults:
   needs: [controller]
   setup:
-    studio: {patch: patches/gorgon_corridor.py, transport: stop}
+    studio: {patch: patches/gorgon_corridor.py, score: scores/demo.json, transport: stop}
 shots:
   - id: key
     title: A value at a row
@@ -33,7 +33,8 @@ shots:
   - id: curve
     title: Hold, Linear, Smooth
     narration: >
-      The curve below the grid is the same lane. Click it to write a key at the edit cursor. {curve}
+      The curve below the grid is the same lane. Click it to set a key: across picks the row, and height picks the value. {curve}
+      The edit cursor moves there; playback doesn't.
       Hold keeps each value until the next key; {hold} Linear draws straight lines between keys; {linear}
       Smooth eases in and out. {smooth} The choice applies to the whole lane in this pattern.
     actions:
@@ -49,7 +50,7 @@ shots:
     frames:
       - {window: studio, rect: [0.03, 0.6, 0.72, 0.4]}
     verify:
-      - "a curve click writes at the edit cursor and does not seek (§4.3)"
+      - "a curve click sets a key at the clicked row (x) and value (y), moves the edit cursor there, and does not seek (app.js:658-662)"
       - "ease buttons named Hold / Linear / Smooth inside #easeButtons"
   - id: bindings
     title: Bindings

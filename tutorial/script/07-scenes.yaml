@@ -4,7 +4,7 @@ title: Scenes and lane signals
 defaults:
   needs: [controller]
   setup:
-    studio: {patch: patches/gorgon_scenes.py, transport: stop}
+    studio: {patch: patches/gorgon_scenes.py, score: scores/demo.json, transport: stop}
 shots:
   - id: code
     title: Scenes in a patch
@@ -21,12 +21,16 @@ shots:
     title: The scene column
     narration: >
       Enter on an empty scene cell writes the next scene after the one above it, {enter}
-      so repeated entries step through the patch. Set a fade, {fade} and play. {play}
+      so repeated entries step through the patch. Set a fade, {fade} then press play. {play}
       Every scene draws into the same output, so feedback carries across the change.
     actions:
-      - studio.click: {selector: '#trackerRows [aria-label^="Scene, row 10"]'}
+      - studio.click: {selector: '#trackerRows [aria-label^="Scene, row 00"]'}
       - at: enter
-        studio.press: Enter
+        studio.press: Enter                 # row 00: nothing above, so the first scene (drift)
+      - after: 0.3
+        studio.click: {selector: '#trackerRows [aria-label^="Scene, row 10"]'}
+      - after: 0.2
+        studio.press: Enter                 # row 10: the next scene after drift (fracture), so the fade shows
       - at: fade
         studio.fill: {target: '#sceneFade', text: '8'}
       - studio.click: '#writeSceneBtn'
@@ -38,7 +42,7 @@ shots:
       - {window: studio, rect: [0.1, 0.22, 0.9, 0.6]}
       - {at: play, window: studio}
     verify:
-      - "scene track's name in aria-label (assumed 'Scene'); #sceneFade 0-64 rows; #writeSceneBtn"
+      - "scene cells are labelled 'Scene, row NN, <name|empty>' with NN in hex (app.js:18, 385); #sceneFade 0-64 rows; #writeSceneBtn"
       - "feedback (src(o0)) and delay() history carry across scene changes"
   - id: signals
     title: Lane signals

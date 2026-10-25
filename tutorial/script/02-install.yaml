@@ -13,39 +13,39 @@ shots:
       actions:
         - shell: rm -rf hydrapy hydrapy-env
     narration: >
-      HydraPy needs Python 3.9 or newer. Clone it, {clone} make a virtual environment, {venv}
-      and install it in editable mode with the extras the tracker uses: {pip}
+      HydraPy needs Python 3.9 or newer. Clone it {clone} from GitHub; a shallow clone is enough.
+      The repository is one Python package, with Studio and the Gorgon tracker inside it.
+      Make a virtual environment and activate it, so HydraPy's packages stay separate from the system's. {venv}
+      Then install it in editable mode, with the extras the tracker uses: {pip}
       gpu for the OpenGL renderer, video for MP4 export, and jack for audio ports Rack can record.
     actions:
       - at: clone
-        term.run: {cmd: "git clone https://github.com/JosiahAlanLee/hydrapy.git && cd hydrapy", wait_for: '\$ $|Resolving deltas.*done', timeout: 300}
+        term.run: {cmd: "git clone --depth 1 https://github.com/JosiahAlanLee/hydrapy.git && cd hydrapy", wait_for: '\$ $|Resolving deltas.*done', timeout: 300, cps: 32}
       - at: venv
-        term.run: {cmd: "python3 -m venv ../hydrapy-env && . ../hydrapy-env/bin/activate", wait_for: '\(hydrapy-env\)|\$ $'}
+        term.run: {cmd: "python3 -m venv ../hydrapy-env && . ../hydrapy-env/bin/activate", wait_for: '\(hydrapy-env\)|\$ $', cps: 32}
       - at: pip
-        mark: pip-start
         term.run: {cmd: "pip install -e \".[gpu,video,jack]\"", wait_for: 'Successfully installed', timeout: 900}
-      - wait: 0.5
-        mark: pip-done
-    speed:
-      - {from: pip-start, to: pip-done, factor: 12}
     hold: 1.5
     verify:
       - "extras gpu, video and jack exist in hydrapy pyproject.toml"
       - "Python >= 3.9 (README quick start)"
+      - "Studio (hydrapy/studio.py) and the tracker (hydrapy/tracker/) are inside the hydrapy package"
   - id: check
     title: Check it
     setup:
+      terminal: {}
       actions:
         - term.quiet: "cd hydrapy && . ../hydrapy-env/bin/activate"
     narration: >
-      hydrapy encoders lists the video encoders this machine can use. {enc}
-      On an NVIDIA card, NVENC is the one to look for.
+      hydrapy encoders tries each video encoder with a real frame and marks the ones that work OK;
+      here only those are shown. {enc} On an NVIDIA card, NVENC is the one to look for.
     actions:
       - at: enc
-        term.run: {cmd: "hydrapy encoders", wait_for: 'nvenc|software'}
+        term.run: {cmd: "hydrapy encoders | grep OK", wait_for: 'nvenc|software'}
     hold: 2
     verify:
-      - "`hydrapy encoders` exists (cli.py subcommand) and names nvenc when available"
+      - "`hydrapy encoders` exists (cli.py subcommand), tries every encoder and marks OK or --; names nvenc when available"
+      - "FFmpeg paths it prints show ~, not the home folder (the terminal's hydrapy wrapper; QC OCR)"
   - id: plugins
     title: The Rack plugins
     source: [Gorgon/README.md#start, DSP_Emulation/docs/GETTING_STARTED.md#install, DSP_Emulation/docs/DEVELOPMENT.md]
@@ -54,36 +54,34 @@ shots:
         - shell: rm -rf Gorgon DSP_Emulation
     narration: >
       The Rack plugins come from two repositories. The Gorgon module is in Gorgon, under rack. {gorgon}
-      OTIS, Vastish, Spoon Bender and Séance are in DSP Emulation, under vcv. {dsp}
-      Each builds against the Rack SDK with make dist, which writes a vcvplugin file. {build}
-      Prebuilt files are also on each repository's releases page.
+      OTIS, Vastish, Spoon Bender, Séance and ByteBusLab are in DSP Emulation, under vcv. {dsp}
+      Each builds against the Rack SDK with make dist, which writes a vcvplugin file.
+      Build them from source: DSP Emulation's current release predates Séance. {build}
     actions:
       - at: gorgon
         term.run: {cmd: "git clone --depth 1 https://github.com/JosiahAlanLee/Gorgon.git", wait_for: '\$ $|done\.', timeout: 300}
       - at: dsp
         term.run: {cmd: "git clone --depth 1 https://github.com/JosiahAlanLee/DSP_Emulation.git", wait_for: '\$ $|done\.', timeout: 300}
       - at: build
-        mark: build-start
-        term.run:
-          cmd: "for d in Gorgon/rack DSP_Emulation/vcv/{otislab,vastish,spoonbender,seance}; do make -s -C $d RACK_DIR=$RACK_SDK -j8 dist; done"
-          wait_for: 'SeanceLab-[0-9.]+-lin-x64\.vcvplugin'
-          timeout: 1800
+        term.type: {cmd: "for d in Gorgon/rack DSP_Emulation/vcv/{otislab,vastish,spoonbender,seance,bytebus}; do make -s -C $d RACK_DIR=$RACK_SDK -j8 dist; done"}
+      - mark: build-start                 # typed at normal speed; only the build is fast-forwarded
+        term.wait: {wait_for: 'ByteBusLab-[0-9.]+-lin-x64\.vcvplugin', timeout: 1800}
       - wait: 0.5
         mark: build-done
     speed:
       - {from: build-start, to: build-done, factor: 16}
     verify:
-      - "make dist target names and dist/*.vcvplugin output for all five plugins"
-      - "Gorgon releases page has GorgonBridge builds; DSP_Emulation preview-1 predates Séance — say so if still true"
+      - "make dist target names and dist/*.vcvplugin output for all six plugins (ByteBusLab is needed for chapter 11's Bridge example)"
+      - "DSP_Emulation's only release, preview-1, predates Séance (gh release list); update this line if a newer release exists"
   - id: copy
     title: Into Rack's plugins folder
     narration: >
-      Copy the five files into the plugins folder inside Rack's user folder. {copy}
+      Copy the six files into the plugins folder inside Rack's user folder. {copy}
       Rack's Help menu has Open user folder if you are not sure where it is.
       Quit Rack first; it unpacks new plugins when it starts.
     actions:
       - at: copy
-        term.run: {cmd: "cp Gorgon/rack/dist/*.vcvplugin DSP_Emulation/vcv/*/dist/*.vcvplugin \"$RACK_USER/plugins-lin-x64/\" && ls \"$RACK_USER/plugins-lin-x64/\" | grep -i -E 'gorgon|lab'", wait_for: 'SeanceLab'}
+        term.run: {cmd: "cp Gorgon/rack/dist/*.vcvplugin DSP_Emulation/vcv/*/dist/*.vcvplugin \"$RACK_USER/plugins-lin-x64/\" && ls \"$RACK_USER/plugins-lin-x64/\" | grep -i -E 'gorgon|lab'", wait_for: 'VastishLab'}
     hold: 2
     verify:
       - "DSP_Emulation GETTING_STARTED: Help → Open user folder; quit Rack before copying"
@@ -97,7 +95,7 @@ shots:
       rack: {patch: blank}
     narration: >
       Start Rack and right-click empty space to open the module browser. {search}
-      Search for Gorgon, then for the others. {add} Each plugin appears under its own brand.
+      Search for Gorgon, then for the others. Each plugin appears under its own brand. {add}
     actions:
       - at: search
         rack.add: {query: Gorgon, fallback: rack-gorgon}

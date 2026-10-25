@@ -80,11 +80,24 @@ narration:
   speed: 1.0
   align: auto                        # auto | whisper | proportional — how cue times are found
   pause_after_sentence: 0.25
-  # How the voice says the project's words. Keys are whole words (or regexes with \\b, ^ or $).
-  # Check the first takes by ear; Josiah decides how HydraPy and Gorgon are said.
+  # How the voice says the project's words. Keys are whole words (or regexes with \\b, ^ or $), applied in
+  # order. Josiah's pronunciations (2026-10-25), as exact Kokoro phonemes, [word](/phonemes/): Kokoro drops
+  # words it doesn't know ("druh", "Tish", plain "Otis") and reads "Oh tis" as "'tis". Possessives come first.
   lexicon:
-    HydraPy: Hydra Pie
-    hydrapy: hydra pie
+    '\bHydraPy[''’]s\b': '[HydraPy’s](/hˈIdɹəpˌIz/)'
+    '\bHydraPy\b(?![''’])': '[HydraPy](/hˈIdɹəpˌI/)'        # "high druh pie"
+    hydrapy: '[hydrapy](/hˈIdɹəpˌI/)'
+    Gorgon: '[Gorgon](/ɡˈɔɹɡʌn/)'                          # "Gore gun"
+    '\bVastish[''’]s\b': '[Vastish’s](/vˈæstɪʃɪz/)'
+    '\bVastish\b(?![''’])': '[Vastish](/vˈæstɪʃ/)'          # "Vas Tish"
+    '\bSéance[''’]s\b': '[Séance’s](/sAˈɑnsɪz/)'
+    '\bSéance\b(?![''’])': '[Séance](/sAˈɑns/)'             # French: an "ahh" in the second half
+    '\bOTIS[''’]s\b': '[OTIS’s](/ˈOtɪsɪz/)'
+    '\bOTIS\b(?![''’])': '[OTIS](/ˈOtɪs/)'                  # one word, the name Otis
+    'ACT OUT': act out                                    # otherwise spelled A-C-T
+    'MASK IN': mask in                                    # "IN." before a full stop reads as I-N
+    '\bBUS\b': bus                                        # otherwise spelled B-U-S
+    kHz: kilohertz
     '1 V/oct': one volt per octave
     V/OCT: volt per octave
     CV: C V
@@ -92,7 +105,6 @@ narration:
     HP: H P
     VCV: V C V
     JSON: jason
-    OTIS: Otis
     ES-40: E S forty
     ES-3: E S three
     ms: milliseconds
