@@ -54,9 +54,9 @@ shots:
         - shell: rm -rf Gorgon DSP_Emulation
     narration: >
       The Rack plugins come from two repositories. The Gorgon module is in Gorgon, under rack. {gorgon}
-      OTIS, Vastish, Spoon Bender and Séance are in DSP Emulation, under vcv. {dsp}
+      OTIS, Vastish, Spoon Bender, Séance and ByteBusLab are in DSP Emulation, under vcv. {dsp}
       Each builds against the Rack SDK with make dist, which writes a vcvplugin file. {build}
-      Prebuilt files are also on each repository's releases page.
+      Build them from source: DSP Emulation's current release predates Séance.
     actions:
       - at: gorgon
         term.run: {cmd: "git clone --depth 1 https://github.com/JosiahAlanLee/Gorgon.git", wait_for: '\$ $|done\.', timeout: 300}
@@ -65,25 +65,25 @@ shots:
       - at: build
         mark: build-start
         term.run:
-          cmd: "for d in Gorgon/rack DSP_Emulation/vcv/{otislab,vastish,spoonbender,seance}; do make -s -C $d RACK_DIR=$RACK_SDK -j8 dist; done"
-          wait_for: 'SeanceLab-[0-9.]+-lin-x64\.vcvplugin'
+          cmd: "for d in Gorgon/rack DSP_Emulation/vcv/{otislab,vastish,spoonbender,seance,bytebus}; do make -s -C $d RACK_DIR=$RACK_SDK -j8 dist; done"
+          wait_for: 'ByteBusLab-[0-9.]+-lin-x64\.vcvplugin'
           timeout: 1800
       - wait: 0.5
         mark: build-done
     speed:
       - {from: build-start, to: build-done, factor: 16}
     verify:
-      - "make dist target names and dist/*.vcvplugin output for all five plugins"
-      - "Gorgon releases page has GorgonBridge builds; DSP_Emulation preview-1 predates Séance — say so if still true"
+      - "make dist target names and dist/*.vcvplugin output for all six plugins (ByteBusLab is needed for chapter 11's Bridge example)"
+      - "DSP_Emulation's only release, preview-1, predates Séance (gh release list); update this line if a newer release exists"
   - id: copy
     title: Into Rack's plugins folder
     narration: >
-      Copy the five files into the plugins folder inside Rack's user folder. {copy}
+      Copy the six files into the plugins folder inside Rack's user folder. {copy}
       Rack's Help menu has Open user folder if you are not sure where it is.
       Quit Rack first; it unpacks new plugins when it starts.
     actions:
       - at: copy
-        term.run: {cmd: "cp Gorgon/rack/dist/*.vcvplugin DSP_Emulation/vcv/*/dist/*.vcvplugin \"$RACK_USER/plugins-lin-x64/\" && ls \"$RACK_USER/plugins-lin-x64/\" | grep -i -E 'gorgon|lab'", wait_for: 'SeanceLab'}
+        term.run: {cmd: "cp Gorgon/rack/dist/*.vcvplugin DSP_Emulation/vcv/*/dist/*.vcvplugin \"$RACK_USER/plugins-lin-x64/\" && ls \"$RACK_USER/plugins-lin-x64/\" | grep -i -E 'gorgon|lab'", wait_for: 'VastishLab'}
     hold: 2
     verify:
       - "DSP_Emulation GETTING_STARTED: Help → Open user folder; quit Rack before copying"

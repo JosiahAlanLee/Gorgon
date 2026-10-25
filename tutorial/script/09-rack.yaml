@@ -39,8 +39,8 @@ shots:
       Clock is sixteenths by default. {clock} Reset fires on start, on a seek and at the loop boundary. {reset}
       Run is high while Gorgon plays. {pitch} Pitch, velocity and gates carry the four audio lanes as polyphonic cables,
       in lane order: Breaks, FM hits, Sub, Texture. Gates one to four are the same gates on separate jacks. {lanes}
-      Z, Roll and Feedback are the visual lanes as control voltage, {audio} and the last four jacks are audio from Studio,
-      which we'll come back to.
+      Z, Roll and Feedback are the visual lanes as control voltage, {audio} and the last four jacks carry audio from Studio;
+      chapter thirteen covers them.
     actions:
       - at: clock
         rack.highlight: {ref: Gorgon.out.Clock, label: CLOCK, seconds: 2.5}

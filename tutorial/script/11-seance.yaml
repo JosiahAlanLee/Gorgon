@@ -13,7 +13,7 @@ shots:
       rack: {patch: rack-seance, view: {modules: [OtisSampler, Seance, SeanceFreeze, SeanceScramble]}}
     narration: >
       Séance is a spectral core with expanders. The core analyses its input, hands the frame to the expanders
-      touching it on the right, and resynthesises what comes back. {row} Nothing spectral travels on a cable.
+      touching it on the right, and resynthesises what comes back. {row} The frame stays in the row.
       Freeze holds the frame with its phases still turning; {freeze} Scramble moves every partial by a seeded offset. {scramble}
     actions:
       - at: row
@@ -30,7 +30,9 @@ shots:
     mix: {programme: -10}
     verify:
       - "expanders act only touching the core to its right; LINK light (GETTING_STARTED Try Séance)"
-      - "latency = frame size + 64 samples"
+      - "latency = frame size minus one plus 64 samples: 2111 at the default 2048 (MANUAL, Séance core)"
+      - "OTIS plays the included demo (bright-demo.wav, embedded in vcv/otislab/examples/OTIS-start.vcv)"
+      - "Scramble at RANGE 0.6 (7.2 semitones) audibly moves the demo's partials; small RANGE leaves low partials in place (MANUAL)"
   - id: seed
     title: The same frames every time
     setup:
@@ -47,3 +49,39 @@ shots:
     mix: {programme: -10}
     verify:
       - "SEED and RESET make textures a pure function of seed and frame count (README)"
+      - "RESET input is a trigger rising through 1 V; Gorgon's Reset output is a 5 ms trigger (MANUALs)"
+  - id: bridge
+    title: Bridge puts the frame on the byte bus
+    source: [DSP_Emulation/vcv/seance/docs/BYTE_BUS.md, DSP_Emulation/vcv/seance/docs/MANUAL.md#patch-starting-points]
+    needs: [rack]
+    setup:
+      rack: {patch: rack-bridge, view: {modules: [OtisSampler, Seance, SeanceBridge, ClockedRegister, Lookup]}}
+    narration: >
+      Bridge is the fifth expander. It measures eight frequency bands of the frame before it changes anything, {act}
+      and sends them out of ACT OUT as eight bits, one word per frame. Eight bits into MASK IN open or close
+      the same bands. {mask} In this example patch from DSP Emulation, a Register samples the activity four times
+      a second, {reg} and a Lookup turns that word into Bridge's mask and into the frame OTIS plays. {lookup}
+      Press PLAY on OTIS. {play} The loop settles into a cycle of two steps. OTIS alternates between two frames,
+      and the side that passes through Séance between silence and one band.
+    actions:
+      - rack.highlight: {ref: SeanceBridge, label: Bridge, seconds: 2.5}
+      - at: act
+        rack.highlight: {ref: 'SeanceBridge.out#0', label: ACT OUT, seconds: 2.5}
+      - at: mask
+        rack.highlight: {ref: 'SeanceBridge.in#0', label: MASK IN, seconds: 2.5}
+      - at: reg
+        rack.highlight: {ref: ClockedRegister, label: 'Register, 4 Hz', seconds: 2.5}
+      - at: lookup
+        rack.highlight: {ref: Lookup, label: Lookup, seconds: 2.5}
+      - at: play
+        rack.click: OtisSampler.param.Play
+    hold: 6
+    mix: {programme: -10}
+    verify:
+      - "Bridge is the fifth Séance expander, 8 HP; panel labels ACT OUT and MASK IN (res/SeanceBridge.svg, tools/make_panel.py)"
+      - "eight bands with edges 125/250/500/1000/2000/4000/8000 Hz, measured before Bridge's own mask (vcv/seance/docs/BYTE_BUS.md)"
+      - "ACT OUT carries one word per frame, a one-sample clock on channel 9 (BYTE_BUS.md; workstation run: every 512 samples at 2048/48 kHz)"
+      - "the example's Register is Internal at RATE 2, 4 Hz (vcv/bytebus docs; examples/OTIS-spectral-feedback.vcv params)"
+      - "Lookup feeds both MASK IN and OTIS FRAME BUS (the example's cables; work/patches/rack-bridge.cables.txt)"
+      - "two-step cycle at 48 kHz: Register 07/0F, masks 60/02, OTIS frames 3/0, left silent / 125-250 Hz (BYTE_BUS.md, workstation run); confirm on this take"
+      - "left = Séance OUT (OTIS L through the row), right = OTIS R dry"

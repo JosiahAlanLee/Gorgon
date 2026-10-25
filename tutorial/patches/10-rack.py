@@ -1,5 +1,8 @@
 """Rack patches for chapters 2 and 9-13, built by name from the catalog (gtut patches).
 
+Patches that reuse DSP_Emulation's own examples (OTIS's embedded demo sample, Séance Bridge's feedback
+patch) read them from paths.dsp_emulation, so the film shows what the repository ships.
+
 Each returns the patch at the *start* of its shot: cables that are patched on camera
 are left out here. Module and port names are Rack's own (configInput/configOutput),
 matched case-insensitively, exact then prefix then substring; `#n` picks by index.
@@ -20,7 +23,14 @@ def _harvested(d: Path, name: str):
     return json.loads(p.read_text()) if p.exists() else None
 
 
-def build(cat, harvested):
+def _example(cfg, rel: str):
+    """A DSP_Emulation example patch (paths.dsp_emulation), or None without the config or the file."""
+    root = cfg.path('dsp_emulation') if cfg else None
+    p = root / rel if root else None
+    return json.loads(p.read_text()) if p and p.exists() else None
+
+
+def build(cat, harvested, cfg=None):
     audio = _harvested(harvested, 'audio-jack')
     capture = _harvested(harvested, 'gorgon-capture')
     out = {}
@@ -74,9 +84,12 @@ def build(cat, harvested):
     p.cable(sb, 'Left', a, '#0').cable(sb, 'Right', a, '#1')
     out['rack-chain'] = p
 
-    # ch11 Séance: OTIS (load its demo on camera or here) -> Séance core + Freeze + Scramble, touching
+    # ch11 Séance: OTIS with its included demo (embedded in DSP_Emulation's OTIS-start.vcv) -> Séance core
+    # + Freeze + Scramble, touching
+    start = _example(cfg, 'vcv/otislab/examples/OTIS-start.vcv')
+    demo = next((m.get('data') for m in start['modules'] if m['model'] == 'OtisSampler'), None) if start else None
     p, g = base()
-    ot = p.add('OtisLab', 'OtisSampler', x=0, y=1, params={'Loop': 1})
+    ot = p.add('OtisLab', 'OtisSampler', x=0, y=1, params={'Loop': 1}, data=demo)
     se = p.add('SeanceLab', 'Seance', y=1, gap=2)
     p.add('SeanceLab', 'SeanceFreeze', y=1)
     p.add('SeanceLab', 'SeanceScramble', y=1)
@@ -85,6 +98,21 @@ def build(cat, harvested):
     p.cable(ot, 'Audio L', se, 'A')
     p.cable(se, 'Out', a, '#0').cable(se, 'Out', a, '#1')
     out['rack-seance'] = p
+
+    # ch11 Bridge: Séance Bridge's feedback example (vcv/seance/examples/OTIS-spectral-feedback.vcv) as shipped,
+    # module for module and cable for cable; only its audio device comes from the harvest.
+    ex = _example(cfg, 'vcv/seance/examples/OTIS-spectral-feedback.vcv')
+    if ex:
+        p, h = Patch(cat), {}
+        for m in ex['modules']:
+            if m['plugin'] == 'Core':
+                h[m['id']] = p.add('Core', 'AudioInterface2', x=m['pos'][0], y=m['pos'][1], data=audio)
+            else:
+                h[m['id']] = p.add(m['plugin'], m['model'], x=m['pos'][0], y=m['pos'][1],
+                                   params={q['id']: q['value'] for q in m.get('params', [])}, data=m.get('data'))
+        for c in ex['cables']:
+            p.cable(h[c['outputModuleId']], f"#{c['outputId']}", h[c['inputModuleId']], f"#{c['inputId']}")
+        out['rack-bridge'] = p
 
     # ch12 CV back: an LFO beside Gorgon, unpatched
     p, g = base()
