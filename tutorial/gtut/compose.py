@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -613,6 +614,50 @@ def srt_time(t: float) -> str:
     return f'{ms // 3600000:02}:{ms // 60000 % 60:02}:{ms // 1000 % 60:02},{ms % 1000:03}'
 
 
+def subtitles(caps: list[dict], chars: int = 42, lines: int = 2) -> list[dict]:
+    """Narration captions as readable subtitles.
+
+    A narration caption is one stretch of speech and can run several sentences (a cue mark after
+    a full stop keeps them together), which is too much to read at once. Each becomes a sentence
+    or clause per subtitle, at most `lines` lines of about `chars` characters, timed by its share
+    of the caption's characters; short sentences that fit one line together share it.
+    """
+    out = []
+    for c in caps:
+        merged = []
+        for s in re.split(r'(?<=[.!?;:])\s+', c['text'].strip()):
+            if merged and len(merged[-1]) + 1 + len(s) <= chars:
+                merged[-1] += ' ' + s
+            else:
+                merged.append(s)
+        pieces = [p for s in merged for p in _fit(s, chars * lines)]
+        total = sum(len(p) for p in pieces) or 1
+        t = c['start']
+        for p in pieces:
+            d = (c['end'] - c['start']) * len(p) / total
+            out.append(dict(start=t, end=t + d, text=_wrap(p, chars)))
+            t += d
+    return out
+
+
+def _fit(s: str, limit: int) -> list[str]:
+    """s in parts of at most `limit` characters, cut at the comma nearest the middle, else the space."""
+    if len(s) <= limit:
+        return [s]
+    cuts = [m.end() for m in re.finditer(r',\s', s)] or [m.end() for m in re.finditer(r'\s', s)]
+    if not cuts:
+        return [s]
+    k = min(cuts, key=lambda i: abs(i - len(s) / 2))
+    return _fit(s[:k].strip(), limit) + _fit(s[k:].strip(), limit)
+
+
+def _wrap(s: str, chars: int) -> str:
+    if len(s) <= chars or ' ' not in s:
+        return s
+    k = min((m.start() for m in re.finditer(' ', s)), key=lambda i: abs(i - len(s) / 2))
+    return s[:k] + '\n' + s[k + 1:]
+
+
 def join(cfg, segments: list[Path], out: Path, title: str, chapter_marks: list[tuple[float, str]] | None = None) -> Path:
     """Concatenate segments (video + wav), normalise loudness, write SRT and chapters."""
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -633,6 +678,7 @@ def join(cfg, segments: list[Path], out: Path, title: str, chapter_marks: list[t
         if cp.exists():
             caps += [dict(start=c['start'] + t, end=c['end'] + t, text=c['text']) for c in json.loads(cp.read_text())]
         t += d
+    caps = subtitles(caps)
     srt = out.with_suffix('.srt')
     srt.write_text(''.join(f"{i}\n{srt_time(c['start'])} --> {srt_time(c['end'])}\n{c['text']}\n\n"
                            for i, c in enumerate(caps, 1)))
