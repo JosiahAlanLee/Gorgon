@@ -32,6 +32,8 @@ shots:
       - "the highlight label text matches what the display really shows"
   - id: outputs
     title: What comes out
+    frames:
+      - {window: rack}
     setup:
       rack: {patch: rack-gorgon, view: {modules: [Gorgon], zoom: 2.0}}
     source: [Gorgon/rack/docs/MANUAL.md#outputs-from-gorgon]
@@ -67,6 +69,8 @@ shots:
       - "lane order Breaks, FM hits, Sub, Texture (walkthrough §7.3)"
   - id: scope
     title: Clock and a gate on a scope
+    frames:
+      - {window: rack}
     setup:
       rack: {patch: rack-scope-start, view: {modules: [Gorgon, Scope]}}
     narration: >

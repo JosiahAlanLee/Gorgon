@@ -8,6 +8,8 @@ defaults:
 shots:
   - id: vastish
     title: Vastish from the FM hits lane
+    frames:
+      - {window: rack}
     source: [DSP_Emulation/vcv/vastish/docs/MANUAL.md, hydrapy/docs/gorgon-editor-walkthrough.md#7-connect-rack]
     setup:
       rack: {patch: rack-voice-start, view: {modules: [Gorgon, Split, Split#2, Vastish]}}
@@ -36,6 +38,8 @@ shots:
       - "Vastish audio reaches the recorder (Audio 2 on the stage JACK server)"
   - id: poly
     title: All four lanes at once
+    frames:
+      - {window: rack}
     setup:
       rack: {patch: rack-voice-poly, view: {modules: [Gorgon, Vastish]}}
     narration: >
@@ -52,6 +56,8 @@ shots:
       - "AIR keeps held pitch; velocity 0 opens no gate (MANUAL Outputs)"
   - id: chain
     title: Spoon Bender, OTIS, Vastish
+    frames:
+      - {window: rack}
     source: [DSP_Emulation/docs/GETTING_STARTED.md#connect-the-sample-sharing-chain]
     setup:
       rack: {patch: rack-chain, view: {modules: [SpoonBender, OtisSampler, Vastish]}}

@@ -37,6 +37,8 @@ shots:
       - "ports appear as HydraPy:optical_L etc."
   - id: offset
     title: Lining up with OFFSET
+    frames:
+      - {window: rack}
     setup:
       rack: {patch: rack-offset, view: {modules: [Gorgon, Scope]}}
     narration: >

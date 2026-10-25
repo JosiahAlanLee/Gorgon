@@ -8,6 +8,8 @@ defaults:
 shots:
   - id: row
     title: One frame, held by a row of modules
+    frames:
+      - {window: rack}
     source: [DSP_Emulation/README.md#séance-a-spectral-frame-held-by-a-row-of-modules, DSP_Emulation/vcv/seance/docs/MANUAL.md]
     setup:
       rack: {patch: rack-seance, view: {modules: [OtisSampler, Seance, SeanceFreeze, SeanceScramble]}}
@@ -35,6 +37,8 @@ shots:
       - "Scramble at RANGE 0.6 (7.2 semitones) audibly moves the demo's partials; small RANGE leaves low partials in place (MANUAL)"
   - id: seed
     title: The same frames every time
+    frames:
+      - {window: rack}
     setup:
       rack: {patch: rack-seance, view: {modules: [Gorgon, Seance]}}
     narration: >
