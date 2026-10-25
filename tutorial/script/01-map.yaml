@@ -1,0 +1,38 @@
+chapter: 1
+slug: map
+title: The pieces
+shots:
+  - id: map
+    kind: still
+    asset: diagrams/ecosystem.svg
+    title: What runs where
+    source: [Gorgon/README.md#the-pieces, Gorgon/AGENTS.md]
+    narration: >
+      There are three repositories. {hydrapy} HydraPy is a Python port of Olivia Jack's Hydra video synth.
+      Its Studio is a local workspace in the browser, and the Gorgon tracker runs inside it.
+      {gorgon} The Gorgon repository holds the contract between the pieces, and the Rack module, also called Gorgon,
+      which puts the score on Rack's jacks. {dsp} DSP Emulation holds the instruments:
+      OTIS, Vastish, Spoon Bender and Séance.
+      {clock} Gorgon is the master clock. Rack follows it; it never follows anything else.
+    frames:
+      - {rect: [0, 0, 1, 1]}
+      - {at: hydrapy, rect: [0.0, 0.05, 0.5, 0.6]}
+      - {at: gorgon, rect: [0.33, 0.05, 0.5, 0.6]}
+      - {at: dsp, rect: [0.5, 0.35, 0.5, 0.6]}
+      - {at: clock, rect: [0, 0, 1, 1]}
+    verify:
+      - "Gorgon README table: tracker in hydrapy, Rack module in Gorgon/rack, contract in Gorgon/spec"
+      - "DSP_Emulation README: OTIS, Vastish, Spoon Bender; Séance is a core + four expanders"
+  - id: contract
+    kind: still
+    asset: diagrams/ecosystem.svg
+    title: The contract
+    source: [Gorgon/AGENTS.md#where-a-change-goes, Gorgon/spec/README.md]
+    narration: >
+      The contract is the score format, the bridge API, what each signal means, and the audio ports.
+      HydraPy is the reference implementation, and the Rack module is tested against its outputs
+      at a pinned HydraPy commit. That is the commit this video was recorded with.
+    overlays:
+      - {at: 0, until: '+6', kind: lower_third, text: 'HydraPy at the Gorgon pin', sub: '{hydrapy_sha}'}
+    verify:
+      - "AGENTS.md: fixture byte-identical to pinned HydraPy's TrackerCV"

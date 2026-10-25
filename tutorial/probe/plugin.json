@@ -1,0 +1,16 @@
+{
+  "slug": "GorgonTutorialProbe",
+  "name": "Gorgon Tutorial Probe",
+  "version": "2.0.0",
+  "license": "BSD-3-Clause",
+  "brand": "Gorgon",
+  "author": "Gorgon contributors",
+  "sourceUrl": "https://github.com/JosiahAlanLee/Gorgon",
+  "modules": [{
+    "slug": "Director",
+    "name": "Director",
+    "description": "Tutorial filming aid: reports screen coordinates of modules, ports, params and menus, and draws highlights. Not for performance patches.",
+    "tags": ["Utility"],
+    "hidden": false
+  }]
+}

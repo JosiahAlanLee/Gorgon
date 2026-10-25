@@ -1,0 +1,43 @@
+name: Tutorial kit
+# The filming harness's unit tests, and the Director probe built against the Rack SDK.
+# Filming itself needs the workstation (Rack Free, a GPU, a display); see tutorial/CLAUDE.md.
+on:
+  push:
+    paths: ['tutorial/**', '.github/workflows/tutorial.yml']
+  pull_request:
+    paths: ['tutorial/**', '.github/workflows/tutorial.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  RACK_SDK_VERSION: 2.6.4
+jobs:
+  harness:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libjack-jackd2-0
+      - run: python -m pip install -e 'tutorial[test]'
+      - run: python -m pytest -q tutorial/tests
+      - name: Every chapter validates
+        working-directory: tutorial
+        run: gtut check
+  probe:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch Rack SDK
+        run: |
+          curl --fail --location "https://vcvrack.com/downloads/Rack-SDK-${RACK_SDK_VERSION}-lin-x64.zip" -o /tmp/rack-sdk.zip
+          unzip -q /tmp/rack-sdk.zip -d /tmp
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends zstd jq
+      - name: Build the probe
+        run: make -C tutorial/probe -j2 RACK_DIR=/tmp/Rack-SDK dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GorgonTutorialProbe-lin-x64
+          path: tutorial/probe/dist/*.vcvplugin
+          if-no-files-found: error

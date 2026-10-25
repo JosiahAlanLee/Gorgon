@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" font-family="DejaVu Sans, sans-serif">
+  <rect width="1920" height="1080" fill="#101014"/>
+  <text x="120" y="130" font-size="44" fill="#f0ece4" font-weight="bold">Scenes: named chains a score can pick</text>
+  <text x="120" y="182" font-size="26" fill="#9c988f">patches/gorgon_scenes.py, in HydraPy</text>
+  <rect x="120" y="230" width="1100" height="560" rx="14" fill="#17171d" stroke="#3a3a44" stroke-width="2"/>
+  <g font-family="DejaVu Sans Mono, monospace" font-size="34" xml:space="preserve">
+    <text x="170" y="310" fill="#ffc733">@scene('drift')</text>
+    <text x="170" y="360" fill="#d8d4cc">def _():</text>
+    <text x="170" y="410" fill="#d8d4cc">    return osc(8).rotate(roll)</text>
+    <text x="170" y="510" fill="#ffc733">@scene('fracture')</text>
+    <text x="170" y="560" fill="#d8d4cc">def _():</text>
+    <text x="170" y="610" fill="#d8d4cc">    return voronoi(5).kaleid(6) \</text>
+    <text x="170" y="660" fill="#d8d4cc">        .scale(1 + tracker.hit(1, decay=.2))</text>
+    <text x="170" y="740" fill="#7d7a73"># @scene('glow', o1) targets another output</text>
+  </g>
+  <g font-size="28" fill="#c8c4bb">
+    <text x="1290" y="300">a function per scene,</text>
+    <text x="1290" y="340">returning one output's chain</text>
+    <text x="1290" y="440">the SCENE column starts</text>
+    <text x="1290" y="480">a scene on a row; it holds</text>
+    <text x="1290" y="520">until the next change</text>
+    <text x="1290" y="620">Fade: 0–64 rows,</text>
+    <text x="1290" y="660">never past the next change</text>
+    <text x="1290" y="760">one output buffer, so feedback</text>
+    <text x="1290" y="800">carries across a change</text>
+  </g>
+</svg>

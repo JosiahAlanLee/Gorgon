@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" font-family="DejaVu Sans, sans-serif">
+  <defs><marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#9c988f"/></marker></defs>
+  <rect width="1920" height="1080" fill="#101014"/>
+  <text x="120" y="130" font-size="44" fill="#f0ece4" font-weight="bold">Direct CV to a modular: documented, not shown</text>
+  <rect x="120" y="300" width="460" height="260" rx="14" fill="#17171d" stroke="#3a3a44" stroke-width="2"/>
+  <text x="150" y="360" font-size="32" fill="#ffc733">Studio + tracker</text>
+  <text x="150" y="404" font-size="24" fill="#c8c4bb">clock · reset · run · gates</text>
+  <text x="150" y="440" font-size="24" fill="#c8c4bb">1 V/oct · velocity · lanes</text>
+  <text x="150" y="476" font-size="24" fill="#c8c4bb">generated per sample</text>
+  <text x="150" y="512" font-size="24" fill="#c8c4bb">in the audio callback</text>
+  <rect x="740" y="230" width="500" height="180" rx="14" fill="none" stroke="#55534d" stroke-width="2" stroke-dasharray="10 8"/>
+  <text x="770" y="290" font-size="30" fill="#d8d4cc">DC-coupled interface</text>
+  <text x="770" y="334" font-size="24" fill="#9c988f">e.g. Expert Sleepers ES-3 (ADAT)</text>
+  <text x="770" y="370" font-size="24" fill="#9c988f">--cv-device, --cv-map</text>
+  <rect x="740" y="460" width="500" height="180" rx="14" fill="none" stroke="#55534d" stroke-width="2" stroke-dasharray="10 8"/>
+  <text x="770" y="520" font-size="30" fill="#d8d4cc">ES-40 + ESX-8GT / ESX-8CV</text>
+  <text x="770" y="564" font-size="24" fill="#9c988f">encoded S/PDIF · --cv-profile</text>
+  <text x="770" y="600" font-size="24" fill="#9c988f">hydrapy es40-check to diagnose</text>
+  <rect x="1400" y="330" width="400" height="220" rx="14" fill="none" stroke="#55534d" stroke-width="2" stroke-dasharray="10 8"/>
+  <text x="1430" y="420" font-size="32" fill="#d8d4cc">the modular</text>
+  <path d="M580 430 L736 330" stroke="#9c988f" stroke-width="2" marker-end="url(#g)" fill="none"/>
+  <path d="M580 430 L736 550" stroke="#9c988f" stroke-width="2" marker-end="url(#g)" fill="none"/>
+  <path d="M1240 320 L1396 410" stroke="#9c988f" stroke-width="2" marker-end="url(#g)" fill="none"/>
+  <path d="M1240 550 L1396 470" stroke="#9c988f" stroke-width="2" marker-end="url(#g)" fill="none"/>
+  <text x="120" y="780" font-size="28" fill="#c8c4bb">Not yet validated end to end: physical interfaces, the ES-40 digital path,</text>
+  <text x="120" y="824" font-size="28" fill="#c8c4bb">display and device latency. See hydrapy/docs/es40.md and live-io.md.</text>
+</svg>

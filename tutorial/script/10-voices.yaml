@@ -1,0 +1,80 @@
+chapter: 10
+slug: voices
+title: Playing the instruments
+defaults:
+  needs: [controller, rack]
+  setup:
+    studio: {patch: patches/gorgon_corridor.py, transport: stop}
+shots:
+  - id: vastish
+    title: Vastish from the FM hits lane
+    source: [DSP_Emulation/vcv/vastish/docs/MANUAL.md, hydrapy/docs/gorgon-editor-walkthrough.md#7-connect-rack]
+    setup:
+      rack: {patch: rack-voice-start, view: {modules: [Gorgon, Split, Split#2, Vastish]}}
+    narration: >
+      Vastish is an eight-voice synthesizer in the style of Kurzweil VAST. To play it from one lane,
+      split Gorgon's pitch and gates, {split} and take channel two, FM hits. {patch}
+      Play. {play} Vastish's first program is Ladder Bass; click the program name to try the others. {program}
+    actions:
+      - at: split
+        rack.cable: {from: Gorgon.out.Pitch, to: 'Split.in#0'}
+      - rack.cable: {from: 'Gorgon.out.Gates 1', to: 'Split#2.in#0'}
+      - at: patch
+        rack.cable: {from: 'Split.out#1', to: Vastish.in.Pitch}
+      - rack.cable: {from: 'Split#2.out#1', to: Vastish.in.Gate}
+      - at: play
+        studio.press: Space
+      - rack.view: {modules: [Vastish], seconds: 1.2}
+      - at: program
+        rack.highlight: {ref: Vastish, label: Ladder Bass, seconds: 3}
+      - after: 6
+        studio.press: Space
+    mix: {programme: -10}
+    verify:
+      - "Vastish initial program is Ladder Bass; clicking the name cycles programs (GETTING_STARTED)"
+      - "Split output index 1 = channel 2"
+      - "Vastish audio reaches the recorder (Audio 2 on the stage JACK server)"
+  - id: poly
+    title: All four lanes at once
+    setup:
+      rack: {patch: rack-voice-poly, view: {modules: [Gorgon, Vastish]}}
+    narration: >
+      Or patch the polyphonic cables straight in. {play} Vastish takes up to eight channels,
+      so all four lanes play it at once. AIR events open a gate but keep the previous pitch;
+      a zero-velocity event opens no gate at all.
+    actions:
+      - at: play
+        studio.press: Space
+      - after: 8
+        studio.press: Space
+    mix: {programme: -10}
+    verify:
+      - "AIR keeps held pitch; velocity 0 opens no gate (MANUAL Outputs)"
+  - id: chain
+    title: Spoon Bender, OTIS, Vastish
+    source: [DSP_Emulation/docs/GETTING_STARTED.md#connect-the-sample-sharing-chain]
+    setup:
+      rack: {patch: rack-chain, view: {modules: [SpoonBender, OtisSampler, Vastish]}}
+    narration: >
+      Side by side, in this order, Spoon Bender, OTIS and Vastish share samples. {order}
+      In OTIS, follow Spoon Bender captures; {otis} in Vastish, follow OTIS on the left. {vast}
+      Play into Spoon Bender, {play} and press Capture after a phrase you want to keep. {capture}
+      OTIS takes the capture, and Vastish takes OTIS's sample as its oscillator. Audio still travels on cables;
+      only the finished samples move between the modules.
+    actions:
+      - at: order
+        rack.highlight: {ref: SpoonBender, label: Spoon Bender → OTIS → Vastish, seconds: 3}
+      - at: otis
+        rack.menu: {ref: OtisSampler, path: [Follow Spoon Bender captures]}
+      - at: vast
+        rack.menu: {ref: Vastish, path: [Follow OTIS on the left]}
+      - at: play
+        studio.press: Space
+      - at: capture
+        rack.click: SpoonBender.param.Capture the recent past
+      - after: 3
+        studio.press: Space
+    mix: {programme: -10}
+    verify:
+      - "menu item texts 'Follow Spoon Bender captures' and 'Follow OTIS on the left' (GETTING_STARTED)"
+      - "links carry completed samples only; audio still on cables"

@@ -1,0 +1,34 @@
+chapter: 12
+slug: cv-back
+title: Rack back into the picture
+defaults:
+  needs: [controller, rack]
+  setup:
+    studio: {patch: patches/gorgon_corridor.py, transport: stop}
+shots:
+  - id: cv-in
+    title: CV 1 to 4
+    needs: [controller, program, rack]
+    source: [Gorgon/rack/docs/MANUAL.md#inputs-to-gorgon, hydrapy/docs/gorgon-editor-walkthrough.md#7-connect-rack]
+    setup:
+      studio: {patch: patches/gorgon_corridor.py, transport: 'off'}
+      rack: {patch: rack-cv-start, view: {modules: [LFO, Gorgon]}}
+    narration: >
+      The four CV inputs set the patch's named controls. Zero to ten volts spans the control's whole range.
+      Patch a slow LFO into CV 1. {patch} By default each input takes the next control no tracker lane is driving.
+      A control bound to a lane follows the score while automation is on, and ignores CV until it's off. {menu}
+      To choose, right-click: CV 1 drives. {watch} The picture now moves with the LFO.
+    actions:
+      - at: patch
+        rack.cable: {from: 'LFO.out#0', to: Gorgon.in.CV 1}
+      - at: menu
+        rack.menu: {ref: Gorgon, path: [CV 1 drives, Roll]}
+      - at: watch
+        rack.highlight: {ref: Gorgon.in.CV 1, label: 'CV 1 → Roll', seconds: 4}
+    frames:
+      - {window: rack}
+      - {at: watch, window: program}
+    verify:
+      - "0–10 V spans the control's range (MANUAL Inputs)"
+      - "menu path 'CV 1 drives' → control name; check exact item text from the layout dump"
+      - "automation off ('off' transport setup = enabled false) so the bound control accepts CV"

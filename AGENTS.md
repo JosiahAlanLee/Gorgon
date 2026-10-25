@@ -13,6 +13,7 @@ routing table.
 | The Rack module: engine, bridge client, panel, manual | **Gorgon `rack/`** | Regenerate the fixture if semantics changed. |
 | The pinned HydraPy commit | **Gorgon `hydrapy.pin`** | One file. The weekly workflow proposes moves; see below. |
 | OTIS, Vastish, Spoon Bender | [DSP_Emulation](https://github.com/JosiahAlanLee/DSP_Emulation) | Not Gorgon. |
+| The tutorial video kit: filming harness, probe plugin, script | **Gorgon `tutorial/`** | Not part of the plugin or the contract; its own CI (`tutorial.yml`). Briefing in `tutorial/CLAUDE.md`. |
 
 A feature that crosses the boundary (a new signal, a new score field a follower
 reads, a new endpoint) is three pull requests in this order:

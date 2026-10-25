@@ -1,0 +1,106 @@
+# Copy to config.yaml and edit paths. Everything else has working defaults.
+# Paths may use ~ and are resolved relative to this file.
+
+paths:
+  hydrapy: ~/src/hydrapy             # checkout; `gtut setup` moves it to hydrapy.pin unless hydrapy_ref says otherwise
+  gorgon: ..                         # this repository
+  dsp_emulation: ~/src/DSP_Emulation
+  rack: ~/opt/Rack2Free/Rack         # the VCV Rack *Free* executable (an unsigned Rack Pro processes no audio)
+  rack_sdk: ~/opt/Rack-SDK           # for building GorgonBridge, the DSP_Emulation plugins and the probe
+  work: ./work                       # stage state, takes, narration, renders (gitignored)
+  chromium: null                     # null = Playwright's own Chromium
+
+hydrapy_ref: pin                     # pin (Gorgon's hydrapy.pin) | main | <sha>
+
+stage:
+  # xvfb: software GL for Rack and Chromium; simple and isolated.
+  # xvfb+virtualgl: as xvfb, but Rack runs under `vglrun -d egl` on the 4090.
+  # nvidia-xorg: a second, monitorless X server on the 4090 (needs sudo; see CLAUDE.md).
+  display: xvfb
+  display_number: 77
+  screen: [3840, 2160]
+  wm: openbox                        # openbox (undecorated, focus works) | none
+  # Window rectangles on the stage screen [x, y, w, h]. One 1080p quadrant each,
+  # so a shot framed on one window is captured 1:1.
+  windows:
+    studio: [0, 0, 1920, 1080]
+    program: [1920, 0, 1920, 1080]
+    rack: [0, 1080, 1920, 1080]
+    terminal: [1920, 1080, 1920, 1080]
+  ui_scale: 1.0                      # Chromium device scale factor and Rack pixelRatio
+  terminal_font: "DejaVu Sans Mono"
+  terminal_font_size: 22
+
+audio:
+  server: jackd                      # jackd (dummy driver, private server) | pipewire (pw-jack)
+  server_name: gtut                  # JACK_DEFAULT_SERVER; never your studio's server
+  rate: 48000
+  period: 256
+  # JACK output ports recorded with every take, as the programme's left and right.
+  # auto: the first two output ports of a client whose name contains "Rack" or "RtApi"
+  # (Rack's Audio module on the JACK driver). Otherwise two regexes; `gtut ports` lists them.
+  record: auto
+
+studio:
+  patch: patches/gorgon_corridor.py
+  backend: gl                        # gl renders on the 4090 through EGL; Studio runs without DISPLAY for that
+  size: [1280, 720]
+  fps: 60
+  port: 8799                         # not 8765, so a real Studio can keep running
+  text_size: large                   # View → Text size, set before recording
+
+rack:
+  zoom: 1.0
+  frame_rate_limit: 60
+  sample_rate: 48000
+  plugins:                           # built by `gtut setup`, installed into the stage's own Rack user folder
+    - gorgon:rack
+    - dsp_emulation:vcv/otislab
+    - dsp_emulation:vcv/vastish
+    - dsp_emulation:vcv/spoonbender
+    - dsp_emulation:vcv/seance
+    - gorgon:tutorial/probe
+
+capture:
+  fps: 30
+  encoder: h264_nvenc                # h264_nvenc | libx264
+  quality: 16                        # nvenc -cq / x264 -crf; takes are intermediates
+  draw_mouse: true
+  preroll: 1.0                       # seconds of picture before the slate
+  tail: 1.0
+
+narration:
+  engine: kokoro                     # kokoro | piper | recorded | none
+  voice: am_michael                  # kokoro voice; piper: path to .onnx
+  speed: 1.0
+  align: auto                        # auto | whisper | proportional — how cue times are found
+  pause_after_sentence: 0.25
+  # How the voice says the project's words. Keys are whole words (or regexes with \\b, ^ or $).
+  # Check the first takes by ear; Josiah decides how HydraPy and Gorgon are said.
+  lexicon:
+    HydraPy: Hydra Pie
+    hydrapy: hydra pie
+    '1 V/oct': one volt per octave
+    V/OCT: volt per octave
+    CV: C V
+    BPM: B P M
+    HP: H P
+    VCV: V C V
+    JSON: jason
+    OTIS: Otis
+    ES-40: E S forty
+    ES-3: E S three
+    ms: milliseconds
+    o0: output zero
+    o1: output one
+    o2: output two
+    o3: output three
+
+output:
+  size: [1920, 1080]
+  fps: 30
+  encoder: h264_nvenc                # final encode
+  quality: 19
+  loudness: -16                      # integrated LUFS
+  captions: srt                      # srt | burn | both | none
+  font: "DejaVu Sans"

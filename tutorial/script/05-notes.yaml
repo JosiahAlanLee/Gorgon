@@ -1,0 +1,102 @@
+chapter: 5
+slug: notes
+title: Notes and blocks
+defaults:
+  needs: [controller]
+  setup:
+    studio: {patch: patches/gorgon_corridor.py, transport: stop}
+shots:
+  - id: one-note
+    title: One note
+    source: [hydrapy/docs/gorgon-editor-walkthrough.md#2-enter-a-pitched-phrase]
+    narration: >
+      Select an empty cell in FM hits, {cell} and the note editor opens under the grid.
+      Type E4 and Tab. {note} It displays as E dash 4; both spellings mean the same note.
+      Velocity runs from zero to one hundred and twenty-seven. {vel}
+      Audition turns the browser's demo sound on and plays the event. FM and Sub are pitched demo voices;
+      they are a sketchpad, not the instruments in Rack.
+    actions:
+      - at: cell
+        studio.click: {selector: '#trackerRows [data-row="1"][data-col="1"]'}
+      - at: note
+        studio.fill: {target: '#noteInput', text: E4}
+      - at: vel
+        studio.fill: {target: '#velocityInput', text: '100'}
+    frames:
+      - {window: studio, rect: [0.1, 0.25, 0.6, 0.55]}
+    verify:
+      - "E4 displays as E-4 (walkthrough §2.2)"
+      - "velocity 0-127 (#velocityInput min/max)"
+      - "Browser Sound off at start; Audition turns it on (walkthrough §2.3). Not clicked here: the stage records Rack's audio, not the browser's"
+  - id: piano
+    title: Piano keys
+    narration: >
+      For a phrase, turn on Piano keys. {piano} Set the octave to 4 and Advance to four rows. {advance}
+      Now Z, X, C, V enter C, D, E and F, {keys} moving four rows after each.
+      S is C sharp, and Q starts the next octave. The full map is under Help.
+    actions:
+      - studio.click: {selector: '#trackerRows [data-row="16"][data-col="1"]'}
+      - at: piano
+        studio.click: '#pianoBtn'
+      - at: advance
+        studio.fill: {target: '#octaveInput', text: '4'}
+      - studio.select: {target: '#entryStep', value: '4'}
+      - studio.click: {selector: '#trackerRows [data-row="16"][data-col="1"]'}
+      - at: keys
+        studio.type: {text: zxcv, cps: 2.5}
+      - after: 1
+        studio.click: '#pianoBtn'
+    frames:
+      - {window: studio, rect: [0.1, 0.25, 0.6, 0.6]}
+    overlays:
+      - {at: keys, until: '+2.5', kind: keycap, text: 'Z  X  C  V'}
+    verify:
+      - "Piano keys focus the grid; Z X C V = C4 D4 E4 F4 at octave 4 (walkthrough §2.5)"
+      - "with Piano keys on, B enters G, not blackout (§2 note) — not demonstrated"
+  - id: toggle-undo
+    title: Enter, undo and redo
+    narration: >
+      With Piano keys off, Enter on an empty cell adds a hit, {enter} and Enter again removes it.
+      Undo and Redo walk back through the last hundred edits in this controller. {undo}
+    actions:
+      - studio.click: {selector: '#trackerRows [data-row="40"][data-col="0"]'}
+      - at: enter
+        studio.press: Enter
+      - after: 0.8
+        studio.press: Enter
+      - at: undo
+        studio.click: '#undoBtn'
+      - after: 0.8
+        studio.click: '#redoBtn'
+    frames:
+      - {window: studio, rect: [0.1, 0.25, 0.6, 0.6]}
+    verify:
+      - "history holds last 100 edits (walkthrough §3.6)"
+  - id: blocks
+    title: Blocks
+    source: [hydrapy/docs/gorgon-editor-walkthrough.md#3-build-a-phrase-with-block-operations]
+    narration: >
+      Shift-click to select a block. {block} The rectangle and its size show above the grid.
+      Copy it, {copy} pick a destination, and Paste. {paste} Empty cells in the copied block overwrite too.
+      With the pasted notes selected, plus twelve moves them up an octave. {octave}
+      AIR events don't transpose, and if any note would go out of range, none of them move.
+    actions:
+      - studio.click: {selector: '#trackerRows [data-row="16"][data-col="1"]'}
+      - at: block
+        studio.click: {selector: '#trackerRows [data-row="31"][data-col="1"]', modifiers: [shift]}
+      - at: copy
+        studio.click: '#copyBtn'
+      - studio.click: {selector: '#trackerRows [data-row="32"][data-col="1"]'}
+      - at: paste
+        studio.click: '#pasteBtn'
+      - after: 0.6
+        studio.click: {selector: '#trackerRows [data-row="47"][data-col="1"]', modifiers: [shift]}
+      - at: octave
+        studio.click: {role: button, name: '+12'}
+    frames:
+      - {window: studio, rect: [0.1, 0.22, 0.6, 0.6]}
+    verify:
+      - "Shift+click selects a block and shows rows×columns (§3.1)"
+      - "Paste overwrites with empty cells too (§3.2)"
+      - "+12 button accessible name is '+12' (check; otherwise use Alt+Shift+Up)"
+      - "AIR not transposed; range failure changes nothing (§3.4)"

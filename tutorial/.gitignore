@@ -1,0 +1,5 @@
+config.yaml
+work/
+__pycache__/
+*.egg-info/
+

@@ -1,0 +1,52 @@
+chapter: 7
+slug: scenes
+title: Scenes and lane signals
+defaults:
+  needs: [controller]
+  setup:
+    studio: {patch: patches/gorgon_scenes.py, transport: stop}
+shots:
+  - id: code
+    title: Scenes in a patch
+    kind: still
+    asset: diagrams/scenes.svg
+    source: [hydrapy/docs/gorgon-tracker.md#scenes-and-lane-signals, hydrapy/patches/gorgon_scenes.py]
+    narration: >
+      A patch can declare named scenes. Each is a function that returns a chain for one output.
+      The tracker's scene column picks which one plays from a row onwards,
+      with an optional crossfade measured in rows.
+    verify:
+      - "@scene('name') returns the chain for o0 by default (tracker guide)"
+  - id: column
+    title: The scene column
+    narration: >
+      Enter on an empty scene cell writes the next scene after the one above it, {enter}
+      so repeated entries step through the patch. Set a fade, {fade} and play. {play}
+      Every scene draws into the same output, so feedback carries across the change.
+    actions:
+      - studio.click: {selector: '#trackerRows [aria-label^="Scene, row 10"]'}
+      - at: enter
+        studio.press: Enter
+      - at: fade
+        studio.fill: {target: '#sceneFade', text: '8'}
+      - studio.click: '#writeSceneBtn'
+      - at: play
+        studio.click: {role: button, name: 'Play from pattern 1'}
+      - after: 7
+        studio.press: Space
+    frames:
+      - {window: studio, rect: [0.1, 0.22, 0.9, 0.6]}
+      - {at: play, window: studio}
+    verify:
+      - "scene track's name in aria-label (assumed 'Scene'); #sceneFade 0-64 rows; #writeSceneBtn"
+      - "feedback (src(o0)) and delay() history carry across scene changes"
+  - id: signals
+    title: Lane signals
+    kind: still
+    asset: diagrams/lane-signals.svg
+    narration: >
+      Inside a patch, the audio lanes are signals too. tracker dot hit gives a decaying one on every hit,
+      gate is high for half a row, note and vel hold the last hit's pitch and velocity,
+      and beat and row are the playhead. Muted lanes and zero-velocity hits send nothing.
+    verify:
+      - "signal names and meanings from the tracker guide's table"
