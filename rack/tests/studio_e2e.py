@@ -6,7 +6,7 @@ plays the tracker, and runs studio_probe: the C++ bridge and follower. Checks
 that the follower's beat matches Studio's own tracker beat, that CV 1 lands on
 the patch's first free control, and that PLAY/stop from Studio is followed.
 
-    make -C vcv/gorgon/tests e2e
+    make -C rack/tests e2e
 """
 import os
 import copy

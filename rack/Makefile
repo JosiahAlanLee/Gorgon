@@ -1,4 +1,4 @@
-RACK_DIR ?= ../../../deps/Rack-SDK
+RACK_DIR ?= ../../deps/Rack-SDK
 SOURCES += src/plugin.cpp src/Gorgon.cpp
 DISTRIBUTABLES += res README.md LICENSE docs
 EXTRA_CXXFLAGS += -std=c++17

@@ -4,8 +4,8 @@
   "version": "2.1.0",
   "license": "BSD-3-Clause",
   "brand": "GorgonBridge",
-  "author": "DSP_Emulation contributors",
-  "sourceUrl": "https://github.com/JosiahAlanLee/DSP_Emulation",
+  "author": "Gorgon contributors",
+  "sourceUrl": "https://github.com/JosiahAlanLee/Gorgon",
   "modules": [{
     "slug": "Gorgon",
     "name": "Gorgon",

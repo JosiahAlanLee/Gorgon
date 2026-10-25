@@ -5,7 +5,7 @@ Random scores are evaluated by hydrapy.tracker_cv.TrackerCV (the code that
 drives the ES-3 from Gorgon), one sample at each chosen beat, and written as
 plain text the C++ test reads. Regenerate with HydraPy installed:
 
-    python vcv/gorgon/tools/make_fixture.py > vcv/gorgon/tests/fixture.txt
+    python rack/tools/make_fixture.py > rack/tests/fixture.txt
 """
 import random
 

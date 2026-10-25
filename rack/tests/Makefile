@@ -1,6 +1,6 @@
 CXX ?= g++
 CXXFLAGS = -std=c++17 -O2 -Wall -Wextra -Wno-unused-parameter
-RACK_DIR ?= ../../../../deps/Rack-SDK
+RACK_DIR ?= ../../../deps/Rack-SDK
 RACK_TEST_LDFLAGS = -Wl,--allow-shlib-undefined
 JANSSON ?= -ljansson
 ENGINE = ../src/engine/*.hpp

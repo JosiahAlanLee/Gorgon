@@ -9,7 +9,7 @@ from fontTools.ttLib import TTFont
 from fontTools.pens.svgPathPen import SVGPathPen
 
 root = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'shared' / 'glyphs'))
+sys.path.insert(0, str(root / 'glyphs'))
 from glyph import glyph  # the twelve marks (Clavicula Matricis, Tabula XIII)
 
 font = TTFont('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf')
