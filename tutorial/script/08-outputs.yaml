@@ -1,0 +1,55 @@
+chapter: 8
+slug: outputs
+title: Outputs and saving
+defaults:
+  needs: [controller]
+  setup:
+    studio: {patch: patches/gorgon_corridor.py, transport: stop}
+shots:
+  - id: program
+    title: Program and Auxiliary
+    needs: [controller, program]
+    source: [hydrapy/docs/gorgon-editor-walkthrough.md#6-use-separate-output-displays]
+    narration: >
+      Program opens the main output in its own window, for a second monitor; {play} press F there for fullscreen.
+      Auxiliary is a second, independent window. Output routing chooses which of the four outputs each one shows. {route}
+      Blackout darkens the browser monitors only. {blackout} Rendering, recordings and exports carry on.
+    actions:
+      - at: play
+        studio.press: Space
+      - at: route
+        studio.select: {target: '#programMode', value: o2}
+      - after: 2.5
+        studio.select: {target: '#programMode', value: o0}
+      - at: blackout
+        studio.click: '#blackoutBtn'
+      - after: 1.5
+        studio.click: '#blackoutBtn'
+      - after: 1
+        studio.press: Space
+    frames:
+      - {window: studio}
+      - {at: route, window: program}
+      - {at: blackout, window: studio}
+    verify:
+      - "Program also selects Studio's displayed/recorded output; Auxiliary never does (tracker guide)"
+      - "Blackout affects browser monitors only (§6.3)"
+  - id: save
+    title: Save and restore
+    source: [hydrapy/docs/gorgon-editor-walkthrough.md#8-save-restore-and-recover]
+    narration: >
+      Save session writes the score to the workspace and downloads the same JSON. {save}
+      File, Restore saved score reloads it; {file} Import score takes a saved file.
+      Restarting Studio starts from the initial study until you restore, so save before you quit.
+    actions:
+      - at: save
+        studio.click: '#saveBtn'
+      - at: file
+        studio.click: {selector: '#fileMenu summary'}
+      - after: 2
+        studio.press: Escape
+    frames:
+      - {window: studio, rect: [0.55, 0, 0.45, 0.35]}
+    verify:
+      - "#fileMenu is a <details> with #restoreBtn and #importBtn"
+      - "restarting Studio needs an explicit Restore (§8.5)"

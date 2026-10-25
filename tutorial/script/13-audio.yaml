@@ -1,0 +1,58 @@
+chapter: 13
+slug: audio
+title: Studio's sound in Rack
+defaults:
+  needs: [controller, rack]
+  setup:
+    studio: {patch: patches/gorgon_corridor.py, transport: stop, jack: true}
+shots:
+  - id: ports
+    title: Optical soundtrack and Breaks
+    source: [hydrapy/docs/gorgon-audio.md, Gorgon/rack/docs/MANUAL.md#jack--pipewire-audio]
+    setup:
+      studio: {patch: patches/gorgon_corridor.py, transport: stop, jack: false}
+      rack: {patch: rack-audio, view: {modules: [Gorgon, VCMixer]}}
+    narration: >
+      Studio can publish two stereo sources as JACK or PipeWire ports: an optical soundtrack read from the picture,
+      and a synthesized breaks kit from the first tracker lane. Enable them in Output routing. {enable}
+      In Rack, Gorgon captures them when its audio device is Studio's client. {capture}
+      They come out of OPT and BRK; Gorgon only captures, so send them on to a mixer and an Audio module. {play}
+    actions:
+      - at: enable
+        studio.click: '#jackEnableBtn'
+      - studio.wait: {js: "document.getElementById('jackPorts').textContent.includes('optical_L')"}
+      - at: capture
+        rack.highlight: {ref: Gorgon.out.Optical audio left, label: 'OPT L/R · BRK L/R', seconds: 3}
+      - at: play
+        studio.press: Space
+      - after: 6
+        studio.press: Space
+    frames:
+      - {window: studio, rect: [0.7, 0.4, 0.3, 0.5]}
+      - {at: capture, window: rack}
+    mix: {programme: -9}
+    verify:
+      - "optical reads first two Soundtracks; breaks is synthesized, not samples (MANUAL JACK/PipeWire audio)"
+      - "Gorgon's capture device harvested as JACK 'HydraPy' channels 1-4 (patches/harvested/gorgon-capture.json)"
+      - "ports appear as HydraPy:optical_L etc."
+  - id: offset
+    title: Lining up with OFFSET
+    setup:
+      rack: {patch: rack-offset, view: {modules: [Gorgon, Scope]}}
+    narration: >
+      Studio keeps a small buffer ahead of the playhead, so Breaks arrives later than the gates for the same row.
+      Patch gate one and Breaks left into a scope to see it. {scope}
+      At forty-eight kilohertz with 256-frame periods, it measured about twenty milliseconds.
+      OFFSET moves Rack's score and CV earlier or later; turn it counterclockwise to delay them to match. {turn}
+      Measure your own setup this way; the number depends on the machine.
+    actions:
+      - at: scope
+        studio.press: Space
+      - rack.view: {modules: [Scope], zoom: 2.2, seconds: 1}
+      - at: turn
+        rack.knob: {ref: Gorgon.param.Timing offset, value: -20, seconds: 2.5}
+      - after: 4
+        studio.press: Space
+    verify:
+      - "16–22 ms Breaks-after-gate at 48k/256 default lead; OFFSET ≈ −20 ms (MANUAL)"
+      - "the scope on screen shows the measured offset on THIS stage; say what it shows, not the manual's number, if they differ"

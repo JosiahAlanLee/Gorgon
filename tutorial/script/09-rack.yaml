@@ -1,0 +1,107 @@
+chapter: 9
+slug: rack
+title: Gorgon in Rack
+defaults:
+  needs: [controller, rack]
+  setup:
+    studio: {patch: patches/gorgon_corridor.py, transport: stop}
+shots:
+  - id: linked
+    title: It finds Studio
+    source: [Gorgon/rack/docs/MANUAL.md#setup, Gorgon/rack/docs/MANUAL.md#display-and-lights]
+    setup:
+      studio: {patch: patches/gorgon_corridor.py, transport: stop}
+      rack: {patch: rack-gorgon, view: {modules: [Gorgon], zoom: 2.0}}
+    narration: >
+      Add Gorgon to a patch with Studio running on the same computer. {linked}
+      The display says Linked and shows the tempo, usually within a second.
+      Studio writes its port and session token to a file only you can read, and the module finds it there;
+      there is no address to type. {lights} LINK is lit while Studio answers; CLK follows the clock.
+    actions:
+      - at: linked
+        rack.highlight: {ref: Gorgon, label: Linked · 138 BPM, seconds: 4}
+      - at: lights
+        studio.press: Space
+      - rack.highlight: {ref: Gorgon.param.Play, label: PLAY, seconds: 3}
+      - after: 3
+        studio.press: Space
+    frames:
+      - {window: rack}
+    verify:
+      - "display shows Linked and tempo (MANUAL Setup.2); LINK/CLK lights (Display and lights)"
+      - "the highlight label text matches what the display really shows"
+  - id: outputs
+    title: What comes out
+    setup:
+      rack: {patch: rack-gorgon, view: {modules: [Gorgon], zoom: 2.0}}
+    source: [Gorgon/rack/docs/MANUAL.md#outputs-from-gorgon]
+    narration: >
+      Clock is sixteenths by default. {clock} Reset fires on start, on a seek and at the loop boundary. {reset}
+      Run is high while Gorgon plays. {pitch} Pitch, velocity and gates carry the four audio lanes as polyphonic cables,
+      in lane order: Breaks, FM hits, Sub, Texture. Gates one to four are the same gates on separate jacks. {lanes}
+      Z, Roll and Feedback are the visual lanes as control voltage, {audio} and the last four jacks are audio from Studio,
+      which we'll come back to.
+    actions:
+      - at: clock
+        rack.highlight: {ref: Gorgon.out.Clock, label: CLOCK, seconds: 2.5}
+      - at: reset
+        rack.highlight: {ref: Gorgon.out.Reset, label: RESET, seconds: 2.5}
+      - after: 1.2
+        rack.highlight: {ref: Gorgon.out.Run, label: RUN, seconds: 2}
+      - at: pitch
+        rack.highlight: {ref: Gorgon.out.Pitch, label: 'V/OCT · 4 ch', seconds: 3}
+      - after: 0.6
+        rack.highlight: {ref: Gorgon.out.Velocity, label: 'VEL · 4 ch', seconds: 3}
+      - after: 0.6
+        rack.highlight: {ref: 'Gorgon.out.Gates 1', label: 'GATES · 4 ch', seconds: 3}
+      - at: lanes
+        rack.highlight: {ref: Gorgon.out.Dolly Z, label: Z, seconds: 2.5}
+      - after: 0.3
+        rack.highlight: {ref: Gorgon.out.Roll, label: ROLL, seconds: 2.5}
+      - after: 0.3
+        rack.highlight: {ref: Gorgon.out.Feedback, label: FDBK, seconds: 2.5}
+      - at: audio
+        rack.highlight: {ref: Gorgon.out.Optical audio left, label: 'OPT · BRK', seconds: 3}
+    verify:
+      - "port order and meanings from MANUAL Outputs table and configOutput names"
+      - "lane order Breaks, FM hits, Sub, Texture (walkthrough §7.3)"
+  - id: scope
+    title: Clock and a gate on a scope
+    setup:
+      rack: {patch: rack-scope-start, view: {modules: [Gorgon, Scope]}}
+    narration: >
+      Patch Clock into a scope, {clock} and gate two, the FM hits lane, into the second channel. {gate}
+      Play in Studio. {play} The clock is Gorgon's tempo on Rack's own sample clock,
+      so pulses land on exact samples; the module nudges its tempo by at most half a percent to stay with Studio.
+    actions:
+      - at: clock
+        rack.cable: {from: Gorgon.out.Clock, to: 'Scope.in#0'}
+      - at: gate
+        rack.cable: {from: Gorgon.out.Gate 2, to: 'Scope.in#1'}
+      - at: play
+        studio.press: Space
+      - rack.view: {modules: [Scope], zoom: 2.2, seconds: 1.2}
+      - after: 5
+        studio.press: Space
+    verify:
+      - "Fundamental Scope input indices 0/1 are its two channels"
+      - "follower trims tempo by at most 0.5% (MANUAL Timing)"
+  - id: transport
+    title: PLAY and RESET act on Studio
+    setup:
+      rack: {patch: rack-gorgon, view: {modules: [Gorgon], zoom: 2.0}}
+    narration: >
+      PLAY on the module starts or pauses Gorgon; {play} RESET goes back to the start of the score, or of the looped pattern. {reset}
+      Both act on Studio, so the picture and every other output move too. There is one transport, and it is Studio's.
+    actions:
+      - at: play
+        rack.click: Gorgon.param.Play
+      - after: 3
+        rack.click: Gorgon.param.Play
+      - at: reset
+        rack.click: Gorgon.param.Back to the start
+    frames:
+      - {window: rack}
+      - {at: reset, window: studio, rect: [0, 0, 0.5, 0.3]}
+    verify:
+      - "PLAY/RESET act on Studio (MANUAL Transport)"

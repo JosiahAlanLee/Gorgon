@@ -61,6 +61,12 @@ own PipeWire session, a signed-in Rack Pro, the ES-40 digital path end to end,
 display and device latency, and the Windows/macOS plugins inside Rack. The plugin
 is not in the VCV Library yet.
 
+## Tutorial
+
+[`tutorial/`](tutorial) is the kit for recording the ecosystem tutorial on one
+machine: a private stage (display, JACK, Studio, Rack), a script of shots, and the
+tools that film, narrate, edit and check them. It is not part of the plugin.
+
 ## Working on it
 
 Read [AGENTS.md](AGENTS.md) first: where a change goes, how the contract

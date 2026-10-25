@@ -1,0 +1,66 @@
+chapter: 3
+slug: hydrapy
+title: HydraPy in a minute
+shots:
+  - id: patch
+    title: A patch is a Python file
+    needs: [terminal]
+    frames:
+      - {window: terminal, rect: [0, 0, 0.7, 0.7]}
+    source: [hydrapy/README.md#quick-start, hydrapy/docs/getting-started.md#the-sixty-second-tour]
+    setup:
+      actions:
+        - term.quiet: "cd hydrapy && . ../hydrapy-env/bin/activate"
+        - shell: |
+            mkdir -p hydrapy && cat > hydrapy/patch.py <<'PY'
+            from hydrapy import *
+
+            osc(10, 0.1, 0.8).rotate(Lfo(0.1, lo=0, hi=6.28)).kaleid(5).out(o0)
+            render(o0)
+            PY
+    narration: >
+      A HydraPy patch is a Python file. {show} If you know Hydra, the chain reads the same:
+      an oscillator, rotated by a slow LFO, folded into five kaleidoscope sides, sent to output zero.
+      {render} hydrapy render writes it to a GIF or an MP4; with --gpu it renders on the graphics card.
+    actions:
+      - at: show
+        term.run: {cmd: "cat patch.py", wait_for: 'render\(o0\)'}
+      - at: render
+        term.run: {cmd: "hydrapy render patch.py -o out.mp4 --gpu --seconds 4 --size 1280x720", wait_for: '\$ $', timeout: 120}
+    verify:
+      - "README quick start patch is exactly this"
+      - "`hydrapy render --gpu` writes MP4 when the extension is .mp4"
+  - id: result
+    kind: render
+    title: What it rendered
+    render:
+      name: quickstart
+      patch: ../sandbox/hydrapy/patch.py
+      seconds: 8
+    narration: >
+      Every float argument can take a signal, or another chain, per pixel.
+      That is where HydraPy goes past Hydra: modulation signals, feedback, painted film,
+      cellular automata, and a modular synth on the other end of a cable.
+    verify:
+      - "getting-started: 'Per-pixel CV: any float parameter accepts a chain'"
+  - id: tracker-launch
+    title: Studio and the tracker
+    needs: [terminal]
+    frames:
+      - {window: terminal, rect: [0, 0, 0.7, 0.7]}
+    source: [hydrapy/docs/gorgon-tracker.md, Gorgon/rack/docs/MANUAL.md#setup]
+    narration: >
+      Studio is HydraPy's local workspace. With --tracker it opens Gorgon. {launch}
+      The patch here, gorgon corridor, declares three controls the tracker can automate:
+      Dolly Z, Roll and Feedback. Studio prints a local address with a session token;
+      it only listens on this computer.
+    actions:
+      - at: launch
+        term.run: {cmd: "show_safe hydrapy studio patches/gorgon_corridor.py --tracker --backend gl --size 1280x720 --fps 60 --no-browser --port 8798", wait_for: 'HydraPy Studio:', timeout: 60}
+      - wait: 3
+      - term.interrupt: null
+    hold: 1
+    verify:
+      - "show_safe masks the token fragment on screen (QC OCR must pass)"
+      - "the stage's own Studio is on studio.port; this one uses 8798 so the two don't collide, and is stopped at the end of the shot"
+      - "Studio listens on 127.0.0.1 only (MANUAL Setup)"

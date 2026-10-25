@@ -1,0 +1,98 @@
+chapter: 4
+slug: transport
+title: Playing and editing are separate
+defaults:
+  needs: [controller]
+  setup:
+    studio: {patch: patches/gorgon_corridor.py, transport: stop}
+shots:
+  - id: tour
+    title: The workspace
+    source: [hydrapy/docs/gorgon-tracker.md#control-surface-and-displays, hydrapy/docs/gorgon-editor-walkthrough.md#before-recording]
+    narration: >
+      Four patterns, each sixty-four sixteenth-note rows, run left to right along the top. {cards}
+      Below is the selected pattern: four audio lanes, then the visual lanes, Dolly Z, Roll and Feedback, and the scene column. {grid}
+      Row numbers are hexadecimal, so 0F comes before 10, and 3F is the last row. {rows}
+      On the right, a preview of the program output and the patch's controls.
+    actions:
+      - at: cards
+        studio.point: {selector: '#patterns .pattern-card[data-pattern="1"]'}
+      - at: grid
+        studio.point: {selector: '#trackHeaders'}
+      - at: rows
+        studio.point: {selector: '#trackerRows [data-seek-row="15"]'}
+    frames:
+      - {window: studio}
+      - {at: cards, window: studio, rect: [0, 0.08, 0.75, 0.22]}
+      - {at: grid, window: studio, rect: [0.1, 0.25, 0.65, 0.5]}
+      - {at: rows, window: studio}
+    verify:
+      - "four patterns x 64 rows; row labels hex (walkthrough 'Before recording')"
+      - "scene column exists in the grid for gorgon_corridor (it has no scenes: check how the column shows)"
+      - "cards show note activity green, automation keys amber"
+  - id: play
+    title: Play and pause
+    source: [hydrapy/docs/gorgon-editor-walkthrough.md#1-explain-playback-and-editing-separately]
+    narration: >
+      Space plays. {play} The green row is the playhead, and the position counter runs.
+      Space again pauses. {pause}
+    actions:
+      - at: play
+        studio.press: Space
+      - at: pause
+        studio.press: Space
+    overlays:
+      - {at: play, until: '+1.5', kind: keycap, text: Space}
+      - {at: pause, until: '+1.5', kind: keycap, text: Space}
+    frames:
+      - {window: studio, rect: [0, 0, 0.62, 0.6]}
+  - id: select-vs-seek
+    title: Selecting does not seek
+    narration: >
+      While it's paused, click a cell. {cell} The amber edit cursor moves; the playhead stays where it was.
+      Select another pattern card, {card} and you are editing that pattern, still without moving playback.
+      To move playback, say so: Seek to row. {seek}
+      A seek keeps the renderer's time and its feedback history; it is a musical move, not a rewind.
+    actions:
+      - at: cell
+        studio.click: {selector: '#trackerRows [data-row="10"][data-col="1"]'}
+      - at: card
+        studio.click: {role: button, name: 'Select pattern 3: ASCENT'}
+      - after: 0.6
+        studio.click: {selector: '#trackerRows [data-row="8"][data-col="2"]'}
+      - at: seek
+        studio.click: '#seekCellBtn'
+    frames:
+      - {window: studio, rect: [0, 0, 0.62, 0.75]}
+    verify:
+      - "selecting a card does not seek (test_studio_tracker_browser asserts beat < 1 after selecting ASCENT)"
+      - "Seek to row preserves renderer clock time and feedback (walkthrough §1.4)"
+  - id: launch-loop-follow
+    title: Launch, loop and follow
+    narration: >
+      The small play button on a card launches that pattern and starts automation. {launch}
+      Stop pauses and goes back to the start of the selected pattern. {stop}
+      Loop repeats the selected pattern; {loop} while it loops, selecting another card only changes what you edit.
+      Follow makes the editor follow playback. {follow} Clicking a cell yourself turns Follow off,
+      so playback never moves a selection out from under you.
+    actions:
+      - at: launch
+        studio.click: {role: button, name: 'Play from pattern 2'}
+      - at: stop
+        studio.click: '#stopBtn'
+      - at: loop
+        studio.click: '#loopBtn'
+      - after: 0.5
+        studio.press: Space
+      - at: follow
+        studio.click: '#followBtn'
+      - after: 2.5
+        studio.click: {selector: '#trackerRows [data-row="4"][data-col="0"]'}
+      - after: 1.5
+        studio.press: Space
+    frames:
+      - {window: studio, rect: [0, 0, 0.62, 0.75]}
+    verify:
+      - "card ▶ aria-label 'Play from pattern N' launches and enables automation"
+      - "Stop returns to selected pattern start or the active loop start"
+      - "manual selection turns Follow off (walkthrough §1.6)"

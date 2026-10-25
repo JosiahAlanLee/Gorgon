@@ -1,0 +1,49 @@
+chapter: 11
+slug: seance
+title: Séance
+defaults:
+  needs: [controller, rack]
+  setup:
+    studio: {patch: patches/gorgon_corridor.py, transport: stop}
+shots:
+  - id: row
+    title: One frame, held by a row of modules
+    source: [DSP_Emulation/README.md#séance-a-spectral-frame-held-by-a-row-of-modules, DSP_Emulation/vcv/seance/docs/MANUAL.md]
+    setup:
+      rack: {patch: rack-seance, view: {modules: [OtisSampler, Seance, SeanceFreeze, SeanceScramble]}}
+    narration: >
+      Séance is a spectral core with expanders. The core analyses its input, hands the frame to the expanders
+      touching it on the right, and resynthesises what comes back. {row} Nothing spectral travels on a cable.
+      Freeze holds the frame with its phases still turning; {freeze} Scramble moves every partial by a seeded offset. {scramble}
+    actions:
+      - at: row
+        studio.press: Space
+      - rack.highlight: {ref: Seance, label: Séance core, seconds: 2.5}
+      - at: freeze
+        rack.knob: {ref: SeanceFreeze.param.Freeze, value: 1, seconds: 0.2}
+      - at: scramble
+        rack.knob: {ref: SeanceScramble.param.Range, scaled: 0.6, seconds: 2}
+      - after: 3
+        rack.knob: {ref: SeanceFreeze.param.Freeze, value: 0, seconds: 0.2}
+      - after: 1
+        studio.press: Space
+    mix: {programme: -10}
+    verify:
+      - "expanders act only touching the core to its right; LINK light (GETTING_STARTED Try Séance)"
+      - "latency = frame size + 64 samples"
+  - id: seed
+    title: The same frames every time
+    setup:
+      rack: {patch: rack-seance, view: {modules: [Gorgon, Seance]}}
+    narration: >
+      Seed and reset make every texture a function of the seed and the frame count.
+      Patch Gorgon's reset into Séance's, {reset} and the score replays the same frames on every pass.
+    actions:
+      - at: reset
+        rack.cable: {from: Gorgon.out.Reset, to: Seance.in.Reset trigger}
+      - studio.press: Space
+      - after: 6
+        studio.press: Space
+    mix: {programme: -10}
+    verify:
+      - "SEED and RESET make textures a pure function of seed and frame count (README)"

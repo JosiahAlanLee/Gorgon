@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" font-family="DejaVu Sans, sans-serif">
+  <rect width="1920" height="1080" fill="#101014"/>
+  <text x="120" y="130" font-size="44" fill="#f0ece4" font-weight="bold">The audio lanes, inside a patch</text>
+  <text x="120" y="182" font-size="26" fill="#9c988f">lanes are numbered 1–4 as in the tracker; any operator argument takes them</text>
+  <g font-size="32">
+    <rect x="120" y="230" width="1680" height="2" fill="#3a3a44"/>
+    <g font-family="DejaVu Sans Mono, monospace" fill="#ffc733">
+      <text x="140" y="310">tracker.gate(n)</text>
+      <text x="140" y="410">tracker.hit(n, decay=.25)</text>
+      <text x="140" y="510">tracker.note(n)</text>
+      <text x="140" y="610">tracker.vel(n)</text>
+      <text x="140" y="710">tracker.beat() · row()</text>
+    </g>
+    <g fill="#d8d4cc">
+      <text x="760" y="310">1 while lane n's gate is open (half a row per hit)</text>
+      <text x="760" y="410">1 at each hit, falling to 0 over decay seconds</text>
+      <text x="760" y="510">the last hit's MIDI note, key-transposed (held)</text>
+      <text x="760" y="610">the last hit's velocity, 0–1 (held)</text>
+      <text x="760" y="710">the playhead: beat 0–64, row 0–63</text>
+    </g>
+    <rect x="120" y="760" width="1680" height="2" fill="#3a3a44"/>
+    <text x="140" y="840" font-size="28" fill="#9c988f">Muted lanes, zero-velocity hits and a stopped tracker send no gates or hits.</text>
+    <text x="140" y="884" font-size="28" fill="#9c988f">A seek clears the held note and velocity, as the CV output does.</text>
+  </g>
+</svg>

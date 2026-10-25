@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" font-family="DejaVu Sans, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#ffc733"/>
+    </marker>
+    <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#7d7a73"/>
+    </marker>
+  </defs>
+  <rect width="1920" height="1080" fill="#101014"/>
+  <text x="80" y="70" font-size="40" fill="#f0ece4" font-weight="bold">One playhead, three repositories</text>
+
+  <!-- hydrapy -->
+  <rect x="80" y="150" width="620" height="490" rx="14" fill="#17171d" stroke="#3a3a44" stroke-width="2"/>
+  <text x="112" y="200" font-size="34" fill="#ffc733" font-weight="bold">hydrapy</text>
+  <text x="112" y="236" font-size="22" fill="#9c988f">AGPL-3.0 · github.com/JosiahAlanLee/hydrapy</text>
+  <rect x="112" y="268" width="556" height="150" rx="10" fill="#1f1f27" stroke="#55534d"/>
+  <text x="136" y="306" font-size="26" fill="#f0ece4">Studio</text>
+  <text x="136" y="342" font-size="21" fill="#c8c4bb">patch editor · Program / Auxiliary outputs</text>
+  <text x="136" y="374" font-size="21" fill="#c8c4bb">renders the picture (OpenGL or NumPy)</text>
+  <rect x="112" y="436" width="556" height="176" rx="10" fill="#1f1f27" stroke="#ffc733" stroke-width="2"/>
+  <text x="136" y="474" font-size="26" fill="#f0ece4">Gorgon tracker</text>
+  <text x="136" y="510" font-size="21" fill="#c8c4bb">four 64-row patterns · note and visual lanes</text>
+  <text x="136" y="542" font-size="21" fill="#c8c4bb">scenes · the playhead: the master clock</text>
+  <text x="136" y="574" font-size="21" fill="#c8c4bb">JACK ports: optical soundtrack, breaks kit</text>
+
+  <!-- Gorgon -->
+  <rect x="770" y="150" width="560" height="420" rx="14" fill="#17171d" stroke="#3a3a44" stroke-width="2"/>
+  <text x="802" y="200" font-size="34" fill="#ffc733" font-weight="bold">Gorgon</text>
+  <text x="802" y="236" font-size="22" fill="#9c988f">BSD-3-Clause · the centre of the project</text>
+  <rect x="802" y="268" width="496" height="118" rx="10" fill="#1f1f27" stroke="#55534d"/>
+  <text x="826" y="306" font-size="26" fill="#f0ece4">spec/ — the contract</text>
+  <text x="826" y="342" font-size="21" fill="#c8c4bb">score format · bridge API · signals · ports</text>
+  <rect x="802" y="404" width="496" height="138" rx="10" fill="#1f1f27" stroke="#ffc733" stroke-width="2"/>
+  <text x="826" y="442" font-size="26" fill="#f0ece4">rack/ — the Gorgon module</text>
+  <text x="826" y="478" font-size="21" fill="#c8c4bb">follows Studio on Rack's sample clock</text>
+  <text x="826" y="510" font-size="21" fill="#c8c4bb">score on jacks · CV back to the picture</text>
+
+  <!-- DSP_Emulation -->
+  <rect x="1400" y="480" width="440" height="500" rx="14" fill="#17171d" stroke="#3a3a44" stroke-width="2"/>
+  <text x="1432" y="530" font-size="34" fill="#ffc733" font-weight="bold">DSP_Emulation</text>
+  <text x="1432" y="566" font-size="22" fill="#9c988f">the instruments, for VCV Rack 2</text>
+  <g font-size="25" fill="#f0ece4">
+    <rect x="1432" y="596" width="376" height="76" rx="10" fill="#1f1f27" stroke="#55534d"/>
+    <text x="1456" y="644">OTIS Sampler</text>
+    <rect x="1432" y="686" width="376" height="76" rx="10" fill="#1f1f27" stroke="#55534d"/>
+    <text x="1456" y="734">Vastish</text>
+    <rect x="1432" y="776" width="376" height="76" rx="10" fill="#1f1f27" stroke="#55534d"/>
+    <text x="1456" y="824">Spoon Bender</text>
+    <rect x="1432" y="866" width="376" height="76" rx="10" fill="#1f1f27" stroke="#55534d"/>
+    <text x="1456" y="914">Séance + expanders</text>
+  </g>
+
+  <!-- links -->
+  <path d="M668 520 C 720 520, 740 470, 800 470" fill="none" stroke="#ffc733" stroke-width="3" marker-end="url(#a)"/>
+  <text x="690" y="660" font-size="20" fill="#ffc733">bridge API, loopback only</text>
+  <text x="690" y="686" font-size="20" fill="#ffc733">playhead ≈30×/s · score · CV back</text>
+  <text x="690" y="718" font-size="20" fill="#ffc733" opacity="0.8">- - -  JACK audio: optical, breaks</text>
+  <path d="M668 590 C 760 640, 840 600, 900 545" fill="none" stroke="#ffc733" stroke-width="2" stroke-dasharray="8 6" marker-end="url(#a)"/>
+  <path d="M1298 500 C 1360 520, 1380 660, 1428 700" fill="none" stroke="#ffc733" stroke-width="3" marker-end="url(#a)"/>
+  <text x="1350" y="420" font-size="20" fill="#ffc733">clock · gates · 1 V/oct</text>
+  <text x="1350" y="446" font-size="20" fill="#ffc733">velocity · lanes</text>
+  <path d="M1050 150 L1050 116 L390 116 L390 146" fill="none" stroke="#7d7a73" stroke-width="2" marker-end="url(#g)"/>
+  <text x="1070" y="136" font-size="19" fill="#9c988f">tested against HydraPy at hydrapy.pin</text>
+
+  <!-- hardware, not shown -->
+  <rect x="80" y="760" width="620" height="220" rx="14" fill="none" stroke="#55534d" stroke-width="2" stroke-dasharray="10 8"/>
+  <text x="112" y="810" font-size="28" fill="#9c988f">A modular synthesizer</text>
+  <text x="112" y="848" font-size="21" fill="#7d7a73">direct CV: ES-3, or ES-40 + ESX-8GT / ESX-8CV</text>
+  <text x="112" y="880" font-size="21" fill="#7d7a73">documented; not validated end to end,</text>
+  <text x="112" y="912" font-size="21" fill="#7d7a73">and not shown in this video</text>
+  <path d="M390 640 L390 756" fill="none" stroke="#7d7a73" stroke-width="2" stroke-dasharray="8 6" marker-end="url(#g)"/>
+</svg>
