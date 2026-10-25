@@ -12,7 +12,7 @@ shots:
       - {window: rack}
     source: [DSP_Emulation/README.md#séance-a-spectral-frame-held-by-a-row-of-modules, DSP_Emulation/vcv/seance/docs/MANUAL.md]
     setup:
-      rack: {patch: rack-seance, view: {modules: [OtisSampler, Seance, SeanceFreeze, SeanceScramble]}}
+      rack: {patch: rack-seance, view: {modules: [Seance, SeanceFreeze, SeanceScramble]}}
     narration: >
       Séance is a spectral core with expanders. The core analyses its input, hands the frame to the expanders
       touching it on the right, and resynthesises what comes back. {row} The frame stays in the row.
