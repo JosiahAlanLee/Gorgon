@@ -14,6 +14,7 @@ shots:
         - shell: rm -rf hydrapy hydrapy-env
     narration: >
       HydraPy needs Python 3.9 or newer. Clone it {clone} from GitHub; a shallow clone is enough.
+      The repository is one Python package, with Studio and the Gorgon tracker inside it.
       Make a virtual environment and activate it, so HydraPy's packages stay separate from the system's. {venv}
       Then install it in editable mode, with the extras the tracker uses: {pip}
       gpu for the OpenGL renderer, video for MP4 export, and jack for audio ports Rack can record.
@@ -33,6 +34,7 @@ shots:
     verify:
       - "extras gpu, video and jack exist in hydrapy pyproject.toml"
       - "Python >= 3.9 (README quick start)"
+      - "Studio (hydrapy/studio.py) and the tracker (hydrapy/tracker/) are inside the hydrapy package"
   - id: check
     title: Check it
     setup:
