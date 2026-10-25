@@ -68,7 +68,6 @@ static void fixture(const char* path) {
 		int beats;
 		in >> beats;
 		Options o;
-		OutputState memory;
 		for (int b = 0; b < beats; b++) {
 			double beat;
 			int moving, clock, reset, run, gate[4];
@@ -83,6 +82,11 @@ static void fixture(const char* path) {
 				in >> v;
 			for (double& v : pitch)
 				in >> v;
+			// Stateless rows, as the generator wrote them: same transport, same
+			// moving state, nothing held (latches are tested separately below).
+			OutputState memory;
+			memory.transportRevision = transport;
+			memory.wasMoving = moving;
 			Outputs out = memory.render(score, moving, beat, transport, o, 1. / 48000.);
 			CHECK((out.clock > 0) == bool(clock), "score %d beat %.17g clock", s, beat);
 			CHECK((out.reset > 0) == bool(reset), "score %d beat %.17g reset", s, beat);

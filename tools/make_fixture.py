@@ -58,12 +58,20 @@ def main():
         beats = [rng.uniform(start, start + length) for _ in range(300)]
         # Exact row and pulse boundaries are where off-by-one errors live.
         beats += [start + k / 8 for k in range(0, int(length * 8))]
+        # Either side of the 5 ms phase-based reset after the cycle start.
+        window = cv.reset_s * d['bpm'] / 60
+        beats += [start + f * window for f in (.25, .5, .99, 1.01, 1.5, 3)]
         print(len(beats))
         for beat in beats:
             moving = rng.random() < .85
             tracker.enabled = True
-            tracker.seek(beat, 0.)
+            # One stateless sample per row: not a seek, no stopped-to-moving
+            # transition, nothing held from the previous row. Transport latches
+            # and held values have their own tests on both sides.
+            tracker.seek(beat, 0., discontinuity=False)
+            cv._transport, cv._moving = tracker.transport_revision, moving
             cv._velocity[:] = 0.
+            cv._pitch[:] = 0.
             cv.publish(tracker, 0., 0., moving)
             v = cv.render(1, 0.)[0]
             gates = [int(v[c] > 0) for c in range(3, 7)]
