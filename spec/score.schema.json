@@ -1,121 +1,16 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/JosiahAlanLee/Gorgon/spec/score.schema.json",
-  "title": "Gorgon tracker score (versions 1 and 2)",
-  "description": "The score document exchanged between the tracker editor, HydraPy Studio and bridge followers such as the VCV Rack module. Normative reference: spec/score.md. Validation in the reference implementation: hydrapy/studio_tracker.py validate().",
-  "type": "object",
-  "required": [
-    "format",
-    "bpm",
-    "key",
-    "pattern",
-    "loop",
-    "sound",
-    "mutes",
-    "modes",
-    "bindings",
-    "patterns"
-  ],
-  "properties": {
-    "format": {
-      "enum": [
-        "hydrapy-tracker-1",
-        "hydrapy-tracker-2"
-      ]
+  "title": "Gorgon tracker score (versions 1, 2 and 3)",
+  "description": "The score document exchanged between the tracker editor, HydraPy Studio and bridge followers such as the VCV Rack module. Normative reference: spec/score.md (versions 1 and 2) and spec/score-v3.md (version 3, proposed). Validation in the reference implementation: hydrapy/studio_tracker.py validate().",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/scoreV1V2"
     },
-    "bpm": {
-      "type": "number",
-      "minimum": 60,
-      "maximum": 200,
-      "description": "Quarter notes per minute. A row is a sixteenth."
-    },
-    "key": {
-      "enum": [
-        0,
-        2,
-        5,
-        7
-      ],
-      "description": "Semitone of the key's root: C, D, F or G. Pitched notes are transposed by key - 2 (D is the reference key)."
-    },
-    "pattern": {
-      "type": "integer",
-      "minimum": 0,
-      "maximum": 3,
-      "description": "The selected pattern; the one that plays when loop is true."
-    },
-    "loop": {
-      "type": "boolean",
-      "description": "true: cycle the selected pattern (16 beats). false: cycle all four patterns in order (64 beats)."
-    },
-    "sound": {
-      "type": "boolean",
-      "description": "Browser audition synth on/off. Editor state; followers ignore it."
-    },
-    "mutes": {
-      "type": "array",
-      "minItems": 4,
-      "maxItems": 4,
-      "items": {
-        "type": "boolean"
-      },
-      "description": "One per audio lane. A muted lane sends no gates or hits and does not update its held pitch or velocity."
-    },
-    "modes": {
-      "type": "object",
-      "required": [
-        "program",
-        "aux"
-      ],
-      "additionalProperties": false,
-      "properties": {
-        "program": {
-          "$ref": "#/$defs/output"
-        },
-        "aux": {
-          "$ref": "#/$defs/output"
-        }
-      },
-      "description": "Which Studio output each monitor shows. Program also selects Studio's displayed/recorded output."
-    },
-    "bindings": {
-      "type": "object",
-      "required": [
-        "z",
-        "roll",
-        "feedback"
-      ],
-      "additionalProperties": false,
-      "properties": {
-        "z": {
-          "$ref": "#/$defs/controlName"
-        },
-        "roll": {
-          "$ref": "#/$defs/controlName"
-        },
-        "feedback": {
-          "$ref": "#/$defs/controlName"
-        }
-      },
-      "description": "The patch control each automation lane drives, by name. An empty string disconnects the lane. Non-empty names must be distinct."
-    },
-    "patterns": {
-      "type": "array",
-      "minItems": 4,
-      "maxItems": 4,
-      "items": {
-        "$ref": "#/$defs/pattern"
-      }
-    },
-    "sounds": {
-      "type": "array",
-      "minItems": 4,
-      "maxItems": 4,
-      "items": {
-        "$ref": "#/$defs/sound"
-      }
+    {
+      "$ref": "#/$defs/scoreV3"
     }
-  },
+  ],
   "$defs": {
     "output": {
       "enum": [
@@ -454,58 +349,540 @@
           "maximum": 191
         }
       }
-    }
-  },
-  "x-notes": [
-    "Unknown top-level and pattern-level keys are tolerated and preserved by the reference implementation (the shipped demo score carries 'version' and 'scene'); implementations must ignore keys they do not know.",
-    "Row ordering (sorted, unique) within keys and scenes cannot be expressed in JSON Schema; validate it in code.",
-    "Non-finite numbers (NaN, Infinity) are rejected everywhere a number is accepted."
-  ],
-  "allOf": [
-    {
-      "if": {
+    },
+    "row3": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 127,
+      "description": "Row within a version-3 pattern, below the pattern's bar * bars (checked in code)."
+    },
+    "keysZ3": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "required": [
+          "r",
+          "v"
+        ],
         "properties": {
-          "format": {
-            "const": "hydrapy-tracker-2"
+          "r": {
+            "$ref": "#/$defs/row3"
+          },
+          "v": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      }
+    },
+    "keysRoll3": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "required": [
+          "r",
+          "v"
+        ],
+        "properties": {
+          "r": {
+            "$ref": "#/$defs/row3"
+          },
+          "v": {
+            "type": "number",
+            "minimum": -45,
+            "maximum": 45
+          }
+        }
+      }
+    },
+    "keysFeedback3": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "required": [
+          "r",
+          "v"
+        ],
+        "properties": {
+          "r": {
+            "$ref": "#/$defs/row3"
+          },
+          "v": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 0.9
+          }
+        }
+      }
+    },
+    "lane3": {
+      "type": "object",
+      "required": [
+        "len",
+        "cells"
+      ],
+      "properties": {
+        "len": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 128,
+          "description": "The lane repeats every len rows; at most the pattern's rows (checked in code)."
+        },
+        "cells": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "$ref": "#/$defs/hit"
+          },
+          "description": "Exactly len cells (checked in code); null is an empty cell."
+        }
+      }
+    },
+    "pattern3": {
+      "type": "object",
+      "required": [
+        "name",
+        "rate",
+        "bar",
+        "bars",
+        "lanes",
+        "keys",
+        "easing"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "rate": {
+          "type": "number",
+          "enum": [
+            0.25,
+            0.5,
+            1,
+            2,
+            4,
+            8
+          ],
+          "description": "Rows per quarter note = 4 * rate."
+        },
+        "bar": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32,
+          "description": "Rows per bar."
+        },
+        "bars": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8,
+          "description": "Bars per pattern; rows = bar * bars, at most 128 (checked in code)."
+        },
+        "lanes": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": {
+            "$ref": "#/$defs/lane3"
+          }
+        },
+        "keys": {
+          "type": "object",
+          "required": [
+            "z",
+            "roll",
+            "feedback"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "z": {
+              "$ref": "#/$defs/keysZ3"
+            },
+            "roll": {
+              "$ref": "#/$defs/keysRoll3"
+            },
+            "feedback": {
+              "$ref": "#/$defs/keysFeedback3"
+            }
+          },
+          "description": "Automation keys per lane, sorted by row with unique rows, at most 128 per lane, rows below the pattern's rows. Lane ranges: z 0-1 (default 0.35), roll -45-45 degrees (default 0), feedback 0-0.9 (default 0.25)."
+        },
+        "easing": {
+          "type": "object",
+          "required": [
+            "z",
+            "roll",
+            "feedback"
+          ],
+          "properties": {
+            "z": {
+              "$ref": "#/$defs/easing"
+            },
+            "roll": {
+              "$ref": "#/$defs/easing"
+            },
+            "feedback": {
+              "$ref": "#/$defs/easing"
+            }
+          }
+        },
+        "scenes": {
+          "type": "array",
+          "maxItems": 128,
+          "default": [],
+          "items": {
+            "type": "object",
+            "required": [
+              "r",
+              "name"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "r": {
+                "$ref": "#/$defs/row3"
+              },
+              "name": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{1,24}$",
+                "description": "A scene the patch declares. A name the patch does not declare is kept in the score and ignored when playing."
+              },
+              "fade": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 128,
+                "default": 0,
+                "description": "Crossfade length in rows from the previous scene on the same output. Clipped to the gap before the next change."
+              }
+            }
+          },
+          "description": "Scene changes, sorted by row with unique rows. Optional: scores saved before scenes existed load unchanged. Visual side only; CV followers ignore this field."
+        }
+      }
+    },
+    "scoreV1V2": {
+      "type": "object",
+      "required": [
+        "format",
+        "bpm",
+        "key",
+        "pattern",
+        "loop",
+        "sound",
+        "mutes",
+        "modes",
+        "bindings",
+        "patterns"
+      ],
+      "properties": {
+        "format": {
+          "enum": [
+            "hydrapy-tracker-1",
+            "hydrapy-tracker-2"
+          ]
+        },
+        "bpm": {
+          "type": "number",
+          "minimum": 60,
+          "maximum": 200,
+          "description": "Quarter notes per minute. A row is a sixteenth."
+        },
+        "key": {
+          "enum": [
+            0,
+            2,
+            5,
+            7
+          ],
+          "description": "Semitone of the key's root: C, D, F or G. Pitched notes are transposed by key - 2 (D is the reference key)."
+        },
+        "pattern": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3,
+          "description": "The selected pattern; the one that plays when loop is true."
+        },
+        "loop": {
+          "type": "boolean",
+          "description": "true: cycle the selected pattern (16 beats). false: cycle all four patterns in order (64 beats)."
+        },
+        "sound": {
+          "type": "boolean",
+          "description": "Browser audition synth on/off. Editor state; followers ignore it."
+        },
+        "mutes": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "boolean"
+          },
+          "description": "One per audio lane. A muted lane sends no gates or hits and does not update its held pitch or velocity."
+        },
+        "modes": {
+          "type": "object",
+          "required": [
+            "program",
+            "aux"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "program": {
+              "$ref": "#/$defs/output"
+            },
+            "aux": {
+              "$ref": "#/$defs/output"
+            }
+          },
+          "description": "Which Studio output each monitor shows. Program also selects Studio's displayed/recorded output."
+        },
+        "bindings": {
+          "type": "object",
+          "required": [
+            "z",
+            "roll",
+            "feedback"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "z": {
+              "$ref": "#/$defs/controlName"
+            },
+            "roll": {
+              "$ref": "#/$defs/controlName"
+            },
+            "feedback": {
+              "$ref": "#/$defs/controlName"
+            }
+          },
+          "description": "The patch control each automation lane drives, by name. An empty string disconnects the lane. Non-empty names must be distinct."
+        },
+        "patterns": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/pattern"
+          }
+        },
+        "sounds": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/sound"
           }
         }
       },
-      "then": {
-        "required": [
-          "sounds"
-        ]
-      },
-      "else": {
-        "not": {
-          "anyOf": [
-            {
-              "required": [
-                "sounds"
-              ]
-            },
-            {
-              "properties": {
-                "patterns": {
-                  "contains": {
-                    "properties": {
-                      "audio": {
-                        "contains": {
-                          "contains": {
-                            "type": "object",
-                            "required": [
-                              "locks"
-                            ]
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "format": {
+                "const": "hydrapy-tracker-2"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "sounds"
+            ]
+          },
+          "else": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "sounds"
+                  ]
+                },
+                {
+                  "properties": {
+                    "patterns": {
+                      "contains": {
+                        "properties": {
+                          "audio": {
+                            "contains": {
+                              "contains": {
+                                "type": "object",
+                                "required": [
+                                  "locks"
+                                ]
+                              }
+                            }
                           }
                         }
                       }
                     }
                   }
                 }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "scoreV3": {
+      "type": "object",
+      "required": [
+        "format",
+        "bpm",
+        "key",
+        "pattern",
+        "loop",
+        "chain",
+        "sound",
+        "mutes",
+        "lanes",
+        "modes",
+        "bindings",
+        "sounds",
+        "patterns"
+      ],
+      "properties": {
+        "format": {
+          "const": "hydrapy-tracker-3"
+        },
+        "bpm": {
+          "type": "number",
+          "minimum": 60,
+          "maximum": 200,
+          "description": "Quarter notes per minute. A row is a sixteenth."
+        },
+        "key": {
+          "enum": [
+            0,
+            2,
+            5,
+            7
+          ],
+          "description": "Semitone of the key's root: C, D, F or G. Pitched notes are transposed by key - 2 (D is the reference key)."
+        },
+        "pattern": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 127,
+          "description": "The selected pattern, bank * 16 + number - 1 (A01 = 0, H16 = 127); the one that plays when loop is true."
+        },
+        "loop": {
+          "type": "boolean",
+          "description": "true: the selected pattern repeats. false: the chain plays."
+        },
+        "chain": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 256,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 127
+          },
+          "description": "The song order: pattern indices played in turn when loop is false. Repeats allowed."
+        },
+        "sound": {
+          "type": "boolean",
+          "description": "Browser audition synth on/off. Editor state; followers ignore it."
+        },
+        "mutes": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": {
+            "type": "boolean"
+          },
+          "description": "One per lane. A muted lane sends no gates or hits and does not update its held pitch or velocity."
+        },
+        "lanes": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 24
               }
             }
-          ]
+          },
+          "description": "Six lanes, one per Monomachine track. Display names."
+        },
+        "modes": {
+          "type": "object",
+          "required": [
+            "program",
+            "aux"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "program": {
+              "$ref": "#/$defs/output"
+            },
+            "aux": {
+              "$ref": "#/$defs/output"
+            }
+          },
+          "description": "Which Studio output each monitor shows. Program also selects Studio's displayed/recorded output."
+        },
+        "bindings": {
+          "type": "object",
+          "required": [
+            "z",
+            "roll",
+            "feedback"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "z": {
+              "$ref": "#/$defs/controlName"
+            },
+            "roll": {
+              "$ref": "#/$defs/controlName"
+            },
+            "feedback": {
+              "$ref": "#/$defs/controlName"
+            }
+          },
+          "description": "The patch control each automation lane drives, by name. An empty string disconnects the lane. Non-empty names must be distinct."
+        },
+        "sounds": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": {
+            "$ref": "#/$defs/sound"
+          }
+        },
+        "patterns": {
+          "type": "array",
+          "minItems": 128,
+          "maxItems": 128,
+          "items": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/$defs/pattern3"
+              }
+            ]
+          },
+          "description": "Eight banks of sixteen. null is an empty pattern: rate 1, bar 16, bars 4, empty lanes of 64 rows."
         }
       }
     }
+  },
+  "x-notes": [
+    "Unknown top-level and pattern-level keys are tolerated and preserved by the reference implementation (the shipped demo score carries 'version' and 'scene'); implementations must ignore keys they do not know.",
+    "Row ordering (sorted, unique) within keys and scenes cannot be expressed in JSON Schema; validate it in code.",
+    "Non-finite numbers (NaN, Infinity) are rejected everywhere a number is accepted.",
+    "Version 3 (proposed, spec/score-v3.md): bar * bars <= 128, each lane's len <= rows with exactly len cells, and key and scene rows below rows cannot be expressed in JSON Schema; validate them in code. Conditions, transforms, seed and bus fields are added by later spec PRs."
   ]
 }
