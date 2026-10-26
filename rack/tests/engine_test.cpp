@@ -161,6 +161,87 @@ static void heldOutputsAndTransport() {
 	CHECK(seek.pitch[1] == 0.f && seek.velocity[1] == 0.f, "seek clears held notes");
 }
 
+// A transport change heard late still plays the hit it landed on (spec/cv-semantics.md,
+// landing gate). 120 BPM: a row is 125 ms (6000 samples), its gate 62.5 ms.
+static void landingGate() {
+	const double dt = 1. / 48000.;
+	const int row = 6000, ms = 48;
+	Options options;
+	auto score = [](bool nextRow) {
+		Score s;
+		s.bpm = 120.;
+		Pattern& p = s.patterns[0];
+		p.hit[0][4] = p.hit[2][4] = true;
+		p.hit[0][5] = nextRow;
+		p.velocity[0][4] = p.velocity[2][4] = p.velocity[0][5] = 127;
+		s.mutes[2] = true;
+		return s;
+	};
+	// `frames` of lane 1's gate, from `late` seconds after the playhead landed at `landing`.
+	auto heard = [&](OutputState& memory, const Score& s, double landing, double late, int frames,
+	                 int64_t transport, bool moving = true, double anchor = NAN) {
+		std::vector<float> gate(frames);
+		for (int i = 0; i < frames; i++) {
+			double beat = landing + (moving ? (late + i * dt) * s.bpm / 60. : 0.);
+			Outputs out = memory.render(s, moving, beat, transport, options, dt, std::isnan(anchor) ? landing : anchor);
+			gate[i] = out.gate[0];
+			CHECK(out.gate[2] == 0.f, "muted lane stays closed");
+		}
+		return gate;
+	};
+	auto high = [](const std::vector<float>& g) { int n = 0; for (float v : g) n += v > 0.f; return n; };
+	auto rises = [](const std::vector<float>& g) {
+		std::vector<int> at;
+		for (size_t i = 1; i < g.size(); i++)
+			if (g[i] > 0.f && g[i - 1] == 0.f)
+				at.push_back(int(i));
+		return at;
+	};
+	Score one = score(false), two = score(true);
+	// At once: the row's own gate. 40 ms late: all of it, from now. 70 ms late (the window
+	// had closed): until 1 ms before the row ends. In the next row: nothing.
+	const double lates[] = {0., .04, .07, .13};
+	const int lengths[] = {row / 2, row / 2 - ms, row - 3360 - ms, 0};
+	for (int k = 0; k < 4; k++) {
+		OutputState memory;
+		auto g = heard(memory, one, 1., lates[k], row, 1);
+		CHECK(high(g) == lengths[k] && (!lengths[k] || (g[0] > 0.f && g[lengths[k] - 1] > 0.f)),
+		      "seek heard %.0f ms late: %d samples high, expected %d", lates[k] * 1000, high(g), lengths[k]);
+	}
+	{
+		OutputState memory;
+		auto g = heard(memory, two, 1., .07, row, 1);
+		CHECK(g[0] > 0.f && rises(g) == std::vector<int>{row - 3360}, "next row's hit still rises");
+	}
+	{
+		OutputState memory;
+		CHECK(high(heard(memory, one, 1., .07, 64, 1)) == 64, "landing gate");
+		CHECK(high(heard(memory, one, 1., .07, 64, 1, false)) == 0, "pause ends it");
+		OutputState seek;
+		CHECK(high(heard(seek, one, 1., .07, 64, 1)) == 64, "landing gate");
+		CHECK(high(heard(seek, one, 1.5, 0., 64, 2)) == 0, "another seek ends it");
+	}
+	// A seek that interrupts an open gate retriggers it: 1 ms low, then the landing hit.
+	{
+		OutputState memory;
+		Score s = score(false);
+		s.patterns[0].hit[0][0] = true;
+		s.patterns[0].velocity[0][0] = 127;
+		CHECK(high(heard(memory, s, 0., 0., 64, 1)) == 64, "row 0 gate open");
+		auto g = heard(memory, s, 1., 0., row, 2);
+		CHECK(g[0] == 0.f && g[ms - 1] == 0.f && g[ms] > 0.f && high(g) == row / 2 - ms,
+		      "seek retriggers an open gate: %d samples high", high(g));
+		CHECK(high(heard(memory, s, 1.05, 0., 64, 2)) == 64, "a repeated snapshot does not retrigger");
+	}
+	// Resume: the landing is where the playhead stood, not the anchor of the last seek.
+	for (double stood : {1., 1.15}) {
+		OutputState memory;
+		heard(memory, one, stood, 0., 64, 1, false, 3.);
+		int n = high(heard(memory, one, stood, .07, row, 1, true, 3.));
+		CHECK(n == (stood == 1. ? row - 3360 - ms : 0), "resume at beat %g heard 70 ms late: %d samples", stood, n);
+	}
+}
+
 // Studio at `bpm` on its clock; Rack's sample clock runs `ppm` fast, blocks are
 // processed with timing jitter, and the bridge updates 30 times a second.
 // Returns the largest phase error after settling, in milliseconds.
@@ -293,6 +374,7 @@ static void details() {
 int main(int argc, char** argv) {
 	details();
 	heldOutputsAndTransport();
+	landingGate();
 	follower();
 	fixture(argc > 1 ? argv[1] : "tests/fixture.txt");
 	if (failures) {

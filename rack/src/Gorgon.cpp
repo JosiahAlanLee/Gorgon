@@ -102,7 +102,8 @@ struct Gorgon : Module {
 
 		bool moving = haveSnapshot && snapshot.playhead.moving() && follower.locked;
 		gorgon::Outputs o = outputState.render(snapshot.score, moving, follower.beat,
-		                                      snapshot.playhead.transportRevision, options, args.sampleTime);
+		                                      snapshot.playhead.transportRevision, options, args.sampleTime,
+		                                      snapshot.playhead.anchorBeat);
         // Receiver owns both buffers. Gates and resolved controls share this
         // flip: patch order cannot pair a new trigger with the previous lock.
         Module* receiver = rightExpander.module;

@@ -18,6 +18,9 @@ becoming true (start or resume). At a transport change the follower:
 
 - starts a reset pulse of `reset_ms` (5 ms), latched for its full length even if
   the playhead has already moved past it;
+- holds every gate that was high on the sample before the change low for
+  `retrigger_ms` (1 ms), so a hit the change lands on rises again instead of
+  continuing the gate it interrupted;
 - starts a **landing gate** when the playhead landed inside the gate window of
   its row and the follower hears the change while the playhead is still in that
   row (see below), so a change that reaches it late still plays the hit it
@@ -42,8 +45,9 @@ the same pattern and row, the landing gate lasts
 
 from that sample, where `row phase` is that sample's and `retrigger_ms` is 1 ms,
 so the gate falls before the next row starts. While it lasts and the playhead
-stays in the landing row, `gate n` is high wherever lane `n` is **on**. It ends
-early at the next transport change or when `moving` becomes false.
+stays in the landing row, `gate n` is high wherever lane `n` is **on**, except
+during a retrigger. It ends early at the next transport change or when `moving`
+becomes false.
 
 For a follower that hears the change at once, the landing gate ends within the
 phase-based gate and changes nothing. One that hears it later, up to the end of
@@ -71,7 +75,7 @@ While a lane is muted or the cell is silent, nothing below updates for that lane
 | `clock` | high while `frac(beat · ppqn) < 0.5` and `moving`. `ppqn` default 4 (sixteenths). |
 | `reset` | high during the transport-change pulse, and while `(beat − cycle start) · 60 / bpm < reset_ms`, and `moving`. So every cycle wrap produces a pulse. |
 | `run` | high while `moving`. |
-| `gate n` | high while **on** and `row phase < gate`, and during a landing gate (above). `gate` default 0.5 (half a row). |
+| `gate n` | high while **on** and `row phase < gate`, and during a landing gate; low during a retrigger (above). `gate` default 0.5 (half a row). |
 | `pitch n` | held. Updated to the cell's pitch whenever **on** and the note is pitched; `AIR` leaves it. `volts = (midi + key − 2 − pitch_zero) / 12`. `pitch_zero` default 60 (C4 = 0 V); 48 (C3) is the alternative. |
 | `vel n` | held. Updated to the cell's velocity whenever **on**. Output `vel / 127 · high`. |
 | `z`, `roll`, `feedback` | the lane's interpolated value at the fractional row (score.md), mapped linearly from the lane range to its volt range. Hold while paused or disabled. |
