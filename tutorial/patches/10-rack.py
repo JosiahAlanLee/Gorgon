@@ -81,6 +81,17 @@ def build(cat, harvested, cfg=None):
     p.cable(k, 'Stereo mix left', a, '#0').cable(k, 'Stereo mix right', a, '#1')
     out['rack-kit'] = p
 
+    # ch10 sound locks: Machinemodule touching Gorgon's right side, TRIG unpatched, so it takes Gorgon's sound link;
+    # its native tempo matches kit-md.json. The OS is the user's own (paths.machinedrum_os); without it the patch
+    # loads and stays silent.
+    os_file = cfg.path('machinedrum_os') if cfg else None
+    p, g = base()
+    m = p.add('MachinemoduleRack', 'Machinemodule', params={'Engine tempo for synced retrigs/LFOs': 138},
+              data=dict(firmwarePath=str(os_file), samplePath='') if os_file else None)
+    a = audio_out(p)
+    p.cable(m, 'Main left', a, '#0').cable(m, 'Main right', a, '#1')
+    out['rack-machine'] = p
+
     # ch10 sample chain: Spoon Bender -> OTIS -> Vastish, touching, in that order (row 1);
     # Vastish plays from FM hits; its audio goes through Spoon Bender to the Audio module.
     p, g = base()
