@@ -5,13 +5,15 @@ defaults:
   needs: [controller]
   setup:
     studio: {patch: patches/gorgon_corridor.py, score: scores/demo.json, transport: stop}
+    actions:
+      - studio.click: '#visualPageTab'     # automation lives on the Visual page
 shots:
   - id: key
     title: A value at a row
     source: [hydrapy/docs/gorgon-editor-walkthrough.md#4-shape-visual-automation, hydrapy/docs/gorgon-tracker.md]
     narration: >
-      The visual lanes hold keys: a value at a row. Select a Dolly Z cell, {cell}
-      type a value, {value} and write the key. Playback doesn't move.
+      On the Visual page, the lanes hold keys: a value at a row. Select a Dolly Z cell; {cell}
+      the editor under the grid shows its value. Type a new one, {value} and write the key. Playback doesn't move.
       Seek to that row and play, {play} and the picture takes the value.
     actions:
       - at: cell
@@ -67,7 +69,7 @@ shots:
       - after: 1.2
         studio.point: '#bind_feedback'
     frames:
-      - {window: studio, rect: [0.7, 0.3, 0.3, 0.4], zoom: 1.0}
+      - {window: studio, rect: [0.78, 0.46, 0.22, 0.34], zoom: 1.0}
     verify:
       - "Dolly Z is 2D scale, not depth reprojection (gorgon_corridor docstring, tracker guide)"
       - "lane units 0–1, degrees, 0–0.9; no normalisation to the control's range"
@@ -76,7 +78,7 @@ shots:
     source: [hydrapy/docs/gorgon-editor-walkthrough.md#5-name-and-copy-patterns]
     narration: >
       Pattern tools renames, copies and clears. Name this one First Phrase, {name}
-      copy it to pattern two, {copy} which replaces everything there, name and curves included.
+      and the name appears on its card. Then copy it to pattern two, {copy} which replaces everything there, name and curves included.
       The order of patterns and their length are fixed for now; there is no song chain yet.
     actions:
       - studio.click: {selector: '#patternMenu summary'}

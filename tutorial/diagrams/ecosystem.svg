@@ -40,15 +40,19 @@
   <rect x="1400" y="480" width="440" height="500" rx="14" fill="#17171d" stroke="#3a3a44" stroke-width="2"/>
   <text x="1432" y="530" font-size="34" fill="#ffc733" font-weight="bold">DSP_Emulation</text>
   <text x="1432" y="566" font-size="22" fill="#9c988f">the instruments, for VCV Rack 2</text>
-  <g font-size="25" fill="#f0ece4">
-    <rect x="1432" y="596" width="376" height="76" rx="10" fill="#1f1f27" stroke="#55534d"/>
-    <text x="1456" y="644">OTIS Sampler</text>
-    <rect x="1432" y="686" width="376" height="76" rx="10" fill="#1f1f27" stroke="#55534d"/>
-    <text x="1456" y="734">Vastish</text>
-    <rect x="1432" y="776" width="376" height="76" rx="10" fill="#1f1f27" stroke="#55534d"/>
-    <text x="1456" y="824">Spoon Bender</text>
-    <rect x="1432" y="866" width="376" height="76" rx="10" fill="#1f1f27" stroke="#55534d"/>
-    <text x="1456" y="914">Séance + expanders</text>
+  <g font-size="23" fill="#f0ece4">
+    <rect x="1432" y="592" width="376" height="53" rx="10" fill="#1f1f27" stroke="#55534d"/>
+    <text x="1456" y="627">OTIS Sampler</text>
+    <rect x="1432" y="655" width="376" height="53" rx="10" fill="#1f1f27" stroke="#55534d"/>
+    <text x="1456" y="690">Vastish</text>
+    <rect x="1432" y="718" width="376" height="53" rx="10" fill="#1f1f27" stroke="#55534d"/>
+    <text x="1456" y="753">Spoon Bender</text>
+    <rect x="1432" y="781" width="376" height="53" rx="10" fill="#1f1f27" stroke="#55534d"/>
+    <text x="1456" y="816">Séance + expanders</text>
+    <rect x="1432" y="844" width="376" height="53" rx="10" fill="#1f1f27" stroke="#55534d"/>
+    <text x="1456" y="879">ByteBusLab</text>
+    <rect x="1432" y="907" width="376" height="53" rx="10" fill="#1f1f27" stroke="#55534d"/>
+    <text x="1456" y="942">DrumLab Percussion</text>
   </g>
 
   <!-- links -->

@@ -54,6 +54,39 @@ shots:
     mix: {programme: -10}
     verify:
       - "AIR keeps held pitch; velocity 0 opens no gate (MANUAL Outputs)"
+  - id: kit
+    title: A drum kit from the four lanes
+    frames:
+      - {window: rack}
+    source: [DSP_Emulation/vcv/drumlab/docs/MANUAL.md#connect-gorgon, DSP_Emulation/vcv/drumlab/docs/MANUAL.md#models-and-controls]
+    setup:
+      studio: {patch: patches/gorgon_corridor.py, score: scores/kit.json, transport: stop}
+      rack: {patch: rack-kit, view: {modules: [Gorgon, Percussion]}}
+    narration: >
+      DrumLab's Percussion plays Gorgon's four lanes as a kit: kick, snare, hat and FM. {patch}
+      Gorgon's gates, pitch and velocity go to its trigger, pitch and velocity inputs, one polyphonic cable each,
+      and a C4 plays each model at its own base pitch. {play}
+      Every hit captures the knobs as it starts, so turning Decay changes the next hit, {decay}
+      while the one already sounding keeps its envelope.
+    actions:
+      - at: patch
+        rack.highlight: {ref: Percussion.in.Triggers, label: 'TRIG · GATES, 4 ch', seconds: 2.5}
+      - at: play
+        studio.api: {action: tracker_transport, enabled: true, playing: true, beat: 0}
+      - at: decay
+        rack.knob: {ref: Percussion.param.Decay, scaled: 0.8, seconds: 2.5}
+      - after: 2.5
+        rack.knob: {ref: Percussion.param.Decay, scaled: 0.45, seconds: 1.5}
+      - after: 2
+        studio.press: Space
+    hold: 1
+    mix: {programme: -10}
+    verify:
+      - "Four-lane kit by default: channels 1-4 play Kick, Snare, Hat, FM (DrumLab MANUAL)"
+      - "Gorgon GATES -> TRIG, PITCH -> V/OCT, VEL -> VEL as in examples/Gorgon-percussion.vcv (rack-kit.cables.txt)"
+      - "with key D, C4 plays each model's base pitch (MANUAL Connect Gorgon 4; Gorgon pitch (midi + key - 2 - 60)/12 V)"
+      - "controls are captured at each trigger: turning DECAY changes the next hit, not the sounding one (MANUAL; DSP_Emulation #24)"
+      - "DrumLab plays in Rack Free's GUI on the stage's JACK server on this take (#24 had not checked live Rack/audio use)"
   - id: chain
     title: Spoon Bender, OTIS, Vastish
     frames:

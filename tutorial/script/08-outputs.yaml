@@ -13,7 +13,7 @@ shots:
     narration: >
       {play} Program opens the main output in its own window, for a second monitor; press F there for fullscreen.
       Auxiliary is a second, independent window. Output routing chooses which of the four outputs each one shows. {route}
-      Blackout darkens the browser monitors only. {blackout} Rendering, recordings and exports carry on.
+      Blackout darkens the monitors. {blackout} Rendering, recordings and exports carry on.
     actions:
       - at: play
         studio.press: Space
@@ -32,7 +32,66 @@ shots:
       - {at: blackout, window: studio}
     verify:
       - "Program also selects Studio's displayed/recorded output; Auxiliary never does (tracker guide)"
-      - "Blackout affects browser monitors only (§6.3)"
+      - "Blackout blanks the browser monitors and the native fullscreen output, not rendering, recordings or exports (tracker guide, HydraPy #53)"
+  - id: monitor
+    title: Inspect any output
+    source: [hydrapy/docs/gorgon-tracker.md#control-surface-and-displays]
+    narration: >
+      The Hydra monitor can inspect any of the four outputs without changing what Program sends. {o1}
+      Click one, or step through them with the square brackets. {step}
+      Program returns to the live feed; the dot marks the output Program is on. {program}
+    actions:
+      - studio.press: Space
+      - at: o1
+        studio.click: '[data-preview-output="o1"]'
+      - at: step
+        studio.press: ']'
+      - after: 1.2
+        studio.press: ']'
+      - at: program
+        studio.click: '[data-preview-output="program"]'
+      - after: 1.5
+        studio.press: Space
+    frames:
+      - {window: studio, rect: [0.8, 0.17, 0.2, 0.3], zoom: 1.0}
+    verify:
+      - "o0-o3 buttons and [ / ] inspect outputs locally; Program follows the live feed; the dot marks Program's output; routing, recording and the score are untouched (HydraPy #57, tracker guide)"
+      - "gorgon_corridor draws distinct pictures on o0 (composite), o1 (source), o2 (edges), o3 (feedback)"
+  - id: fullscreen
+    title: Program from Studio itself
+    # Studio here sees the stage's display (needs studio_display), so its Display menu works; it renders through
+    # the stage's software GL for this shot only. A window in the program quadrant stands in for the second monitor.
+    needs: [controller, studio_display]
+    source: [hydrapy/docs/gorgon-tracker.md#control-surface-and-displays, hydrapy/docs/studio.md]
+    narration: >
+      On Linux, the Display menu puts Program in Studio's own window instead. {menu} Pick the monitor; here a window
+      stands in for the second screen. Then Show Program fullscreen, or press Shift F. {show}
+      It draws the frame Studio rendered, with no browser in between, and edits go to it at once. {play}
+      The monitor here becomes a small preview. Shift F again closes it. {close}
+    actions:
+      - at: menu
+        studio.click: {selector: '#displayMenu summary'}
+      - after: 0.8
+        studio.select: {target: '#nativeMonitor', value: window}
+      - at: show
+        studio.click: '#nativeToggleBtn'
+      - place: {name: HydraPy Program, window: program}
+      - at: play
+        studio.press: Space
+      - at: close
+        studio.press: Shift+F
+      - after: 1
+        studio.press: Space
+    hold: 1
+    frames:
+      - {window: studio}
+      - {at: show, window: program}
+      - {at: close, window: studio}
+    verify:
+      - "Display menu (Linux, X display): monitor list plus 'A window on this desktop'; Show Program fullscreen / Shift+F; Close (HydraPy #53, tracker guide)"
+      - "the native window draws the texture Studio rendered (no readback, JPEG or browser); edits are sent at once while it shows (edit delay 0) (HydraPy #53)"
+      - "while it shows, the editor's monitor is a 480x270 confidence preview (HydraPy #53/#55); its caption says 'in a window · preview'"
+      - "on the stage this renders through Xvfb's software GL: the narration makes no GPU or latency claim"
   - id: save
     title: Save and restore
     source: [hydrapy/docs/gorgon-editor-walkthrough.md#8-save-restore-and-recover]

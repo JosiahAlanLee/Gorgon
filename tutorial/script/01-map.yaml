@@ -12,7 +12,7 @@ shots:
       Its Studio is a local workspace in the browser, and the Gorgon tracker runs inside it.
       {gorgon} The Gorgon repository holds the contract between the pieces, and the Rack module, also called Gorgon,
       which puts the score on Rack's jacks. {dsp} DSP Emulation holds the instruments:
-      OTIS, Vastish, Spoon Bender and Séance, and the ByteBusLab byte-bus modules.
+      OTIS, Vastish, Spoon Bender, Séance, the ByteBusLab byte-bus modules, and DrumLab's percussion kit.
       {clock} Gorgon is the master clock. Rack follows it, and Gorgon never follows an external clock.
     frames:
       - {rect: [0, 0, 1, 1]}

@@ -54,7 +54,7 @@ shots:
         - shell: rm -rf Gorgon DSP_Emulation
     narration: >
       The Rack plugins come from two repositories. The Gorgon module is in Gorgon, under rack. {gorgon}
-      OTIS, Vastish, Spoon Bender, Séance and ByteBusLab are in DSP Emulation, under vcv. {dsp}
+      OTIS, Vastish, Spoon Bender, Séance, ByteBusLab and DrumLab are in DSP Emulation, under vcv. {dsp}
       Each builds against the Rack SDK with make dist, which writes a vcvplugin file.
       Build them from source: DSP Emulation's current release predates Séance. {build}
     actions:
@@ -63,20 +63,20 @@ shots:
       - at: dsp
         term.run: {cmd: "git clone --depth 1 https://github.com/JosiahAlanLee/DSP_Emulation.git", wait_for: '\$ $|done\.', timeout: 300}
       - at: build
-        term.type: {cmd: "for d in Gorgon/rack DSP_Emulation/vcv/{otislab,vastish,spoonbender,seance,bytebus}; do make -s -C $d RACK_DIR=$RACK_SDK -j8 dist; done"}
+        term.type: {cmd: "for d in Gorgon/rack DSP_Emulation/vcv/{otislab,vastish,spoonbender,seance,bytebus,drumlab}; do make -s -C $d RACK_DIR=$RACK_SDK -j8 dist; done"}
       - mark: build-start                 # typed at normal speed; only the build is fast-forwarded
-        term.wait: {wait_for: 'ByteBusLab-[0-9.]+-lin-x64\.vcvplugin', timeout: 1800}
+        term.wait: {wait_for: 'DrumLab-[0-9.]+-lin-x64\.vcvplugin', timeout: 1800}
       - wait: 0.5
         mark: build-done
     speed:
       - {from: build-start, to: build-done, factor: 16}
     verify:
-      - "make dist target names and dist/*.vcvplugin output for all six plugins (ByteBusLab is needed for chapter 11's Bridge example)"
+      - "make dist target names and dist/*.vcvplugin output for all seven plugins (ByteBusLab for chapter 11's Bridge example, DrumLab for the kit in chapters 0 and 10)"
       - "DSP_Emulation's only release, preview-1, predates Séance (gh release list); update this line if a newer release exists"
   - id: copy
     title: Into Rack's plugins folder
     narration: >
-      Copy the six files into the plugins folder inside Rack's user folder. {copy}
+      Copy the seven files into the plugins folder inside Rack's user folder. {copy}
       Rack's Help menu has Open user folder if you are not sure where it is.
       Quit Rack first; it unpacks new plugins when it starts.
     actions:
