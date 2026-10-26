@@ -85,7 +85,7 @@ stage also refuses a server with any ports besides its dummy driver's.
 ### 1. Build what is filmed
 
 ```sh
-gtut setup                # HydraPy worktree at Gorgon's hydrapy.pin; build + install the five plugins and the probe
+gtut setup                # HydraPy worktree at Gorgon's hydrapy.pin; build + install the plugins (rack.plugins) and the probe
 gtut catalog              # starts Rack once on the stage; writes work/catalog.json (ports, params, panel widths)
 gtut preflight            # again: now it can confirm Rack Free and the installed plugins
 ```
@@ -192,7 +192,11 @@ A take records only the windows a shot frames, 1:1, with the programme sound
 from Rack's Audio module (JACK) and a slate channel. Compose crops and zooms in
 post (`frames:` keyframes), so capture once and frame freely.
 
-- **Studio** runs without `DISPLAY` so moderngl uses EGL on the 4090. Its state
+- **Studio** runs without `DISPLAY` so moderngl uses EGL on the 4090, and with
+  `--no-native-output`, so its Display menu stays hidden. A shot that needs
+  `studio_display` (chapter 8's fullscreen shot) gets a Studio on the stage's display
+  instead: its Display menu works and the `place` action moves the native Program
+  window into a stage window; that Studio renders through Xvfb's software GL. Its state
   (`.hydrapy/`) lives in the HydraPy worktree, not his checkout.
 - **Rack** runs with `-u work/stage/rack-user`. Every generated patch includes a
   `Director` module (the probe), parked far right. The probe writes
@@ -230,11 +234,11 @@ Checked (2026-10-25, Rack Free 2.6.6, Xvfb, jackd1):
 - context menus and submenus (`rack.menu` slides into submenus in straight lines;
   Gorgon's audio device list is a submenu since GorgonBridge 2.1.1);
 - Kokoro on the GPU (with the spaCy pins in `pyproject.toml`); faster-whisper falls
-  back to the CPU when CUDA 12's cuBLAS is missing (PyTorch here is CUDA 13).
-
-Still to check in takes: cable drags, `rack.add` (whether Enter adds the browser's
-top result), knob ramps, the view animation, NVENC in a take, and the tracker
-selectors in chapters 3–8.
+  back to the CPU when CUDA 12's cuBLAS is missing (PyTorch here is CUDA 13);
+- in takes: cable drags, `rack.add` (Enter adds the browser's top result), knob ramps,
+  the view animation, menus, the tracker selectors in chapters 3–8 (Audio/Visual pages,
+  output picker), Studio's native Program window on the stage (chapter 8), and DrumLab's
+  Percussion playing Gorgon's lanes on the stage's JACK server (chapters 0 and 10).
 
 ## Where things are when something fails
 

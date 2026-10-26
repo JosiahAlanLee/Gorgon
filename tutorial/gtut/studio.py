@@ -59,11 +59,18 @@ def reset_state(cfg, score: Path | None = None, outputs: dict | None = None):
         (state / 'outputs.json').write_text(json.dumps(outputs, indent=2))
 
 
-def launch(cfg, procs: Procs, patch: str | None = None, tracker: bool = True) -> dict:
+def launch(cfg, procs: Procs, patch: str | None = None, tracker: bool = True, display: bool = False) -> dict:
+    """Start the stage's Studio. Without ``display`` it has no X display, renders on the GPU through EGL,
+    and runs with --no-native-output (no Display menu). With it, Studio sees the stage's display so its
+    Display menu can open a native Program window there; it then renders through the stage's software GL."""
     s = cfg['studio']
     root = make_root(cfg)
     env = audio.jack_env(cfg)
-    env.pop('DISPLAY', None)
+    if display:
+        from .display import x_env
+        env = x_env(cfg, env)
+    else:
+        env.pop('DISPLAY', None)
     env['HYDRAPY_STUDIO_FILE'] = str(bridge_file(cfg))
     if bridge_file(cfg).exists():
         bridge_file(cfg).unlink()
@@ -72,6 +79,8 @@ def launch(cfg, procs: Procs, patch: str | None = None, tracker: bool = True) ->
             '--size', f"{s['size'][0]}x{s['size'][1]}", '--fps', s['fps'], '--port', s['port'], '--no-browser']
     if tracker:
         argv.append('--tracker')
+    if not display:
+        argv.append('--no-native-output')
     procs.start('studio', audio.wrap(cfg, argv), env=env, cwd=root)
     try:
         info = wait_until(lambda: json.loads(bridge_file(cfg).read_text()), 90, interval=0.25,

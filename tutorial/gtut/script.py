@@ -29,7 +29,7 @@ import yaml
 
 CUE = re.compile(r'\{([a-z0-9_-]+)\}')
 CONTROL = {'at', 'after', 'mark', 'note'}
-SERVICES = {'studio', 'controller', 'program', 'aux', 'rack', 'terminal'}
+SERVICES = {'studio', 'studio_display', 'controller', 'program', 'aux', 'rack', 'terminal'}
 
 
 class ScriptError(ValueError):
@@ -132,7 +132,9 @@ def validate(shot: Shot, path):
     service = {'studio': 'controller', 'program': 'program', 'rack': 'rack', 'terminal': 'terminal'}
     for f in shot.frames:
         w = f.get('window')
-        if shot.kind == 'live' and w and service.get(w) not in shot.needs:
+        # A Studio with the stage display can put its own native Program window in the program quadrant.
+        native = w == 'program' and 'studio_display' in shot.needs
+        if shot.kind == 'live' and w and service.get(w) not in shot.needs and not native:
             raise ScriptError(f'{where}: frames show {w!r} but needs has no {service.get(w)!r}')
         at = f.get('at')
         if at not in (None, 0) and at not in cues and at not in marks:

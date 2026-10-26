@@ -205,6 +205,14 @@ def _h_move(st, arg):
     st.hand.move(x + w * arg['x'], y + h * arg['y'], seconds=arg.get('seconds'))
 
 
+@action('place', '{name, window, timeout}: move the X window titled `name` (Studio\'s native Program window)'
+                 ' onto a stage window')
+def _place(st, arg):
+    from .display import place, wait_window
+    wid = wait_window(st.cfg, timeout=arg.get('timeout', 10), name=arg['name'])
+    place(st.cfg, wid, st.cfg['stage']['windows'][arg['window']])
+
+
 @action('shell', 'cmd: run a command off camera, with the stage environment, in the terminal\'s sandbox')
 def _shell(st, arg):
     # The same folder the on-camera terminal starts in (work/sandbox), so a path in a script means one thing.
