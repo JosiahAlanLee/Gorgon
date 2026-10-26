@@ -215,12 +215,22 @@ def cmd_serve(cfg, a):
                 self._reply(500, dict(error=str(exc), trace=traceback.format_exc()))
 
     server = HTTPServer(('127.0.0.1', SERVE_PORT), H)
-    print(f'gtut serving on 127.0.0.1:{SERVE_PORT}; Ctrl+C to stop and tear the stage down', flush=True)
+    # `gtut serve &` from a script or non-interactive shell starts with SIGINT ignored, so Python never
+    # installs its Ctrl+C handler; SIGTERM would skip the teardown and leave the stage's processes up.
+    # Both now stop serving and tear the stage down.
+    import signal
+
+    def stop(signum, frame):
+        raise KeyboardInterrupt
+    signal.signal(signal.SIGINT, stop)
+    signal.signal(signal.SIGTERM, stop)
+    print(f'gtut serving on 127.0.0.1:{SERVE_PORT}; Ctrl+C (or kill) stops it and tears the stage down', flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         pass
     finally:
+        server.server_close()
         stage.down()
 
 
