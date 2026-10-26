@@ -128,9 +128,10 @@ change without notice. A follower uses only the three above.
 ## Follower obligations
 
 - Treat a `transport_revision` change as a discontinuity: emit a complete reset
-  pulse (even if the playhead is already past its first milliseconds), give the
-  row at `anchor_beat` its landing gate ([cv-semantics.md](cv-semantics.md)),
-  clear held pitch and velocity, and re-anchor.
+  pulse (even if the playhead is already past its first milliseconds), retrigger
+  open gates and give the row at `anchor_beat` its landing gate
+  ([cv-semantics.md](cv-semantics.md)), clear held pitch and velocity, and
+  re-anchor.
 - Do not re-trigger reset on a `revision` change, a controls change, or a
   repeated snapshot.
 - When Studio stops answering, keep the last tempo and position and carry on;

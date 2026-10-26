@@ -3,18 +3,25 @@
 Newest first. Each entry names the HydraPy commit and Rack module version it
 describes.
 
-## 2026-10-26 — late transport changes keep their landing hit (specification)
+## 2026-10-26 — a transport change keeps the hit it lands on (specification)
 
 Spec-first; HydraPy's `TrackerCV` and the Rack module follow in separate PRs.
-[cv-semantics.md](cv-semantics.md) adds the landing gate: at a transport change,
-when the playhead landed inside its row's gate window and the follower is
-still in that row, the row's gates last as long as they would have from the
-landing, starting at the first available sample. Gates were purely phase-based,
-so a change that reached a follower after the window closed lost the hits it
-landed on: on the workstation, 8 of 58 Seek-to-row cues lost their landing kick
-in Rack, and with OFFSET +24 ms the first downbeat after Play never fired. The
-reset pulse already worked this way. The fixture's rows are stateless and do not
-change.
+On the workstation, 8 of 58 Seek-to-row cues lost their landing kick in Rack,
+for two reasons, and with OFFSET +24 ms the first downbeat after Play never
+fired. [cv-semantics.md](cv-semantics.md) adds two rules for a transport change:
+
+- **Retrigger**: a gate that was high on the sample before it goes low for 1 ms.
+  A cue made while the previous kick's gate was still open landed on a gate that
+  was already high, so no new edge reached the instruments (4 of the 8; this
+  happens to any follower, however soon it hears the change).
+- **Landing gate**: when the playhead landed inside its row's gate window and
+  the follower is still in that row, the row's gates last as long as they would
+  have from the landing, starting at the first available sample. Gates were
+  purely phase-based, so a change that reached a follower after the window
+  closed lost the hits it landed on (the other 4, and the OFFSET downbeat).
+
+The reset pulse already latches the same way. The fixture's rows are stateless
+and do not change.
 
 ## 2026-10-26 — pattern-rate timing (proposal)
 
