@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // Copyright (c) 2026 Gorgon contributors. See the repository LICENSE.
-#pragma once
+#ifndef GORGON_SOUND_LINK_V1_HPP
+#define GORGON_SOUND_LINK_V1_HPP
 #include <cmath>
 #include <cstdint>
 #include <type_traits>
@@ -40,3 +41,5 @@ inline bool valid(const Packet& p, int64_t now) {
     return true;
 }
 } // namespace gorgon_sound
+
+#endif // GORGON_SOUND_LINK_V1_HPP
