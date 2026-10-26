@@ -68,21 +68,20 @@ def test_start_restore_audio_idempotency_stop_and_relaunch(tmp_path, monkeypatch
         if check:
             assert result.returncode == 0, result.stdout + result.stderr + '\n' + str(launcher.read_state(config))
         return result
-    foreign = receiver = None
+    foreign = receiver = output = None
     try:
         until(lambda: audio.probe(config))
         import jack
         # A long-running desktop server reuses node IDs, so a new client can sort before an existing
         # device. Free some IDs below the output's, as there, for Studio's and Rack's clients to take.
-        placeholders = [jack.Client(f'gorgon_test_placeholder{i}', no_start_server=True) for i in range(4)]
+        placeholders = [jack.Client(f'gorgon_test_placeholder{i}', no_start_server=True) for i in range(8)]
         for client in placeholders:
             client.outports.register('out')
             client.activate()
-        subprocess.run(['pw-cli', 'create-node', 'adapter', '{ factory.name = support.null-audio-sink '
-                        'node.name = gorgon-test-output node.description = "Gorgon Test Output" media.class = Audio/Sink '
-                        'audio.position = [ FL FR ] object.linger = true '
-                        'adapter.auto-port-config = { mode = dsp monitor = true position = preserve } }'],
-                       check=True, capture_output=True, timeout=10)
+        output = jack.Client('Gorgon Test Output', no_start_server=True)
+        for name in ('playback_FL', 'playback_FR'):
+            output.inports.register(name)
+        output.activate()
         for client in placeholders:
             client.deactivate()
             client.close()
@@ -149,7 +148,7 @@ def test_start_restore_audio_idempotency_stop_and_relaunch(tmp_path, monkeypatch
         print(f'real PipeWire → Studio → Gorgon/Rack → JACK capture: peak {peak:.6f}; restore/relaunch/ownership passed')
     finally:
         command('stop', check=False)
-        for client in (receiver, foreign):
+        for client in (receiver, foreign, output):
             if client is not None:
                 client.deactivate()
                 client.close()

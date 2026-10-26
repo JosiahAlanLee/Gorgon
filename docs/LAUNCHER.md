@@ -149,8 +149,9 @@ PID. Logs/discovery files are private to your account; status omits the token.
 
 ## Validation
 
-The opt-in integration test starts a private real PipeWire server, a null output
-device, the pinned Studio and Rack Free with the real Gorgon plugin. It captures
+The opt-in integration test starts a private real PipeWire server, a test output
+whose node ID sits above freed ones (as on a long-running desktop server), the
+pinned Studio and Rack Free with the real Gorgon plugin. It captures
 audio through the entire chain, checks score restoration, repeated start, stop,
 relaunch with a changed Studio client name, and survival of an unrelated client
 and the pre-existing audio server. No physical interface or firmware is used.
