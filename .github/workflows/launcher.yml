@@ -1,0 +1,79 @@
+name: Linux session launcher
+on:
+  push:
+    branches: [main]
+    paths: ['gorgon/**', 'pyproject.toml', 'tests/test_launcher*.py', 'hydrapy.pin', '.github/workflows/launcher.yml']
+  pull_request:
+    paths: ['gorgon/**', 'pyproject.toml', 'tests/test_launcher*.py', 'hydrapy.pin', '.github/workflows/launcher.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: gorgon-launcher-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  unit:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        python: ['3.10', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install -e '.[test]'
+      - run: gorgon --help && python -m pytest -q tests/test_launcher.py
+  pipewire:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Resolve the compatible Studio revision
+        id: pin
+        run: echo "ref=$(tr -d '[:space:]' < hydrapy.pin)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          repository: JosiahAlanLee/hydrapy
+          ref: ${{ steps.pin.outputs.ref }}
+          path: .integration/hydrapy
+      - name: Install native audio and build tools
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends pipewire-bin pipewire-jack libspa-0.2-modules libjack-jackd2-0 libpulse0 jq zstd
+      - run: python -m pip install -e '.[test]' -e '.integration/hydrapy[jack]'
+      - name: Fetch Rack Free and its matching SDK
+        run: |
+          curl --fail --location https://vcvrack.com/downloads/RackFree-2.6.4-lin-x64.zip -o /tmp/rack.zip
+          unzip -q /tmp/rack.zip -d /tmp
+          curl --fail --location https://vcvrack.com/downloads/Rack-SDK-2.6.4-lin-x64.zip -o /tmp/rack-sdk.zip
+          unzip -q /tmp/rack-sdk.zip -d /tmp
+      - name: Build the real Gorgon Rack plugin
+        run: make -C rack -j2 RACK_DIR=/tmp/Rack-SDK
+      - name: Launch, hear and stop a complete isolated session
+        env:
+          GORGON_RACK_EXECUTABLE: /tmp/Rack2Free/Rack
+          GORGON_PLUGIN_DIRECTORY: ${{ github.workspace }}/rack
+        run: pw-jack python -m pytest -q -s --basetemp=/tmp/gorgon-launch-tests tests/test_launcher_live.py
+      - name: Collect redacted app diagnostics
+        if: always()
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          out = Path('/tmp/gorgon-launch-diagnostics')
+          out.mkdir(exist_ok=True)
+          root = Path('/tmp/gorgon-launch-tests')
+          for number, path in enumerate([*root.rglob('*.log'), *root.rglob('log.txt')]):
+              if path.name not in ('pipewire.log', 'launcher.log', 'studio.log', 'rack.log', 'log.txt'):
+                  continue
+              text = path.read_text(errors='replace')
+              text = re.sub(r'(http://127\.0\.0\.1:\d+/\S*#)\S+', r'\1REDACTED', text)
+              (out / f'{number}-{path.name}').write_text(text)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gorgon-launch-diagnostics
+          path: /tmp/gorgon-launch-diagnostics
+          if-no-files-found: warn

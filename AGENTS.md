@@ -14,6 +14,7 @@ routing table.
 | The pinned HydraPy commit | **Gorgon `hydrapy.pin`** | One file. The weekly workflow proposes moves; see below. |
 | OTIS, Vastish, Spoon Bender | [DSP_Emulation](https://github.com/JosiahAlanLee/DSP_Emulation) | Not Gorgon. |
 | The tutorial video kit: filming harness, probe plugin, script | **Gorgon `tutorial/`** | Not part of the plugin or the contract; its own CI (`tutorial.yml`). Briefing in `tutorial/CLAUDE.md`. |
+| The Linux session launcher, profiles and app startup | **Gorgon `gorgon/`** | `gorgon start` supervises Studio/Rack using their existing interfaces. It is not the sequencer or the tutorial harness. Tests in `tests/test_launcher*.py`; CI in `launcher.yml`. |
 
 A feature that crosses the boundary (a new signal, a new score field a follower
 reads, a new endpoint) is three pull requests in this order:
@@ -85,7 +86,8 @@ make -C rack RACK_DIR=/path/to/Rack-SDK dist
 
 ## What this repository is not
 
-It is not where the Python tracker lives, yet. Extracting it from HydraPy into
+The `gorgon` Python package currently contains the Linux session launcher.
+It is not where the Python tracker lives, yet. Extracting the tracker from HydraPy into
 a `gorgon` package that depends on HydraPy is planned for after the current
 feature work settles, once Studio exposes the hooks it needs (session lifecycle,
 HTTP routes, renderer prewarm). Until then, HydraPy is the reference

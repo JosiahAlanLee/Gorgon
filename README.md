@@ -16,6 +16,18 @@ and VCV Rack can play that same score through other instruments.
 
 ## Start
 
+On Linux, the session launcher can open Studio's tracker and picture window,
+then Rack with your saved patch and JACK/PipeWire routing:
+
+```sh
+gorgon start
+```
+
+Install it once with `python -m pip install -e .` in your HydraPy environment.
+Use `gorgon init` to select your existing rig, and `gorgon doctor` to check it.
+The [launcher guide](docs/LAUNCHER.md) covers setup, audio-device selection and
+session controls. The launcher lives here; sequencing/rendering still live in HydraPy.
+
 From a HydraPy checkout, install the GPU/video extras and open the tracker:
 
 ```sh
