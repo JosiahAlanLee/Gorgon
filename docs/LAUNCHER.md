@@ -26,8 +26,8 @@ ports (`python -m pip install -e '/path/to/hydrapy[live,jack]'`). Gorgon's
 the GorgonBridge plugin must also be installed. The launcher discovers `Rack`
 on PATH and common `~/opt/Rack2Free/Rack` / `/opt/Rack2/Rack` locations.
 
-Install your distribution's PipeWire JACK tools, including `pw-jack` and
-`pw-cli`, and WirePlumber. `wmctrl` is optional for requesting a clean Rack
+Install your distribution's PipeWire JACK tools, including `pw-jack`, `pw-cli`
+and `pw-dump`, and WirePlumber. `wmctrl` is optional for requesting a clean Rack
 window close from `gorgon stop`. This is a user-session launcher: it runs no
 sudo commands, installs no OS packages, and does not replace PulseAudio or
 rewrite ALSA configuration. Set up the desktop audio system once using your

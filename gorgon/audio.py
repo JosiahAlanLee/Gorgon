@@ -77,9 +77,8 @@ def playback_device(config, graph):
         return wanted
     physical = {p['name'].split(':', 1)[0] for p in inputs if p['flags'] & 4}
     # Resolve WirePlumber's default sink through JACK names and aliases.
-    if config['audio']['backend'] == 'pipewire' and shutil.which('wpctl'):
-        result = subprocess.run(['wpctl', 'inspect', '@DEFAULT_AUDIO_SINK@'], capture_output=True, text=True, timeout=5)
-        names = re.findall(r'node\.(?:name|nick|description)\s*=\s*"([^"]+)"', result.stdout)
+    if config['audio']['backend'] == 'pipewire' and shutil.which('pw-dump'):
+        names = default_sink_names()
         matches = {p['name'].split(':', 1)[0] for p in inputs
                    if any(n == alias.split(':', 1)[0] for alias in [p['name'], *p['aliases']] for n in names)}
         if len(matches) == 1:
@@ -88,6 +87,22 @@ def playback_device(config, graph):
         return next(iter(physical))
     choices = ', '.join(sorted(physical or groups)) or 'none'
     raise LaunchError(f'Choose audio.device once in {config["_path"]}; available JACK input groups: {choices}')
+
+
+def default_sink_names():
+    # From pw-dump rather than `wpctl inspect @DEFAULT_AUDIO_SINK@`, which WirePlumber 0.4.8 rejects.
+    try:
+        objects = json.loads(subprocess.run(['pw-dump'], capture_output=True, text=True, timeout=5).stdout)
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        return []
+    default = next((entry['value'].get('name') for o in objects if (o.get('props') or {}).get('metadata.name') == 'default'
+                    for entry in o.get('metadata') or []
+                    if entry.get('key') == 'default.audio.sink' and isinstance(entry.get('value'), dict)), None)
+    for o in objects:
+        props = (o.get('info') or {}).get('props') or {}
+        if default and props.get('node.name') == default:
+            return [props[k] for k in ('node.name', 'node.nick', 'node.description') if props.get(k)]
+    return []
 
 
 def rack_ports(graph):
