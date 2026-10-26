@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gorgon-live"
+version = "0.1.0"
+description = "Start a Gorgon / HydraPy / VCV Rack session on Linux"
+requires-python = ">=3.10"
+license = {text = "BSD-3-Clause"}
+dependencies = ["zstandard>=0.21"]
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[project.scripts]
+gorgon = "gorgon.cli:main"
+
+[tool.setuptools]
+packages = ["gorgon"]
