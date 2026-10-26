@@ -1,0 +1,497 @@
+# Gorgon system roadmap — October 2026
+
+A plan across Gorgon, HydraPy and DSP_Emulation, written from the design
+decisions made on 2026-10-26. It is **not a contract change**: nothing here
+alters `spec/`, the HydraPy pin or the Rack outputs until the PRs it names land.
+Proposed home: Gorgon `docs/ROADMAP.md`, next to
+[DRUM_MACHINE.md](DRUM_MACHINE.md), which it extends and in places supersedes.
+
+Snapshot inspected: Gorgon `edfd116`, HydraPy pin `e5999b2`, DSP_Emulation
+`3a7447b`. Versions: GorgonBridge 2.3.1, Machinemodule 2.0.0, Vastish 2.5.0,
+OtisLab 2.8.0, ByteBusLab 2.2.0.
+
+## 1. Decisions this plan is built on
+
+1. **Gorgon's job is time and events. Sound lives in Rack.** No real-time
+   model inference anywhere on the tick. RAVE is dropped. The Stable Audio
+   fine-tune becomes an offline sample renderer (§3.F).
+2. **Six lanes, not bound to engines.** A lane is a typed event stream — hit,
+   pitch, velocity, locks, command — and routing to destinations is a separate
+   layer. Six is the default, carried as a constant in v3, not hard-wired into
+   the schema's shape forever.
+3. **Timing: three numbers per pattern.** `rate` (rows per quarter note, from
+   [pattern-timing.md](../spec/pattern-timing.md)), `bar` (rows per bar), `bars`
+   (bars per pattern, up to 128 rows total). **The cycle is the bar**, not the
+   pattern loop. Per-lane length is allowed (polymeter against the bar).
+   Bar counters reset on pattern entry and at a transport change.
+4. **One pure evaluator is the central artifact of v3.**
+   `evaluate(score, transport, interval) → events`, with no hidden state: the
+   same inputs give the same events in every implementation (HydraPy
+   scheduler, browser audition, Rack engine). **Conditions live in the cell**,
+   next to note, velocity and locks, and are typed data, not code.
+   **Transforms live on the lane**, as a bounded tree. Probability is a hash of
+   the seed and position, never a wall-clock dice roll. PRE/NEI are deferred
+   because they are the only Elektron conditions that would need state.
+5. **The byte bus is the control fabric.** Gorgon's existing BUS OUT stays;
+   Gorgon gains BUS IN for FILL and mutes. Counter is built before Pipeline.
+   Machinemodule's TRIG gains a bus mode.
+6. **Retired:** DrumLab Percussion (Machinemodule is the drum destination;
+   OTIS is the sampler). [pattern-timing.md](../spec/pattern-timing.md) is
+   subsumed by score v3 rather than implemented on its own.
+7. **Added destinations, no new sequencer code:** Vastish gains an audio input
+   (K2500 Live Mode); a Monomodule adapter reuses the Machinemodule adapter;
+   OTIS gains EPS-style patch-select bits; the Analog Four and Rytm are reached
+   through Rack's Core MIDI modules.
+
+Open questions are collected in §5.
+
+## 2. Workstreams
+
+Each item names its repository per [AGENTS.md](../AGENTS.md). Sizes are
+rough: **S** an evening, **M** a few sessions, **L** a multi-PR feature.
+
+| ID | Item | Repo | Size | Depends on |
+| --- | --- | --- | --- | --- |
+| A | Score v3: lanes, timing, conditions, transforms, bus I/O | Gorgon spec → HydraPy → Gorgon rack | L | — |
+| B1 | Ratify byte bus §11 | DSP_Emulation docs | S | — |
+| B2 | Counter module | DSP_Emulation bytebus | M | B1 |
+| B3 | Machinemodule BUS TRIG mode | DSP_Emulation machinemodule | S | B1 |
+| B4 | Switch, then Pipeline | DSP_Emulation bytebus | M | B2 |
+| C1 | Sound link v2: six lanes | Gorgon spec/rack + Machinemodule | M | A |
+| C2a | Machinemodule adapter refactor, no behavior change | DSP_Emulation machinemodule | M | — |
+| C2b | Monomodule Rack adapter | DSP_Emulation (new `vcv/monomodule`) | L | C1, C2a |
+| D1 | Vastish AUDIO IN (mono, then poly) | DSP_Emulation vastish | S→M | — |
+| D2 | Vastish chain mode (triple) | DSP_Emulation vastish | M | D1 |
+| E1 | OTIS patch-select bits | DSP_Emulation otislab | S | — |
+| E2 | Otis Kit + Capture | DSP_Emulation otislab | L | E1, A |
+| F1 | Retire DrumLab | DSP_Emulation + this doc | S | — |
+| F2 | Diffusion model as offline renderer | outside these repos | M | — |
+| G1 | Latency measurement and per-destination offsets | Gorgon rack | M | — |
+| G2 | Event trace in all three evaluators | Gorgon spec → HydraPy → rack | M | A |
+| H1 | A4/Rytm as MIDI destinations | documentation only | S | — |
+
+### A. Score v3 — `hydrapy-tracker-3`
+
+This is the big one and it goes through the three-PR sequence. It should be
+**several spec PRs**, one concern each, before any implementation:
+
+- **A-spec-1: lanes and timing.** Six lanes; `rate`/`bar`/`bars`; per-lane
+  length; the generalized beat/row conversion; migration from v1/v2.
+- **A-spec-2: the evaluator.** The event record (stable id, lane, rational
+  beat position, duration, note, velocity, locks, origin: which cell and which
+  transform step produced it), the `evaluate()` signature and its invariants,
+  cell conditions, bar counters, seed, fill-from-beat. This PR carries
+  **hand-computed vectors** for the awkward combinations — a 7-row lane against
+  a 16-row bar, `1:3` plus `%` plus `ply 4`, a seek mid-bar, a FILL arriving
+  mid-bar — in the style of `BYTE_BUS_SPEC.md` §6, so HydraPy has something to
+  reproduce before the generated fixture exists. It also defines the trace
+  format (§G2).
+- **A-spec-3: lane transforms.** The bounded transform tree and its semantics.
+- **A-spec-4: bus I/O.** BUS OUT hit mask widened; BUS IN defined; the
+  bridge's transport endpoint extended so a follower can set `fill` and
+  `mutes`.
+
+Then one HydraPy PR per spec PR (validator, timing helpers, editor, browser
+scheduler, direct CV, scene/automation evaluation), then the Rack PR with pin
+move and regenerated fixture. §4 has the concrete proposal for A-spec-1..3.
+The order of proof is: spec vectors → HydraPy reproduces them → fixture
+generated from HydraPy → Rack matches the fixture. The fixture cannot precede
+HydraPy, because HydraPy's `TrackerCV` is what generates it (AGENTS.md). Add
+property-based tests in HydraPy over random lane lengths, conditions,
+transforms and transport jumps, checking the evaluator's invariants rather
+than fixed outputs; the fixture then samples that space.
+
+**The internal event model is lane-indexed, not destination-indexed.** The
+sound link's six channels, the Rack jack count and the hit-mask width are
+projections of it, and none of them is the definition of a lane. v3 validates
+exactly six lanes; the schema shape is a list.
+
+**What changes in Rack** (A, with C1): GATES/VEL/V-OCT become six channels;
+individual GATE jacks go to 1–6 if HP allows, else the poly jack plus Split.
+Existing port IDs are preserved and new ones appended, as the manual requires.
+The sound-link packet grows from four lanes to six under a new ABI version.
+BUS OUT's hit mask uses bits 0–5; bit 6 is FILL, bit 7 reserved.
+
+**What changes in HydraPy:** the editor's Audio page shows six lanes, a pattern
+header with rate/bar/bars, a per-lane length, a condition field in the
+selected-cell editor, and a transform list per lane. Direct CV gains two gates
+(ES-40 maps are HydraPy's own, not contract). The browser audition synth
+follows the same rules (it is the third implementation, per `spec/README.md`).
+
+### B. Byte bus
+
+- **B1.** Ratify [BYTE_BUS_SPEC.md](https://github.com/JosiahAlanLee/DSP_Emulation/blob/main/docs/BYTE_BUS_SPEC.md)
+  §11 as written (name aside). The sample-rate vs latched question is already
+  settled by "mode by channel count" and "latching modules own an internal
+  clock"; nothing downstream should wait on it.
+- **B2. Counter** moves ahead of Pipeline. It is the missing piece of
+  Counter → Lookup (rhythm family) → Machinemodule TRIG, which is the whole
+  bytebeat-kit chain, and of Counter → Lookup → Converter DAC → any filter,
+  which is an ESQ-1/SQ-80-style DOC oscillator for free. Contract first
+  (`vcv/bytebus/docs/COUNTER.md`), then build: a latching module per §5, with
+  increment (from a second bus or a knob), direction, wrap/saturate, RESET to a
+  seed word, internal clock in Hz. Erfurt is the reference role; the module is
+  original.
+- **B3. Machinemodule BUS TRIG.** Today a poly cable into TRIG is sixteen tracks,
+  channel = track, and a bus works only by accident: bit *k* rising fires track
+  *k*+1, channel 9 fires track 9 on every publication, and a bit held high
+  across sample instants never retriggers. A 9-channel cable is ambiguous
+  between "9 tracks" and "8 bits + CLK", so this must be explicit: a context-menu
+  mode (or a BUS jack) in which a hit fires on each CLK rising edge where the
+  bit is high, bits 0–7 → tracks 1–8. The semantics are the bus spec's §5 and
+  nothing else: a hit on track *k*+1 at engine sample *s* iff the `Reader`
+  reports a rising CLK edge at *s* and bit *k* of `rawWord` is high at *s*.
+  Data and CLK share the cable, so module processing order cannot split them;
+  the one-sample hop is the documented latency. Bus spec untouched. With B2
+  this is the first playable result of the whole bus effort.
+- **B4. Switch, then Pipeline.** Order flipped from the current roadmap.
+  Pipeline is the canon-of-the-kit effect; Switch is the A/B pattern-byte
+  commutator and reclocker. Both are small once Counter has set the pattern for
+  latching modules.
+- **Not needed:** a bus-aware control machine in Machinemodule. Converter DAC →
+  a P1–P8 CV input is already byte-as-parameter-lock, latched at the hit, and
+  mono CV broadcasts to all tracks. Per-track byte values don't fit on one cable;
+  don't design for them.
+
+### C. Elektron side
+
+- **C1. Sound link v2.** Six lanes in `spec/sound-link.hpp`, ABI version bump,
+  Machinemodule receiver updated. Lands with the Rack PR of A. Machinemodule
+  gets lanes 1–6 of its sixteen tracks; the rest stay on TRIG/CV.
+- **C2. Monomodule adapter — two stages, not one.** Monomodule (Shnolk,
+  AGPL-3.0) is a sibling of the Machinemodule core on the same dsp56300
+  emulator; the Machinemodule adapter already compiles Monomodule's resampler.
+  - **C2a. Refactor the Machinemodule adapter into shared infrastructure with
+    no behavior change**: worker thread, SPSC queues, generations, sound-link
+    receiver, P-CV capture at trigger, OS loading. Regression: the existing
+    portable and Rack tests, plus the README's live hit-timing measurement
+    (24.2 ms ±0.35 after Gorgon's gate) reproduced on the workstation. Write
+    down the AGPL/BSD boundary of the shared code *before* extracting it.
+  - **C2b. Monomodule on that infrastructure.** This is more than
+    configuration: the MnM is pitched, so the lock path carries the lane's
+    note as the track note (the MD adapter's "does not guess which parameter
+    is pitch" rule inverts); its parameter pages differ; and the FX machines
+    mean a track can process external audio, so the adapter exposes an audio
+    input per track or a separate FX module. Six tracks, OS 1.32B. Live
+    validation is Linux only, as with the MD.
+  A failure in C2b should be attributable to the emulation integration, not to
+  the refactor; that is what the stage split buys.
+- **Deferred, deliberately:** MD master reverb/delay/EQ/dynamics (Rack effects
+  fill it), UW RAM machines (Spoon Bender CAPTURE → OTIS already resamples the
+  whole patch, which is the UW's signature move done better), CTR machines.
+
+### D. Vastish
+
+- **D1. AUDIO IN (Live Mode).** One input that replaces the oscillator block at
+  the engine rate, through the gate-free DSP path BUS wave already uses
+  ([BUS_SPEC.md](https://github.com/JosiahAlanLee/DSP_Emulation/blob/main/vcv/vastish/BUS_SPEC.md)
+  §BUS wave). Mono first: one input, voice 1's chain, every DSP block exercised
+  with external audio, feedback through Rack's one-sample loop checked. Then
+  polyphonic, with the audio cable's channel count establishing voices the way
+  pitch/gate cables do now, so Machinemodule's sixteen TRACKS or the modular go
+  through VAST shapers and filters per channel. The K2500 could do this for one
+  input. Highest leverage item on the list; "small" applies to the mono step.
+- **D2. Chain mode.** Vastish immediately to the right of Vastish continues the
+  chain (the Séance row pattern): the K2600's triple modular processing. Real,
+  but it is more of the same; after D1 and the bus work.
+
+### E. OTIS
+
+- **E1. Patch-select bits.** The EPS idiom: two buttons, four layer
+  combinations per hit, which is how EPS players varied a part live. Two bits
+  (from the existing FRAME BUS word, or a second bus input — decide in the
+  contract) select among four stored region/loop/degradation presets per hit.
+  With Gorgon's hit mask or a Lookup supplying the bits, this is the
+  sampler-side replacement for DrumLab's retired four-lane kit.
+- **E2. Otis Kit and Capture** stay as described in DRUM_MACHINE.md §"An Otis
+  flavor" — a bounded bank, slot/slice per hit, record-then-play with
+  generation handoff. E1 is the first step toward it; the rest waits for the
+  v3 event path so hits carry slot and region as locks.
+
+### F. Retirements and redirections
+
+- **F1. DrumLab.** Archive `vcv/drumlab` (README pointer, no release bundle,
+  CI job removed). DRUM_MACHINE.md's "First implementation: DrumLab Percussion"
+  gets a status line pointing here and at Machinemodule. Nothing in the
+  contract referenced it.
+- **F2. Diffusion model → offline renderer.** A CLI, living with the model and
+  not in these repos: prompt or caption in, WAV out, into a folder OTIS can
+  load (one sample now; a bank once E2 exists). Each WAV gets a JSON sidecar
+  manifest, in the spirit of OTIS's Lookup export: model and checkpoint, seed,
+  prompt/caption, generation parameters, sample rate and channel layout, BPM
+  and key, and — computed after rendering — transient positions and candidate
+  loop points. BPM and key alone are not enough to make a rendered hit
+  reusable later. The nonsense-word caption scheme is the prompt vocabulary.
+  Gorgon never calls it on a tick; a "render" is a thing you do between takes. The ControlNet idea (record
+  Machinemodule with pitch/timing labels for a second fine-tune) stays a
+  research note until there is a reason to prefer a generated hit over a
+  Machinemodule one.
+- **F3. pattern-timing.md.** Its `rate` concept, conversion formulas and
+  transport-discontinuity rules are carried into A-spec-1 unchanged; its fixed
+  64 rows and four lanes are not. Mark it superseded in `spec/README.md` once
+  A-spec-1 merges, rather than deleting it.
+
+### G. Timing
+
+- **G1. Measurement and per-destination offsets.** Gorgon's single OFFSET
+  (±100 ms, picture vs Rack) stays the contract-level control. Alignment
+  between Rack destinations (Machinemodule's ~23 ms queue, a Monomodule
+  adapter, the ES-3 path, USB MIDI to the Elektron boxes) is a Rack patching
+  matter today. The plan: a small measurement utility — emit a click on a gate,
+  listen on an audio input, report the round trip in samples — if nothing in
+  the VCV Library already does it, plus a table in the Gorgon manual of
+  measured offsets per destination on the workstation. A number that is stored,
+  not a session ritual. Ableton Link stays out: the contract says nothing
+  follows an external clock, and nothing here needs it.
+- **G2. Event trace.** With six lanes, conditions, a bridge, Rack and several
+  destinations, "the hit didn't sound" has at least five causes. Each
+  implementation of the evaluator can emit a trace line per event: event id,
+  intended beat, evaluation result and why (which condition, which transform),
+  dispatch time, and where measurable the observed arrival (Machinemodule
+  already counts missed blocks and reports delay; the sound-link packet
+  already carries the producer sample frame). HydraPy writes JSONL; Rack
+  writes a bounded ring the menu can dump. The trace format is defined in
+  A-spec-2 so all three implementations agree on it. Phase 2, not "when
+  something breaks".
+
+### H. External MIDI destinations
+
+- **H1.** Analog Four and Rytm MKI: each track answers to a note on its own
+  channel and the parameter set is exposed over CC/NRPN. Gorgon's lanes →
+  Rack → Core **CV-MIDI** (gate/pitch/velocity → notes) and **CV-CC** (a lane's
+  automation or a Lookup byte through Converter → CC). No new code; a documented
+  patch and a G1 offset entry each. The Elektron sequencers stay unused;
+  Gorgon's conditions and 128-row patterns apply to both boxes regardless of
+  their OS. Whether their MKI firmware has its own trig conditions is
+  irrelevant to this path.
+
+## 3. Sequence
+
+**Phase 0 — ratify (no code).** B1. The §5 questions. Agree this document.
+
+**Phase 1 — cheap, independent, immediately playable.** No contract change;
+each is one PR in DSP_Emulation.
+
+1. D1 Vastish AUDIO IN, mono. It exploits everything that already exists.
+2. B2 Counter (contract, then module).
+3. B3 Machinemodule BUS TRIG mode.
+4. F1 DrumLab retirement.
+5. H1 written up; G1's measurement utility if time allows.
+
+After phase 1 the chain Counter → Lookup → Machinemodule plays, the modular
+and the drum machine run through Vastish, and the bus experiment has had its
+evening. If it does not click, nothing in phase 2 depended on it beyond BUS IN.
+
+**Phase 2 — the event architecture, as spec.** A-spec-1 through A-spec-4 as
+separate PRs, each reviewable on its own. A-spec-2 is the one to argue over:
+the evaluator, event identity, the hand-computed vectors and the trace format.
+Treat this phase as protocol design, not feature work; the PR review *is* the
+architectural review before any implementation starts.
+
+**Phase 3 — integration.** HydraPy implements the four specs with property
+tests; fixture generated; Rack matches, with C1 and the pin/fixture move; G2
+trace on both sides; the full event path validated on the workstation. This is
+where the tracker becomes the instrument you will take to a show, so it is not
+rushed to fit around phase 1.
+
+**Phase 4 — destinations on the new contract.** C2a refactor, then C2b
+Monomodule; E1 OTIS patch select; G1 offsets table.
+
+**Phase 5 — depth.** B4 Switch and Pipeline; D2 chain mode; E2 Otis Kit and
+Capture; F2's manifest and renderer workflow; the tutorial video kit updated
+for six lanes.
+
+## 4. Score v3 proposal (for A-spec-1..3)
+
+Concrete enough to be argued with. Field names are provisional.
+
+### Shape
+
+```
+format     "hydrapy-tracker-3"
+bpm, key, pattern, loop, sound, modes, bindings     unchanged
+seed       integer                                   drives every probability
+mutes      [bool…]                                   one per lane
+lanes      [{name}…]                                 display names; v3 validates exactly 6
+sounds     [sound…]                                  as version 2, one per lane
+patterns   [pattern ×4]                              count unchanged in v3
+```
+
+Lane-indexed arrays are lists whose length v3 pins to six by validation, not
+by shape, so a later format can change the count without changing the model.
+
+A pattern:
+
+```
+name       1–40 characters
+rate       0.25 | 0.5 | 1 | 2 | 4 | 8     rows per quarter note = 4·rate   (pattern-timing.md)
+bar        rows per bar, 1–32, default 16
+bars       bars per pattern, 1–8;  rows = bar·bars ≤ 128
+lanes      [{len, cells, transforms}…]              one per lane
+             len        1–rows, default rows         the lane loops every len rows
+             cells      [cell ×len]                  null or {note, vel, locks?, cond?}
+             transforms [transform…]                 ordered; each a node tree, depth ≤ 3
+keys, easing, scenes                                 as before; rows 0–(rows−1)
+```
+
+### Time
+
+From pattern-timing.md with `rows[p]` in place of 64:
+
+```
+R[p] = 4·rate[p]              rows per quarter note
+L[p] = rows[p] / R[p]         pattern length in beats
+S[p] = Σ L[q] for q < p       start in the song
+```
+
+Within pattern `p` at beat `b`: `row_position = (b − S[p])·R[p]`,
+`row = ⌊row_position⌋`, `row_phase` its fraction. For lane `n`,
+`lane_row = row mod len[n]`. The **bar count** is position-based:
+`bar_count = visits · bars[p] + ⌊row / bar[p]⌋`, where `visits` is how many
+times the playing cycle has wrapped into this pattern since the transport
+anchor, `⌊(beat − anchor_beat) / cycle_length⌋` when looping one pattern and
+derived from the chain schedule otherwise. Row 48 of a 16-row-bar pattern is
+therefore bar 3 whether you played into it or seeked to it, and when looping
+one pattern `1:4` fires once per four loops. It is a pure function of the
+transport anchor and the beat, so the fixture stays stateless. A transport
+change re-anchors and so resets `visits` to 0; a seek never changes which bar
+a row is in.
+
+Gate, clock PPQN, reset and run semantics are unchanged from cv-semantics.md,
+with `row` now ranging over `rows[p]` and the lane's cell taken at `lane_row`.
+
+### Conditions
+
+`cond` on a cell is a typed object with a `not` flag; display codes in
+parentheses. The cell **fires** on a bar when its condition is true; a cell
+with no condition always fires.
+
+| kind | fields | true when | code |
+| --- | --- | --- | --- |
+| every | a, b (1 ≤ a ≤ b ≤ 8) | bar_count mod b == a − 1 | `a:b` |
+| prob | p (1–99) | hash(seed, pattern, lane, lane_row, bar_count) mod 100 < p | `%p` |
+| fill | — | `fill` is true | `F` |
+| first | — | bar_count == 0 | `1ST` |
+
+Negation prefixes `!`. **PRE and NEI** (Elektron's "previous condition on this
+track / on the neighbour track was true") are the only stateful ones and are
+deferred to v3.1 with a pure definition still to be written; shipping four
+stateless kinds first keeps the fixture honest.
+
+A lane whose `len` does not divide `bar` sees a given cell at different bar
+positions; its condition applies to every occurrence within a qualifying bar.
+This is correct and should be documented so it does not read as a bug.
+
+### Transforms
+
+Per lane, ordered, applied to the lane's events for the bar being queried.
+Original subset; no Strudel code import (DRUM_MACHINE.md's position holds).
+
+| transform | fields | effect on the bar's events |
+| --- | --- | --- |
+| every | n (2–8), inner | apply `inner` on bars where bar_count mod n == 0 |
+| rot | k (rows) | rotate the lane's cells by k rows within its len |
+| rev | — | reverse the lane's cells within its len |
+| degrade | p (1–99) | each event fires with probability p, same hash family as `prob` |
+| ply | n (2–4) | each event repeats n times evenly within its row (ratchet); sub-row hits carry the parent's locks |
+
+A transform is a typed node; `every` holds a child node, so the list is a
+tree with depth capped at 3 in the schema. v3 implements these five node
+types. The tree shape, the per-event `origin` field and a lane-indexed (not
+destination-indexed) event record are what keep the door open to hierarchical
+composition and stream routing later without a format change; nothing about
+them is implemented now.
+
+Generators — Euclidean fills, a mini-notation string — are **editor tools that
+bake into cells**, not score fields. The evaluator's invariants are the ones
+DRUM_MACHINE.md already lists: querying a bar equals concatenating its partial
+queries; no duplicate boundary hits; no wall clock; order-independent.
+
+### FILL and BUS IN
+
+`fill` is transport state owned by Studio — it travels in the playhead
+snapshot (bridge-api.md), not in the score document — and it is **effective
+from a beat, not from receipt**: the snapshot carries `fill` as a transition
+`{beat, on}`, and the evaluator reads the value in force at the event's beat.
+Sources: an editor key (Studio stamps the beat); a Rack **BUS IN** (nine
+channels, bus spec levels) whose bit 0 is FILL and bits 1–6 are lane mutes; or
+a plain FILL gate jack. A FILL change that originates in Rack is stamped with
+the module's current beat, applied by the Rack engine to its own outputs at
+that beat immediately, and reported to Studio through
+`POST /api/tracker_transport` extended with `fill` and `mutes` fields
+(`bridge_params` is for patch controls and is not the right endpoint). Studio
+and the other followers then apply it from the stamped beat, late by one poll
+(~35 ms) but never disagreeing about which bar it took effect in. The picture
+being 35 ms behind on a fill is invisible; the Rack outputs are not late. If
+Rack's stamped beat is already past for Studio, Studio applies it from the
+stamp, not from receipt: the record is consistent even when the delivery was
+not. Mutes get the same transition shape. BUS OUT's hit mask gains bit 6 =
+FILL so a patch can see the state it set.
+
+### Migration
+
+v1 and v2 load as: six lanes with lanes 5–6 empty, `rate 1`, `bar 16`,
+`bars 4`, `len 64`, no conditions, no transforms, `seed 0`. Opening or saving
+does not upgrade; the first v3 edit does, explicitly, with undo restoring the
+old format — pattern-timing.md's rule.
+
+## 5. Decisions to ratify
+
+Defaults are what the plan assumes if nobody objects.
+
+1. **Six lanes** — what fixes six? If it is the Monomachine's six tracks, say
+   so in the spec; it changes nothing but it should be written down.
+2. **Pattern count** stays four in v3. Raising it is a separate migration.
+3. **FILL semantics**: effective-from-beat with Rack applying its own changes
+   immediately and Studio reconciling from the stamp (default), vs
+   Studio-only ownership with ~35 ms applied to everyone. The default keeps
+   one record and gives Rack zero latency; the cost is the transition shape in
+   the snapshot.
+3a. **`evaluate()` is pure** — no `state` argument. The price is deferring
+   PRE/NEI (decision 5); the benefit is the fixture and three implementations
+   that can be compared at any beat.
+4. **BUS IN bit map**: FILL + six mutes (default), vs FILL only with a
+   separate mute input.
+5. **PRE/NEI** deferred to v3.1 (default), vs defined now with a recursion
+   bound.
+6. **OTIS patch-select**: two bits of the existing FRAME BUS word, vs a second
+   bus input. Default: a second input, so frame scanning and layer selection
+   can come from different sources.
+7. **Counter before Pipeline** in the bus roadmap (default yes).
+8. **Byte bus name** — still "Harriot" pending a better one. Not blocking.
+
+## 6. Release-blocking, already enforced
+
+These are not guidance; CI fails without them, and the plan relies on that:
+
+- `rack/tests/fixture.txt` byte-identical to the pinned HydraPy's output.
+- `spec/score.schema.json` accepts and rejects what HydraPy's `validate()` does.
+- Existing Rack port IDs preserved; new ports appended (the Rack API tests for
+  `bytebus-output.md` already check old output IDs).
+- v1 and v2 scores load and play unchanged; opening or saving never upgrades.
+
+## 7. Not in this plan
+
+- Real-time model inference as a voice.
+- Strudel or Vortex code import. An original pattern subset is not Strudel
+  support, and the Vortex repository is archived on GitHub with development on
+  Codeberg; vendoring ideas, not depending on the package.
+- MD master effects, UW RAM machines, CTR machines.
+- A Leibniz-compatible hardware interface. The bus is Rack-only by design.
+- New hardware.
+
+## 8. Review notes (2026-10-26)
+
+A second review (GPT Sol) of the first draft led to these changes: the
+evaluator named as the central artifact with a stable event record; spec-level
+hand-computed vectors and property tests; lane-indexed arrays as validated
+lists; transforms as a bounded tree; FILL effective-from-beat; BUS TRIG
+semantics pinned to the bus spec's Reader; the Monomodule adapter split into a
+refactor stage and an integration stage; Vastish AUDIO IN first and mono
+first; a sample manifest for the offline renderer; the event trace (G2).
+
+Two suggestions were not taken. A `state` argument on `evaluate()` would make
+the fixture stateful and the three implementations harder to compare; PRE/NEI
+are deferred instead. "Complete the shared fixtures before modifying HydraPy"
+inverts the repository's process, where the fixture is generated from HydraPy;
+hand-computed spec vectors fill that role before HydraPy, the fixture after.
