@@ -3,6 +3,14 @@
 Newest first. Each entry names the HydraPy commit and Rack module version it
 describes.
 
+## 2026-10-26 — per-hit sound controls and Rack sound link (specification)
+
+Spec-first addition; implementations follow in separate PRs. Introduces optional
+score format `hydrapy-tracker-2`, four track sound defaults, per-hit raw parameter
+and machine locks, and the version-1 atomic Rack sound link. Version-1 scores,
+their legacy CV fixture, ByteBus and direct CV maps remain unchanged. No firmware
+is included. See [sound-locks.md](sound-locks.md) for scope and resolution rules.
+
 ## 2026-10-25 — short seeks are seeks
 
 HydraPy `20e9276f74bd469a29a4d370086cae744ff72c66` (unchanged) · Rack module
