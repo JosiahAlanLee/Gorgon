@@ -43,7 +43,7 @@ class Stage:
 
     def up(self, needs: set[str]):
         needs = set(needs)
-        if 'controller' in needs or 'program' in needs or 'aux' in needs:
+        if 'controller' in needs or 'program' in needs or 'aux' in needs or 'studio_display' in needs:
             needs.add('studio')
         if 'base' not in self.up_services:
             display.start_display(self.cfg, self.procs)
@@ -51,9 +51,15 @@ class Stage:
             self.slate = audio.Slate()
             self.up_services.add('base')
         if 'studio' in needs and 'studio' not in self.up_services:
-            info = studio.launch(self.cfg, self.procs)
+            # studio_display: a Studio that can open its native Program window on the stage (chapter 8)
+            info = studio.launch(self.cfg, self.procs, display='studio_display' in needs)
             self.api = studio.StudioAPI(info)
             self.up_services.add('studio')
+            if 'studio_display' in needs:
+                self.up_services.add('studio_display')
+        elif 'studio_display' in needs and 'studio_display' not in self.up_services:
+            raise RuntimeError('Studio is already up without the stage display; take this shot in its own '
+                               '`gtut shoot` run (or `gtut stage down` first)')
         if needs & {'controller', 'program', 'aux'} and 'controller' not in self.up_services:
             self.controller = studio.Controller(self.cfg, json.loads(studio.bridge_file(self.cfg).read_text()), self.hand)
             # View → Text size lives in a closed <details>; set it as the menu would.
@@ -82,6 +88,7 @@ class Stage:
                 'HYDRAPY_STUDIO_FILE': str(self.cfg.stage_dir() / 'terminal-studio.json'),
                 'RACK_USER': str(rack.user_dir(self.cfg)),
                 'RACK_SDK': str(self.cfg.path('rack_sdk') or ''),
+                'GTUT_SANDBOX': str(self.cfg.work / 'sandbox'),
                 'PATH': f"{Path(sys.executable).parent}:{os.environ.get('PATH', '')}"})
             self.up_services.add('terminal')
 
@@ -133,7 +140,8 @@ class Stage:
                 self.rack.view(v.get('modules'), v.get('zoom'), seconds=0, margin=v.get('margin', 24))
         if 'terminal' in s and self.term:
             if s['terminal'].get('clear', True):
-                self.term.quiet('cd ' + str(self.cfg.work / 'sandbox'))
+                # Through a variable: the terminal's transcript (and QC's scan of it) never holds a home path.
+                self.term.quiet('cd "$GTUT_SANDBOX"')
         for a in s.get('actions', []):
             self.do(a)
         windows = self.windows_for(shot)

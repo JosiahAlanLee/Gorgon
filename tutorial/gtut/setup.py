@@ -43,7 +43,8 @@ def prepare_hydrapy(cfg):
         run(['git', '-C', tree, 'checkout', '--quiet', '--detach', sha])
     else:
         run(['git', '-C', src, 'worktree', 'add', '--detach', tree, sha])
-    run([sys.executable, '-m', 'pip', 'install', '-q', '-e', f'{tree}[gpu,video,jack]'])
+    # live: glfw, for Studio's native Program window (chapter 8's fullscreen shot)
+    run([sys.executable, '-m', 'pip', 'install', '-q', '-e', f'{tree}[gpu,video,jack,live]'])
     (cfg.work / 'hydrapy.sha').write_text(sha + '\n')
     return sha
 
