@@ -12,12 +12,15 @@ from gorgon import audio, launcher, starter
 from gorgon.cli import doctor, initialize, main
 from gorgon.config import LaunchError, defaults, load, run_dir, write_private
 
+read_default_sink = audio.default_sink_names
+
 
 @pytest.fixture
 def profile(tmp_path, monkeypatch):
     monkeypatch.setenv('XDG_CONFIG_HOME', str(tmp_path / 'config'))
     monkeypatch.setenv('XDG_DATA_HOME', str(tmp_path / 'data'))
     monkeypatch.setenv('XDG_RUNTIME_DIR', str(tmp_path / 'run'))
+    monkeypatch.setattr(audio, 'default_sink_names', lambda: [])  # never this host's audio setup
     path = tmp_path / 'launch.json'
     value = defaults()
     value['browser'] = False
@@ -106,6 +109,17 @@ def test_doctor_is_read_only_and_does_not_choose_arbitrary_hardware(profile, mon
     assert not result['ok']
     assert 'Card A' in result['checks'][-1]['detail'] and 'Card B' in result['checks'][-1]['detail']
     assert not (run_dir(profile) / 'state.json').exists()
+
+
+def test_the_default_sink_comes_from_pipewire_metadata(profile, monkeypatch):
+    graph = dict(rate=48000, quantum=1024, ports=[port('Card A:playback_1', 5), port('Card B:playback_1', 5)])
+    dump = [dict(id=36, type='PipeWire:Interface:Metadata', props={'metadata.name': 'default'},
+                 metadata=[dict(subject=0, key='default.audio.sink', value=dict(name='alsa_output.card-b'))]),
+            dict(id=51, type='PipeWire:Interface:Node', info=dict(props={'node.name': 'alsa_output.card-b', 'node.description': 'Card B'}))]
+    monkeypatch.setattr(audio, 'default_sink_names', read_default_sink)
+    monkeypatch.setattr(audio.shutil, 'which', lambda name: '/usr/bin/' + name)
+    monkeypatch.setattr(audio.subprocess, 'run', lambda command, **_: subprocess.CompletedProcess(command, 0, json.dumps(dump), ''))
+    assert audio.playback_device(profile, graph) == 'Card B'
 
 
 def test_stale_pid_is_never_signalled(profile):
