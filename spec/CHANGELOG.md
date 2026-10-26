@@ -3,6 +3,14 @@
 Newest first. Each entry names the HydraPy commit and Rack module version it
 describes.
 
+## 2026-10-26 — pattern-rate timing (proposal)
+
+Proposes per-pattern ¼×–8× rates with a stable master BPM, explicit beat/row
+conversion, shared note/visual automation timing and a future version-3 score.
+See [pattern-timing.md](pattern-timing.md). This entry is a design proposal:
+no schema, player, fixture or pin change is included. The existing formats and
+implementations remain the normative contract until the next contract PR.
+
 ## 2026-10-26 — per-hit sound controls and Rack sound link (specification)
 
 Spec-first addition; implementations follow in separate PRs. Introduces optional
