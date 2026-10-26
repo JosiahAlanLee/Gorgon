@@ -3,6 +3,19 @@
 Newest first. Each entry names the HydraPy commit and Rack module version it
 describes.
 
+## 2026-10-26 — late transport changes keep their landing hit (specification)
+
+Spec-first; HydraPy's `TrackerCV` and the Rack module follow in separate PRs.
+[cv-semantics.md](cv-semantics.md) adds the landing gate: at a transport change,
+when the playhead landed inside its row's gate window and the follower is
+still in that row, the row's gates last as long as they would have from the
+landing, starting at the first available sample. Gates were purely phase-based,
+so a change that reached a follower after the window closed lost the hits it
+landed on: on the workstation, 8 of 58 Seek-to-row cues lost their landing kick
+in Rack, and with OFFSET +24 ms the first downbeat after Play never fired. The
+reset pulse already worked this way. The fixture's rows are stateless and do not
+change.
+
 ## 2026-10-26 — pattern-rate timing (proposal)
 
 Proposes per-pattern ¼×–8× rates with a stable master BPM, explicit beat/row
