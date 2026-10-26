@@ -26,9 +26,10 @@ ports (`python -m pip install -e '/path/to/hydrapy[live,jack]'`). Gorgon's
 the GorgonBridge plugin must also be installed. The launcher discovers `Rack`
 on PATH and common `~/opt/Rack2Free/Rack` / `/opt/Rack2/Rack` locations.
 
-Install your distribution's PipeWire JACK tools, including `pw-jack`, `pw-cli`
-and `pw-dump`, and WirePlumber. `wmctrl` is optional for requesting a clean Rack
-window close from `gorgon stop`. This is a user-session launcher: it runs no
+Install your distribution's PipeWire JACK tools, including `pw-jack`, `pw-cli`,
+`pw-dump` and `pw-top`, and WirePlumber. `wmctrl` is optional: it lets
+`gorgon stop` request a clean Rack window close, and with `xrandr` it keeps the
+picture and Rack on different monitors. This is a user-session launcher: it runs no
 sudo commands, installs no OS packages, and does not replace PulseAudio or
 rewrite ALSA configuration. Set up the desktop audio system once using your
 distribution's supported procedure.
@@ -50,7 +51,10 @@ gorgon start
 `--hydrapy /path/to/venv/bin/hydrapy` selects a different Python environment.
 `--rack-user /path/to/Rack2` selects another Rack user folder containing your
 plugins. `--monitor DP-5` opens the native picture fullscreen on that monitor;
-the default is a separate window. Rack uses its saved patch and device choices,
+the default is a separate window. With two or more monitors, `start` keeps the
+picture and Rack apart on X11: a fullscreen picture keeps its monitor and Rack's
+window moves to another (the primary one when it is free), and a picture window
+moves off Rack's monitor. Rack uses its saved patch and device choices,
 including Machinemodule and the path to your own firmware. The launcher neither
 copies nor installs firmware. Save your Rack changes normally with Ctrl+S.
 
@@ -88,7 +92,8 @@ hardware channel map. Rate and quantum are per-client requests, not global
 forced-clock settings. The default 1024 frames (21 ms at 48 kHz) is what Studio's
 JACK client sustains on a desktop session: on a Ryzen 5 5600X, 256 and 512 frames
 dropped audio for the first seconds after Play. Lower it only if yours keeps up.
-The ready message reports the actual server values.
+The ready message reports the rate and quantum Studio's JACK client actually
+runs at (read with `pw-top` under PipeWire).
 If PipeWire is unavailable, `start_services: true` permits starting its user
 socket and WirePlumber through `systemctl --user start`. Services already in
 use are never restarted, and the launcher does not start a competing `jackd`.
@@ -156,5 +161,6 @@ audio through the entire chain, checks score restoration, repeated start, stop,
 relaunch with a changed Studio client name, and survival of an unrelated client
 and the pre-existing audio server. No physical interface or firmware is used.
 Unit tests cover malformed profiles, ambiguous devices, PID reuse, startup
-failure cleanup and capture-route ownership. Native desktop placement and the
+failure cleanup, capture-route ownership, the session quantum and window
+placement; placement was also checked on a two-monitor GNOME (X11) desktop. The
 workstation's actual device/CV routes still need workstation testing.

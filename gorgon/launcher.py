@@ -170,6 +170,72 @@ def close_rack_window(pid):
     return False
 
 
+def _monitors():
+    monitors = []
+    for line in subprocess.run(['xrandr', '--listmonitors'], capture_output=True, text=True, timeout=3).stdout.splitlines()[1:]:
+        match = re.search(r'(\d+)/\d+x(\d+)/\d+\+(-?\d+)\+(-?\d+)\s+(\S+)\s*$', line)
+        if match:
+            w, h, x, y = map(int, match.groups()[:4])
+            monitors.append(dict(name=match[5], x=x, y=y, w=w, h=h, primary='*' in line.split()[1]))
+    return monitors
+
+
+def _windows(pid):
+    windows = []
+    for line in subprocess.run(['wmctrl', '-lpG'], capture_output=True, text=True, timeout=3).stdout.splitlines():
+        parts = line.split(None, 8)
+        if len(parts) == 9 and parts[2].isdigit() and int(parts[2]) == pid:
+            x, y, w, h = map(int, parts[3:7])
+            windows.append(dict(id=parts[0], x=x, y=y, w=w, h=h, title=parts[8]))
+    return windows
+
+
+def _monitor_of(window, monitors):
+    cx, cy = window['x'] + window['w'] // 2, window['y'] + window['h'] // 2
+    return next((m for m in monitors if m['x'] <= cx < m['x'] + m['w'] and m['y'] <= cy < m['y'] + m['h']), None)
+
+
+def separate_windows(config, studio_pid, rack_pid):
+    """Keep the picture and Rack on different monitors. A fullscreen picture keeps the monitor it was given
+    and Rack moves off it; a picture window moves to a monitor Rack is not on. Best effort (X11 only)."""
+    if not config['studio']['native_output'] or _headless(config) or not os.environ.get('DISPLAY') \
+            or not shutil.which('wmctrl') or not shutil.which('xrandr'):
+        return None
+    try:
+        monitors = _monitors()
+        if len(monitors) < 2:
+            return None
+        end = time.monotonic() + 3
+        while True:
+            pictures = _windows(studio_pid)
+            racks = [w for w in _windows(rack_pid) if 'VCV Rack' in w['title']]
+            if pictures and racks or time.monotonic() > end:
+                break
+            time.sleep(.1)
+        if not pictures or not racks:
+            return None
+        picture, rack = max(pictures, key=lambda w: w['w'] * w['h']), racks[0]
+        shared = _monitor_of(picture, monitors)
+        if shared is None or shared is not _monitor_of(rack, monitors):
+            return None
+        others = [m for m in monitors if m is not shared]
+        target = next((m for m in others if m['primary']), others[0])
+        moved, window = ('rack', rack) if config['studio']['native_output'] != 'window' else ('picture', picture)
+        state = subprocess.run(['xprop', '-id', window['id'], '_NET_WM_STATE'], capture_output=True, text=True,
+                               timeout=3).stdout if shutil.which('xprop') else ''
+        maximized = 'MAXIMIZED' in state
+        wmctrl = lambda *args: subprocess.run(['wmctrl', '-ir', window['id'], *args], capture_output=True, timeout=3)
+        if maximized:
+            wmctrl('-b', 'remove,maximized_vert,maximized_horz')
+        wmctrl('-e', f"0,{target['x'] + max(0, (target['w'] - window['w']) // 2)},"
+                     f"{target['y'] + max(0, (target['h'] - window['h']) // 2)},-1,-1")
+        if maximized:
+            wmctrl('-b', 'add,maximized_vert,maximized_horz')
+        return dict(moved=moved, monitor=target['name'])
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        return None
+
+
 def stop(config, force=False):
     state = read_state(config)
     supervisor = state.get('supervisor')
@@ -406,9 +472,11 @@ def supervise(config, lock_fd, nonce):
         if operations:
             _wait(lambda: _connections_ready(config, operations), end, stopping, children, 'configured JACK connections')
         graph = _wait(lambda: _routed(config, sound['ports'], device, previous), end, stopping, children, 'Rack JACK playback connections')
-        publish(phase='ready', url=info['url'] + '/tracker/', audio=dict(rate=graph['rate'], quantum=graph['quantum'],
+        clock = audio.session_clock(config, sound['client'], graph)
+        windows = separate_windows(config, studio.pid, children['rack'].pid)
+        publish(phase='ready', url=info['url'] + '/tracker/', audio=dict(rate=clock['rate'], quantum=clock['quantum'],
                                                                       studio_ports=sound['ports'], device=device),
-                rack_patch=str(patch))
+                rack_patch=str(patch), windows=windows)
         if config['browser'] and os.getpid() == state['supervisor']['pid'] and '--lock-fd' not in sys.argv:
             open_editor(config)  # Foreground mode; detached mode opens in its caller.
         while True:
