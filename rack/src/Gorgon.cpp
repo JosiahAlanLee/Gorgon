@@ -103,7 +103,32 @@ struct Gorgon : Module {
 		bool moving = haveSnapshot && snapshot.playhead.moving() && follower.locked;
 		gorgon::Outputs o = outputState.render(snapshot.score, moving, follower.beat,
 		                                      snapshot.playhead.transportRevision, options, args.sampleTime);
-		follower.advance(snapshot.score, moving, args.sampleTime);
+        // Receiver owns both buffers. Gates and resolved controls share this
+        // flip: patch order cannot pair a new trigger with the previous lock.
+        Module* receiver = rightExpander.module;
+        if (receiver && receiver->model && receiver->model->plugin &&
+            receiver->model->plugin->slug == "MachinemoduleRack" && receiver->model->slug == "Machinemodule" &&
+            receiver->model->plugin->version.rfind("2.", 0) == 0 && receiver->leftExpander.producerMessage) {
+            auto* message = static_cast<gorgon_sound::Packet*>(receiver->leftExpander.producerMessage);
+            if (message->magic == gorgon_sound::MAGIC && message->version == gorgon_sound::VERSION && message->bytes == sizeof(*message)) {
+                gorgon_sound::Packet packet;
+                packet.frame = args.frame;
+                packet.transport = snapshot.playhead.transportRevision;
+                packet.moving = moving;
+                packet.reset = o.reset;
+                int p = std::clamp(int(follower.beat / gorgon::BEATS_PER_PATTERN), 0, gorgon::PATTERNS - 1);
+                int row = std::clamp(int(std::fmod(std::max(0., follower.beat), double(gorgon::BEATS_PER_PATTERN)) * 4.), 0, gorgon::ROWS - 1);
+                for (int lane = 0; lane < gorgon::AUDIO_LANES; ++lane) {
+                    packet.lanes[lane].sound = gorgon::soundAt(snapshot.score, p, lane, row);
+                    packet.lanes[lane].gate = o.gate[lane];
+                    packet.lanes[lane].velocity = o.velocity[lane];
+                    packet.lanes[lane].pitch = o.pitch[lane];
+                }
+                *message = packet;
+                receiver->leftExpander.messageFlipRequested = true;
+            }
+        }
+        follower.advance(snapshot.score, moving, args.sampleTime);
 
 		outputs[CLOCK_OUTPUT].setVoltage(o.clock);
 		outputs[RESET_OUTPUT].setVoltage(o.reset);

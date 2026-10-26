@@ -5,12 +5,16 @@ RACK_TEST_LDFLAGS = -Wl,--allow-shlib-undefined
 JANSSON ?= -ljansson
 ENGINE = ../src/engine/*.hpp
 
-all: engine_test bridge_test pcm_test bytebus_test
+all: engine_test bridge_test pcm_test bytebus_test sound_test
 test: all
+	cmp ../src/engine/SoundLink.hpp ../../spec/sound-link.hpp
 	./engine_test fixture.txt
 	./bridge_test
 	./pcm_test
 	./bytebus_test
+	./sound_test
+sound_test: sound_test.cpp $(ENGINE)
+	$(CXX) $(CXXFLAGS) $< $(JANSSON) -o $@
 bytebus_test: bytebus_test.cpp $(ENGINE)
 	$(CXX) $(CXXFLAGS) $< -o $@
 pcm_test: pcm_test.cpp $(ENGINE)
@@ -34,5 +38,5 @@ e2e: studio_probe
 module_test: module_test.cpp ../src/Gorgon.cpp ../src/AudioInput.hpp ../src/Layout.hpp $(ENGINE)
 	$(CXX) $(CXXFLAGS) -pthread -I$(RACK_DIR)/include -I$(RACK_DIR)/dep/include -I../src $< -L$(RACK_DIR) -Wl,-rpath,$(abspath $(RACK_DIR)) -lRack $(RACK_TEST_LDFLAGS) -o $@
 clean:
-	rm -f engine_test bridge_test bridge_tsan bridge_asan engine_asan studio_probe module_test pcm_test pcm_tsan bytebus_test bytebus_asan
+	rm -f sound_test engine_test bridge_test bridge_tsan bridge_asan engine_asan studio_probe module_test pcm_test pcm_tsan bytebus_test bytebus_asan
 .PHONY: all test sanitize e2e clean

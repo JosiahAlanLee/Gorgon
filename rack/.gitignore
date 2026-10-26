@@ -15,3 +15,6 @@ tests/pcm_test
 tests/pcm_tsan
 tests/bytebus_test
 tests/bytebus_asan
+
+tests/sound_test
+tests/sound_asan
