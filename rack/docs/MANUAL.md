@@ -20,7 +20,7 @@ The score/CV bridge discovers Studio automatically. To point it at a different f
 | RUN | 10 V while Gorgon plays |
 | VEL | Polyphonic, 4 channels: each audio lane's last hit velocity, 0–10 V, held until the next hit |
 | V/OCT | Polyphonic, 4 channels: held note pitch, 1 V/oct. C4 = 0 V by default; *Pitch zero* in the context menu also offers C3 = 0 V |
-| GATE 1–4 | 10 V for half a row on each hit in that audio lane; muted lanes stay low. *Gate length* sets 25–100% of a row. A start or seek that arrives after its hit's gate would have closed still plays that hit, late |
+| GATE 1–4 | 10 V for half a row on each hit in that audio lane; muted lanes stay low. *Gate length* sets 25–100% of a row. A start or seek that arrives after its hit's gate would have closed still plays that hit, late; a seek retriggers an open gate |
 | GATES | The four gates as one polyphonic cable |
 | Z | Dolly Z lane, 0–1 as 0–10 V |
 | ROLL | Roll lane, ±45° as ±5 V |
@@ -149,7 +149,7 @@ Both act on Studio, so the picture and every other Gorgon output move too.
 
 ## Timing
 
-Studio's playhead reaches the module about 30 times a second. Between updates the module runs its own beat at the score's tempo on Rack's sample clock, and trims that tempo by at most 0.5% to stay aligned with Studio. Clock pulses, gates and held automation steps therefore land on exact samples and stay evenly spaced. Seeks, tempo changes, starting and stopping are followed as soon as the next update arrives, within about 35 ms. A seek is followed exactly however short it is (even a fraction of a row): the module jumps on Studio's transport revision, and trims its tempo only for unmarked drift. The hit a start or seek lands on still plays when its update arrives after that hit's gate would have closed (with *Gate length* 50%, 54 ms at 138 BPM): its gates open on arrival for the length they would have had, closing 1 ms before the next row so its hit still triggers. Without this, a late update skipped the hit, and with OFFSET set earlier the first downbeat after Play could be lost.
+Studio's playhead reaches the module about 30 times a second. Between updates the module runs its own beat at the score's tempo on Rack's sample clock, and trims that tempo by at most 0.5% to stay aligned with Studio. Clock pulses, gates and held automation steps therefore land on exact samples and stay evenly spaced. Seeks, tempo changes, starting and stopping are followed as soon as the next update arrives, within about 35 ms. A seek is followed exactly however short it is (even a fraction of a row): the module jumps on Studio's transport revision, and trims its tempo only for unmarked drift. The hit a start or seek lands on still plays when its update arrives after that hit's gate would have closed (with *Gate length* 50%, 54 ms at 138 BPM): its gates open on arrival for the length they would have had, closing 1 ms before the next row so its hit still triggers. A seek that arrives while a gate is open closes it for 1 ms first, so the hit it lands on triggers again rather than continuing the open gate. Without these, a late update skipped the hit, a cue made just after a hit could merge with it, and with OFFSET set earlier the first downbeat after Play could be lost.
 
 The end-to-end test (`tests/studio_e2e.py`) reports follower phase error against a running Studio and requires less than 1 ms in that harness. It does not measure physical audio or display latency.
 

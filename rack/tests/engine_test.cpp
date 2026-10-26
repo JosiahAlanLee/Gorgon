@@ -221,6 +221,18 @@ static void landingGate() {
 		CHECK(high(heard(seek, one, 1., .07, 64, 1)) == 64, "landing gate");
 		CHECK(high(heard(seek, one, 1.5, 0., 64, 2)) == 0, "another seek ends it");
 	}
+	// A seek that interrupts an open gate retriggers it: 1 ms low, then the landing hit.
+	{
+		OutputState memory;
+		Score s = score(false);
+		s.patterns[0].hit[0][0] = true;
+		s.patterns[0].velocity[0][0] = 127;
+		CHECK(high(heard(memory, s, 0., 0., 64, 1)) == 64, "row 0 gate open");
+		auto g = heard(memory, s, 1., 0., row, 2);
+		CHECK(g[0] == 0.f && g[ms - 1] == 0.f && g[ms] > 0.f && high(g) == row / 2 - ms,
+		      "seek retriggers an open gate: %d samples high", high(g));
+		CHECK(high(heard(memory, s, 1.05, 0., 64, 2)) == 64, "a repeated snapshot does not retrigger");
+	}
 	// Resume: the landing is where the playhead stood, not the anchor of the last seek.
 	for (double stood : {1., 1.15}) {
 		OutputState memory;

@@ -249,13 +249,16 @@ inline int absoluteRow(double beat, double* phase = nullptr) {
 // phase-based 5 ms reset window, so deliver a full pulse on the first available
 // samples. Repeated snapshots and ordinary score edits must not retrigger it.
 // Likewise the gates of the row it landed on (spec/cv-semantics.md, landing gate):
-// heard after the row's gate window closed, they would never open.
+// heard after the row's gate window closed, they would never open. And a gate the
+// change interrupts closes for 1 ms (retrigger), or a hit it lands on never rises.
 struct OutputState {
 	int64_t transportRevision = -1;
 	bool wasMoving = false;
 	int resetRemaining = 0;
 	int landingRemaining = 0, landingRow = -1;
 	double stood = -1.;   // the beat while not moving: where a resume lands
+	bool gateWas[AUDIO_LANES] = {};
+	int retrigger[AUDIO_LANES] = {};
 	float velocity[AUDIO_LANES] = {}, pitch[AUDIO_LANES] = {};
 
 	// `anchor` is the playhead's anchor_beat, where a transport_revision change landed.
@@ -268,6 +271,9 @@ struct OutputState {
 			std::fill(velocity, velocity + AUDIO_LANES, 0.f);
 			std::fill(pitch, pitch + AUDIO_LANES, 0.f);
 			landingRemaining = 0;
+			// A gate the change interrupts closes for 1 ms, so a hit it lands on rises again.
+			for (int l = 0; l < AUDIO_LANES; l++)
+				retrigger[l] = (moving && gateWas[l]) ? int(std::lround(.001 / sampleTime)) : 0;
 			if (moving) {
 				double landing = (changed || stood < 0.) ? anchor : stood;
 				startLanding(score, std::isfinite(landing) ? landing : beat, beat, options, sampleTime);
@@ -275,6 +281,7 @@ struct OutputState {
 		}
 		if (!moving) {
 			resetRemaining = landingRemaining = 0;
+			std::fill(retrigger, retrigger + AUDIO_LANES, 0);
 			stood = beat;
 		}
 		transportRevision = transport;
@@ -294,6 +301,13 @@ struct OutputState {
 						out.gate[l] = float(options.high);
 				landingRemaining--;
 			}
+		}
+		for (int l = 0; l < AUDIO_LANES; l++) {
+			if (retrigger[l] > 0) {
+				out.gate[l] = 0.f;
+				retrigger[l]--;
+			}
+			gateWas[l] = out.gate[l] > 0.f;
 		}
 		for (int l = 0; l < AUDIO_LANES; l++) {
 			if (out.present[l])
