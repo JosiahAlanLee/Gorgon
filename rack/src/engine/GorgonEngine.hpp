@@ -136,6 +136,7 @@ struct Follower {
 	double beat = 0., trim = 0., filtered = 0.;
 	bool locked = false, wasMoving = false;
 	long jumps = 0;   // corrections taken as jumps while moving (seeks, edits, lost lock)
+	int64_t transportRevision = -1;
 
 	void advance(const Score& score, bool moving, double seconds) {
 		if (!moving || !locked)
@@ -143,12 +144,16 @@ struct Follower {
 		beat = score.wrap(beat + seconds * score.bpm / 60. * (1. + trim));
 	}
 
-	// `target` is Studio's beat for the sample about to be played.
-	void correct(const Score& score, bool moving, double target) {
+	// `target` is Studio's beat for the sample about to be played. `transport` is the
+	// playhead's transport_revision: a change is an explicit seek (or automation turned on
+	// or off), followed at once however short; only unmarked differences are drift.
+	void correct(const Score& score, bool moving, double target, int64_t transport = -1) {
 		double length = score.cycleLength();
 		double error = target - beat;
 		error -= length * std::floor(error / length + .5);   // shortest way round the loop
-		bool jump = !locked || moving != wasMoving || !moving || std::fabs(error) > jumpBeats;
+		bool seeked = transport != transportRevision;
+		transportRevision = transport;
+		bool jump = !locked || seeked || moving != wasMoving || !moving || std::fabs(error) > jumpBeats;
 		wasMoving = moving;
 		if (jump) {
 			if (moving)

@@ -6,7 +6,7 @@ two visual starter patches, the ByteBus example, and `INSTALL.txt`.
 
 | Plugin | Version | Includes |
 | --- | --- | --- |
-| GorgonBridge | 2.2.0 | Tracker bridge, audio capture and BUS OUT |
+| GorgonBridge | 2.2.1 | Tracker bridge, audio capture and BUS OUT |
 | OtisLab | 2.8.0 | OTIS Sampler, frame-bus selection and table export |
 | VastishLab | 2.5.0 | Synthesizer, FUN logic and bus processing |
 | SpoonBenderLab | 2.2.0 | Echo, reverb and sample capture |

@@ -45,7 +45,8 @@ int main(int argc, char** argv) {
 					have = true;
 				if (have && snap.clock.ready())
 					follower.correct(snap.score, snap.playhead.moving(),
-					                 snap.playhead.beatAt(snap.score, snap.clock.toServer(frameTime + i / sr + offset)));
+					                 snap.playhead.beatAt(snap.score, snap.clock.toServer(frameTime + i / sr + offset)),
+					                 snap.playhead.transportRevision);
 				bridge.setInput(0, true, volts);
 			}
 			bool moving = have && snap.playhead.moving() && follower.locked;

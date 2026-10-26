@@ -18,7 +18,10 @@ becoming true (start or resume). At a transport change the follower:
 
 - starts a reset pulse of `reset_ms` (5 ms), latched for its full length even if
   the playhead has already moved past it;
-- clears every lane's held pitch and held velocity to 0.
+- clears every lane's held pitch and held velocity to 0;
+- if it runs its own clock (the Rack module), jumps to the playhead, however
+  small the change: only differences without a `transport_revision` change are
+  drift to be trimmed.
 
 A `revision` change, a controls change or a repeated snapshot is not a transport
 change and does none of this.
