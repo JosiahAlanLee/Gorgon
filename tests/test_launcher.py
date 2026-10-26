@@ -12,7 +12,7 @@ from gorgon import audio, launcher, starter
 from gorgon.cli import doctor, initialize, main
 from gorgon.config import LaunchError, defaults, load, run_dir, write_private
 
-read_default_sink = audio.default_sink_names
+read_default_sink, read_session_clock = audio.default_sink_names, audio.session_clock
 
 
 @pytest.fixture
@@ -21,6 +21,7 @@ def profile(tmp_path, monkeypatch):
     monkeypatch.setenv('XDG_DATA_HOME', str(tmp_path / 'data'))
     monkeypatch.setenv('XDG_RUNTIME_DIR', str(tmp_path / 'run'))
     monkeypatch.setattr(audio, 'default_sink_names', lambda: [])  # never this host's audio setup
+    monkeypatch.setattr(audio, 'session_clock', lambda c, client, graph: dict(rate=graph['rate'], quantum=graph['quantum']))
     path = tmp_path / 'launch.json'
     value = defaults()
     value['browser'] = False
@@ -120,6 +121,59 @@ def test_the_default_sink_comes_from_pipewire_metadata(profile, monkeypatch):
     monkeypatch.setattr(audio.shutil, 'which', lambda name: '/usr/bin/' + name)
     monkeypatch.setattr(audio.subprocess, 'run', lambda command, **_: subprocess.CompletedProcess(command, 0, json.dumps(dump), ''))
     assert audio.playback_device(profile, graph) == 'Card B'
+
+
+def test_the_ready_quantum_is_the_one_studios_client_runs_at(profile, monkeypatch):
+    graph = dict(rate=48000, quantum=1024, ports=[])
+    top = """S   ID  QUANT   RATE    WAIT    BUSY   W/Q   B/Q  ERR FORMAT           NAME
+C  137      0      0    ---     ---   ---   ---     0                  HydraPy
+S   ID  QUANT   RATE    WAIT    BUSY   W/Q   B/Q  ERR FORMAT           NAME
+R  199    256  48000   2.3ms   0.5us  0.43  0.00    0     F32P 2 48000 gorgon-check-out
+R  140    512  44100  11.0us   0.2us  0.00  0.00    0                   + HydraPy-01
+R  137    256  48000  12.5us   2.3ms  0.00  0.43    0                   + HydraPy
+"""
+    monkeypatch.setattr(audio, 'session_clock', read_session_clock)
+    monkeypatch.setattr(audio.shutil, 'which', lambda name: '/usr/bin/' + name)
+    monkeypatch.setattr(audio.subprocess, 'run', lambda command, **_: subprocess.CompletedProcess(command, 0, top, ''))
+    assert audio.session_clock(profile, 'HydraPy', graph) == dict(rate=48000, quantum=256)
+    assert audio.session_clock(profile, 'HydraPy-01', graph) == dict(rate=44100, quantum=512)
+    assert audio.session_clock(profile, 'Elsewhere', graph) == dict(rate=48000, quantum=1024)
+    profile['audio']['backend'] = 'jack'
+    assert audio.session_clock(profile, 'HydraPy', graph) == dict(rate=48000, quantum=1024)
+
+
+@pytest.mark.parametrize('native_output', ['DP-5', 'window'])
+def test_the_picture_and_rack_end_up_on_different_monitors(profile, monkeypatch, native_output):
+    fullscreen = native_output != 'window'
+    picture = '1920 0 1920 1080' if fullscreen else '1970 87 1280 720'
+    listing = {('xrandr', '--listmonitors'): 'Monitors: 2\n 0: +*HDMI-0 1920/477x1080/268+0+0  HDMI-0\n'
+                                              ' 1: +DP-5 1920/510x1080/290+1920+0  DP-5\n',
+               ('wmctrl', '-lpG'): f'0x0300000b  0 100 {picture} host HydraPy Program\n'
+                                   '0x0500000c  0 200 1920 27 1920 1053 host VCV Rack Free 2.6.6 - rig.vcv\n'
+                                   '0x0600000d  0 300 0 0 800 600 host Unrelated\n',
+               ('xprop', '-id'): '_NET_WM_STATE(ATOM) = _NET_WM_STATE_MAXIMIZED_VERT, _NET_WM_STATE_MAXIMIZED_HORZ'}
+    moves = []
+    def run(command, **_):
+        if command[:2] == ['wmctrl', '-ir']:
+            moves.append(command[2:])
+        return subprocess.CompletedProcess(command, 0, listing.get(tuple(command[:2]), ''), '')
+    monkeypatch.setenv('DISPLAY', ':1')
+    monkeypatch.setattr(launcher.shutil, 'which', lambda name: '/usr/bin/' + name)
+    monkeypatch.setattr(launcher.subprocess, 'run', run)
+    profile['studio']['native_output'] = native_output
+    profile['rack']['args'] = []
+    result = launcher.separate_windows(profile, 100, 200)
+    # A fullscreen picture keeps its monitor and maximized Rack moves; a picture window moves itself.
+    if fullscreen:
+        assert result == dict(moved='rack', monitor='HDMI-0')
+        assert moves == [['0x0500000c', '-b', 'remove,maximized_vert,maximized_horz'], ['0x0500000c', '-e', '0,0,13,-1,-1'],
+                         ['0x0500000c', '-b', 'add,maximized_vert,maximized_horz']]
+    else:
+        assert result == dict(moved='picture', monitor='HDMI-0')
+        assert moves[1] == ['0x0300000b', '-e', '0,320,180,-1,-1']
+    moves.clear()
+    listing[('wmctrl', '-lpG')] = listing[('wmctrl', '-lpG')].replace('200 1920 27', '200 0 27')
+    assert launcher.separate_windows(profile, 100, 200) is None and moves == []
 
 
 def test_stale_pid_is_never_signalled(profile):

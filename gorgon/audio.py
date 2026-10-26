@@ -105,6 +105,22 @@ def default_sink_names():
     return []
 
 
+def session_clock(config, client, graph):
+    # Under PipeWire a client runs at its driver group's quantum, which the query client (in no group) does
+    # not see; pw-top's profiler reports it per node. Native JACK has one buffer size for everyone.
+    if config['audio']['backend'] == 'pipewire' and shutil.which('pw-top'):
+        try:
+            text = subprocess.run(['pw-top', '-b', '-n', '2'], capture_output=True, text=True, timeout=5).stdout
+        except (OSError, subprocess.TimeoutExpired):
+            text = ''
+        for line in text.rsplit('QUANT', 1)[-1].splitlines():
+            fields = line.split()
+            if len(fields) > 9 and fields[0] == 'R' and fields[2].isdigit() and int(fields[2]) > 0 \
+                    and fields[3].isdigit() and line.rstrip().endswith(' ' + client):
+                return dict(rate=int(fields[3]), quantum=int(fields[2]))
+    return dict(rate=graph['rate'], quantum=graph['quantum'])
+
+
 def rack_ports(graph):
     return [p for p in graph['ports'] if re.search(r'rack|rtapi', p['name'].split(':', 1)[0], re.I)]
 

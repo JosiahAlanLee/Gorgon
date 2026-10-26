@@ -109,6 +109,10 @@ def main(argv=None):
                 print('Tracker opened in your browser.')
             if state.get('audio'):
                 print(f"JACK: {state['audio']['rate']} Hz / {state['audio']['quantum']} frames")
+            if state.get('windows'):
+                moved = state['windows']
+                print(f"Moved Rack to {moved['monitor']}, off the picture's monitor." if moved['moved'] == 'rack' else
+                      f"Moved the picture window to {moved['monitor']}, off Rack's monitor.")
             print(f'Logs: {run_dir(config)}')
             return 1 if state.get('phase') == 'error' else 0
         if args.command == 'stop':
