@@ -3,6 +3,39 @@
 Newest first. Each entry names the HydraPy commit and Rack module version it
 describes.
 
+## 2026-10-26 — score format 3, part 1: lanes and timing (proposal)
+
+HydraPy `e5999b2282bd9766b6f7152b4278c3da4e72ed8e` · Rack module `GorgonBridge` 2.3.1,
+both unchanged. A-spec-1 of the [roadmap](../docs/ROADMAP.md).
+
+[score-v3.md](score-v3.md) proposes `hydrapy-tracker-3`, and
+[score.schema.json](score.schema.json) gains its version-3 branch; the version-1/2
+rules are unchanged. The user ratified six lanes (the Monomachine's six tracks)
+and 128 patterns in eight banks of sixteen. The format adds:
+
+- six lanes, each with a name, a sound and a mute
+- 128 patterns, `null` meaning empty, and a `chain` that sets the song order
+  when `loop` is false
+- per pattern: `rate` (¼×–8×), `bar` and `bars`, up to 128 rows
+- per lane: `len`, so lanes repeat within their pattern (polymeter)
+- one timeline, with the beat/row conversion every implementation uses
+- the transport changes that re-anchor it
+- the mapping from versions 1 and 2, which reproduces their song exactly
+
+It supersedes [pattern-timing.md](pattern-timing.md). Conditions and the evaluator
+(A-spec-2), transforms (A-spec-3) and bus I/O (A-spec-4) extend the format next.
+
+When all four are written, each implementation must:
+
+- **HydraPy:** validate version 3. Use the shared timing helpers everywhere a row or
+  beat is computed. Edit banks, the chain, rate, bar, bars and lane lengths, and
+  upgrade explicitly with undo. Re-anchor on the listed transport changes. The browser
+  scheduler and direct CV (two more gates) follow the six lanes.
+- **Rack module:** parse version 3, follow the timeline, provide six-lane outputs and
+  32 PPQN, and regenerate the fixture from HydraPy (Phase 3).
+
+Until then no implementation accepts version 3, and the fixture is unchanged.
+
 ## 2026-10-26 — a transport change keeps the hit it lands on
 
 HydraPy `e5999b2282bd9766b6f7152b4278c3da4e72ed8e` (#60, `TrackerCV`) · Rack module

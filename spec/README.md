@@ -8,7 +8,8 @@ here, and the fixture checks that they agree.
 | Document | Covers | Status |
 | --- | --- | --- |
 | [score.md](score.md) + [score.schema.json](score.schema.json) | The score document (`hydrapy-tracker-1` / `hydrapy-tracker-2`): patterns, lanes, notes, automation, scenes, the playhead model | Normative |
-| [pattern-timing.md](pattern-timing.md) | Proposed ¼×–8× pattern rates, beat/row conversion and shared audio/visual row timing | Proposal; not implemented |
+| [score-v3.md](score-v3.md) + [score.schema.json](score.schema.json) | Score format 3 (`hydrapy-tracker-3`), part 1: six lanes, 128 patterns and a chain, per-pattern rate, bar and bars, per-lane length, the timeline and its transport changes, and how versions 1 and 2 map onto it | Proposed (A-spec-1 of 4); not implemented |
+| [pattern-timing.md](pattern-timing.md) | Proposed ¼×–8× pattern rates, beat/row conversion and shared audio/visual row timing | Superseded by score-v3.md, which carries its rates and rules into format 3; kept as the design record |
 | [bridge-api.md](bridge-api.md) | How a follower finds Studio, authenticates, reads the playhead and score, and sends control values and transport | Normative |
 | [cv-semantics.md](cv-semantics.md) | What every output signal does at every beat: clock, reset, run, gates, pitch, velocity, automation lanes, levels | Normative; checked by the fixture |
 | [audio-ports.md](audio-ports.md) | The JACK/PipeWire listening-audio ports Studio publishes and the Rack module captures | Informative |
