@@ -167,3 +167,35 @@ clock estimate. This does not compensate physical display or device latency.
 The display shows the link state and tempo, then the pattern, row and beat, then what each CV input drives. **LINK** is lit while Studio answers. **CLK** follows the clock output. PLAY's light is lit while Gorgon plays.
 
 If Studio stops answering, the module keeps the last tempo and position and carries on until Studio is back.
+
+
+## Machinemodule sound link (Gorgon 2.3.0)
+
+Place **Machinemodule** (`MachinemoduleRack` plugin) immediately to the right of
+Gorgon, load your Machinedrum OS in its context menu, and leave its TRIG input
+unpatched. Gorgon sends four tracks' resolved machine/SYN1–8 controls together
+with their gates, velocity, pitch and transport in one expander packet. The
+receiver's blue light indicates a live link. No extra parameter cables are needed.
+
+In the matching HydraPy Audio editor, open **External Rack instrument**. Set
+track defaults and per-hit locks as raw integers: machine 0–191, P1–P8 0–127.
+Blank controls inherit. Each hit starts from fresh defaults, and absent values
+remain unspecified until the receiving machine supplies its native defaults.
+Editing these controls upgrades a score to `hydrapy-tracker-2`; older readers
+reject it. Untouched version-1 scores continue to play with the instrument's
+selected machine/defaults. Browser audition and physical direct CV keep their
+existing behavior. Notes are still available on Gorgon's ordinary V/oct output;
+they do not implicitly rewrite a machine's raw P1 control.
+
+Machinemodule's local offsets and eight polyphonic parameter-CV inputs add to
+these controls and latch at each hit. Patching its TRIG input overrides the link.
+The first adapter buffers 1024 host samples plus rate-conversion delay and rounds
+triggers forward to the native 32-sample boundary. Its menu reports delay,
+missed blocks and unavailable machine IDs. Align other voices or adjust Gorgon's
+timing offset for your monitoring path; no physical workstation latency has
+been measured here. Set Machinemodule's native tempo manually to match Gorgon.
+
+The Rack module contains only the public BSD sound-link ABI; firmware and the
+AGPL emulation core live in the separate receiver plugin. See
+[`../../spec/sound-locks.md`](../../spec/sound-locks.md) and
+[`../../spec/sound-link.hpp`](../../spec/sound-link.hpp) for the contract.

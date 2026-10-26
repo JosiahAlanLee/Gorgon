@@ -61,12 +61,56 @@ inline int noteMidi(const char* note) {
 	return midi <= 127 ? midi : -1;
 }
 
-// The tracker document (hydrapy-tracker-1). Returns false if it isn't one.
+// Strict version-2 raw controls. JSON booleans are never numbers here.
+inline bool rawControl(json_t* j, int high, int& value) {
+    if (!json_is_number(j)) return false;
+    double n = json_number_value(j);
+    if (!std::isfinite(n) || n < 0 || n > high || n != std::floor(n)) return false;
+    value = int(n);
+    return true;
+}
+inline bool parseSoundParams(json_t* j, gorgon_sound::Sound& sound, bool machine) {
+    if (!json_is_object(j)) return false;
+    const char* key;
+    json_t* raw;
+    json_object_foreach(j, key, raw) {
+        int value;
+        if (machine && std::string(key) == "machine") {
+            if (!rawControl(raw, 191, value)) return false;
+            sound.machine = int16_t(value);
+        } else {
+            if (key[0] != 'p' || key[1] < '1' || key[1] > '8' || key[2] != '\0' || !rawControl(raw, 127, value)) return false;
+            int i = key[1] - '1';
+            sound.mask |= uint16_t(1u << i);
+            sound.values[i] = float(value);
+        }
+    }
+    return true;
+}
+
+// The tracker document (hydrapy-tracker-1 or -2). Returns false if it isn't one.
 inline bool parseScore(json_t* d, Score& score) {
 	const char* format = json_string_value(json_object_get(d, "format"));
-	if (!format || std::string(format) != "hydrapy-tracker-1")
+	if (!format || (std::string(format) != "hydrapy-tracker-1" && std::string(format) != "hydrapy-tracker-2"))
 		return false;
-	score = Score();
+    bool v2 = std::string(format) == "hydrapy-tracker-2";
+    score = Score();
+    json_t* sounds = json_object_get(d, "sounds");
+    if (!v2 && sounds) return false;
+    if (v2) {
+        if (!json_is_array(sounds) || json_array_size(sounds) != AUDIO_LANES) return false;
+        for (int l = 0; l < AUDIO_LANES; ++l) {
+            json_t* s = json_array_get(sounds, size_t(l));
+            if (!json_is_object(s) || json_object_size(s) != 2) return false;
+            json_t* m = json_object_get(s, "machine");
+            int value;
+            if (!json_is_null(m)) {
+                if (!rawControl(m, 191, value)) return false;
+                score.sounds[l].machine = int16_t(value);
+            }
+            if (!parseSoundParams(json_object_get(s, "params"), score.sounds[l], false)) return false;
+        }
+    }
 	score.bpm = number(json_object_get(d, "bpm"), 120.);
 	score.key = int(number(json_object_get(d, "key"), 2.));
 	if (!(score.bpm >= 1.))
@@ -88,7 +132,9 @@ inline bool parseScore(json_t* d, Score& score) {
 			json_t* lane = json_array_get(audio, size_t(l));
 			for (int r = 0; r < ROWS; r++) {
 				json_t* hit = json_array_get(lane, size_t(r));
-				if (json_is_object(hit)) {
+                if (json_is_object(hit)) {
+                    json_t* locks = json_object_get(hit, "locks");
+                    if (locks && (!v2 || !parseSoundParams(locks, pattern.locks[l][r], true))) return false;
 					pattern.hit[l][r] = true;
 					pattern.velocity[l][r] = float(number(json_object_get(hit, "vel"), 100.));
 					int midi = noteMidi(json_string_value(json_object_get(hit, "note")));

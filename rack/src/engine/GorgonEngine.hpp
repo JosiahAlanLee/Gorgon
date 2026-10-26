@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include "SoundLink.hpp"
 
 namespace gorgon {
 
@@ -33,6 +34,7 @@ struct Lane {
 };
 
 struct Pattern {
+	gorgon_sound::Sound locks[AUDIO_LANES][ROWS];
 	bool hit[AUDIO_LANES][ROWS] = {};
 	float velocity[AUDIO_LANES][ROWS] = {};
 	bool pitched[AUDIO_LANES][ROWS] = {};
@@ -47,6 +49,7 @@ struct Score {
 	bool loop = false;
 	int pattern = 0;
 	bool mutes[AUDIO_LANES] = {};
+	gorgon_sound::Sound sounds[AUDIO_LANES];
 	Pattern patterns[PATTERNS];
 
 	double cycleStart() const { return loop ? pattern * BEATS_PER_PATTERN : 0.; }
@@ -60,6 +63,18 @@ struct Score {
 		return std::min(b, std::nextafter(start + length, 0.));
 	}
 };
+
+// Resolve from the kit on every hit. Unspecified values remain unspecified so
+// the receiving instrument can apply the resolved machine's native defaults.
+inline gorgon_sound::Sound soundAt(const Score& score, int pattern, int lane, int row) {
+    auto sound = score.sounds[lane];
+    const auto& locks = score.patterns[pattern].locks[lane][row];
+    if (locks.machine >= 0) sound.machine = locks.machine;
+    for (int i = 0; i < gorgon_sound::PARAMS; ++i)
+        if (locks.mask & (1u << i)) sound.values[i] = locks.values[i];
+    sound.mask |= locks.mask;
+    return sound;
+}
 
 // value_at() from studio_tracker.py, for a fractional row.
 inline double laneValue(const Lane& lane, int laneIndex, double row) {

@@ -31,6 +31,15 @@ accepted.append(validate(with_scenes))
 rng = random.Random(7)
 accepted += [make_fixture.random_score(rng) for _ in range(200)]
 
+# Version-2 controls are sparse; missing values are deliberately not zero-filled.
+for document in list(accepted):
+    d = copy.deepcopy(document)
+    d['format'] = 'hydrapy-tracker-2'
+    d['sounds'] = [{'machine': None, 'params': {}} for _ in range(4)]
+    d['sounds'][0] = {'machine': 16, 'params': {'p2': 50}}
+    d['patterns'][0]['audio'][0][0] = {'note': 'C-4', 'vel': 90, 'locks': {'machine': 48, 'p1': 0, 'p8': 127}}
+    accepted.append(validate(d))
+
 failures = 0
 for index, document in enumerate(accepted):
     errors = list(checker.iter_errors(document))
@@ -75,6 +84,17 @@ mutate('scene fade 65', lambda d: d['patterns'][0].__setitem__('scenes', [{'r': 
 mutate('program o4', lambda d: d['modes'].__setitem__('program', 'o4'))
 mutate('three mutes', lambda d: d.__setitem__('mutes', [False, False, False]))
 mutate('binding too long', lambda d: d['bindings'].__setitem__('z', 'x' * 121))
+
+def sound_change(d, locks):
+    d['format'] = 'hydrapy-tracker-2'
+    d['sounds'] = [{'machine': None, 'params': {}} for _ in range(4)]
+    d['patterns'][0]['audio'][0][0] = {'note': 'C-4', 'vel': 90, 'locks': locks}
+
+
+mutate('v1 sounds rejected', lambda d: d.__setitem__('sounds', [{'machine': None, 'params': {}}] * 4))
+mutate('v1 locks rejected', lambda d: d['patterns'][0]['audio'][0].__setitem__(0, {'note': 'C-4', 'vel': 90, 'locks': {}}))
+for locks in [None, [], {'p1': True}, {'p1': 128}, {'p1': 1.5}, {'p0': 0}, {'machine': None}, {'machine': 192}, {'unknown': 1}]:
+    mutate('invalid locks '+repr(locks), lambda d, value=locks: sound_change(d, value))
 
 print(f'{len(accepted)} accepted scores checked, {failures} failure(s)')
 sys.exit(1 if failures else 0)
