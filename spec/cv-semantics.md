@@ -64,6 +64,9 @@ change reached the follower, which for the Rack module is up to one bridge poll
 For lane `n` at the playhead's cell:
 
 - **present**: the cell is not null and `vel > 0`. `AIR` with `vel > 0` is present.
+  In version 3 a cell is present only on occurrences whose condition fires
+  ([evaluator.md](evaluator.md)), which needs the transport anchor, elapsed beats
+  and FILL as well as the beat.
 - **on** = present and `moving` and lane `n` not muted.
 
 While a lane is muted or the cell is silent, nothing below updates for that lane.

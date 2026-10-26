@@ -436,7 +436,7 @@
           "type": "array",
           "maxItems": 128,
           "items": {
-            "$ref": "#/$defs/hit"
+            "$ref": "#/$defs/hit3"
           },
           "description": "Exactly len cells (checked in code); null is an empty cell."
         }
@@ -735,6 +735,7 @@
         "pattern",
         "loop",
         "chain",
+        "seed",
         "sound",
         "mutes",
         "lanes",
@@ -782,6 +783,12 @@
             "maximum": 127
           },
           "description": "The song order: pattern indices played in turn when loop is false. Repeats allowed."
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295,
+          "description": "Drives every probability condition (spec/evaluator.md). Migrated scores use 0."
         },
         "sound": {
           "type": "boolean",
@@ -877,12 +884,136 @@
           "description": "Eight banks of sixteen. null is an empty pattern: rate 1, bar 16, bars 4, empty lanes of 64 rows."
         }
       }
+    },
+    "cond": {
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "every",
+            "prob",
+            "fill",
+            "first"
+          ]
+        },
+        "a": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        },
+        "b": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        },
+        "p": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 99
+        },
+        "not": {
+          "type": "boolean"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "every"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "a",
+              "b"
+            ],
+            "not": {
+              "required": [
+                "p"
+              ]
+            }
+          },
+          "else": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "a"
+                  ]
+                },
+                {
+                  "required": [
+                    "b"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "prob"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "p"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "p"
+              ]
+            }
+          }
+        }
+      ],
+      "description": "A cell condition (spec/evaluator.md): every a:b (a <= b, checked in code), prob %p, fill F, first 1ST; not negates. Fields other than the kind's are rejected."
+    },
+    "hit3": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "required": [
+        "note",
+        "vel"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "note": {
+          "$ref": "#/$defs/note"
+        },
+        "vel": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 127,
+          "description": "Velocity 0-127. Zero is silent: no gate, no hit, held values unchanged."
+        },
+        "locks": {
+          "$ref": "#/$defs/locks"
+        },
+        "cond": {
+          "$ref": "#/$defs/cond"
+        }
+      },
+      "description": "A version-3 cell: null, or note and velocity with optional locks and cond."
     }
   },
   "x-notes": [
     "Unknown top-level and pattern-level keys are tolerated and preserved by the reference implementation (the shipped demo score carries 'version' and 'scene'); implementations must ignore keys they do not know.",
     "Row ordering (sorted, unique) within keys and scenes cannot be expressed in JSON Schema; validate it in code.",
     "Non-finite numbers (NaN, Infinity) are rejected everywhere a number is accepted.",
-    "Version 3 (proposed, spec/score-v3.md): bar * bars <= 128, each lane's len <= rows with exactly len cells, and key and scene rows below rows cannot be expressed in JSON Schema; validate them in code. Conditions, transforms, seed and bus fields are added by later spec PRs."
+    "Version 3 (proposed, spec/score-v3.md): bar * bars <= 128, each lane's len <= rows with exactly len cells, and key and scene rows below rows cannot be expressed in JSON Schema; validate them in code. A condition's a <= b is checked in code. Transforms and bus fields are added by later spec PRs."
   ]
 }

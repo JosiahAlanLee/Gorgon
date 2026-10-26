@@ -3,6 +3,45 @@
 Newest first. Each entry names the HydraPy commit and Rack module version it
 describes.
 
+## 2026-10-26 — score format 3, part 2: the evaluator (proposal)
+
+HydraPy `e5999b2282bd9766b6f7152b4278c3da4e72ed8e` · Rack module `GorgonBridge` 2.3.1,
+both unchanged. A-spec-2 of the [roadmap](../docs/ROADMAP.md).
+
+[evaluator.md](evaluator.md) defines what a version-3 score plays.
+
+- **Candidates:** `evaluate(score, transport, [u0, u1))` returns one candidate per
+  occurrence of a present cell, with a stable id, an exact beat, `fires` and its
+  origin. It is pure, and splitting the interval returns the same set.
+- **Conditions:** cells gain `cond`, one of `a:b`, `%p`, `F` or `1ST`, each with an
+  optional `not`. The roadmap's other two, PRE and NEI, are deferred to 3.1 by the
+  user's decision.
+- **Bar counter:** counts bars across a *visit*, consecutive plays of the same
+  pattern, per the #41 review.
+- **Chance:** `%p` draws from a specified 32-bit hash of the new top-level `seed`.
+- **FILL:** takes effect from a beat, as the user ratified.
+- **Effective beat:** every transport change has one, so queued switching later
+  needs no format change.
+- **Playhead:** gains `start`, `elapsed`, `entry`, `fill` and `pending` for
+  version-3 documents.
+- **Trace and vectors:** a JSONL trace format, and five hand-checked vectors.
+
+[score-v3.md](score-v3.md)'s five proposals are now ratified, with the review's
+amendments. It notes that lanes restarting with their pattern is the master-length
+case, and that the empty-pattern object an editor writes must equal the defaults
+exactly. [cv-semantics.md](cv-semantics.md) and [bridge-api.md](bridge-api.md)
+point to the new page. The schema's version-3 branch gains `seed` and `cond`; the
+version-1/2 rules are unchanged.
+
+When all four parts are written, each implementation must:
+
+- **HydraPy:** implement `evaluate()` and its trace, with property tests of the
+  invariants. Feed `TrackerCV`, the scheduler and the browser synth from it.
+  Publish the new playhead fields. Its schema check must also cover the
+  materialised empty pattern.
+- **Rack module:** do the same in the engine, keep the trace ring, and regenerate
+  the fixture from HydraPy (Phase 3).
+
 ## 2026-10-26 — score format 3, part 1: lanes and timing (proposal)
 
 HydraPy `e5999b2282bd9766b6f7152b4278c3da4e72ed8e` · Rack module `GorgonBridge` 2.3.1,
