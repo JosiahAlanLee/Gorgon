@@ -87,6 +87,101 @@ shots:
       - "with key D, C4 plays each model's base pitch (MANUAL Connect Gorgon 4; Gorgon pitch (midi + key - 2 - 60)/12 V)"
       - "controls are captured at each trigger: turning DECAY changes the next hit, not the sounding one (MANUAL; DSP_Emulation #24)"
       - "DrumLab plays in Rack Free's GUI on the stage's JACK server on this take (#24 had not checked live Rack/audio use)"
+  - id: machine
+    title: Machinemodule on Gorgon's sound link
+    frames:
+      - {window: rack}
+    source: [DSP_Emulation/vcv/machinemodule/README.md#play-it, rack/docs/MANUAL.md#machinemodule-sound-link-gorgon-230, spec/sound-locks.md]
+    setup:
+      studio: {patch: patches/gorgon_corridor.py, score: scores/kit-md.json, transport: stop}
+      rack: {patch: rack-machine, view: {modules: [Gorgon, Machinemodule]}}
+    narration: >
+      Machinemodule is a separate plugin. It runs the Machinedrum's own voice code from an OS file you supply.
+      {menu} Its menu loads the file, lists the machines inside and reports the delay and any dropped audio;
+      the green light means the engine is ready.
+      {link} Put it directly to the right of Gorgon and leave TRIG empty: it takes Gorgon's sound link,
+      and the blue light comes on. {play} Each hit now arrives with its machine and eight sound controls,
+      so the score picks the sound, one hit at a time.
+    actions:
+      - at: menu
+        rack.menu: {ref: Machinemodule, path: [Select machine from loaded OS, '16 · TRXBD'], pause: 1.2}
+      - at: link
+        rack.highlight: {ref: Machinemodule, label: 'LINK · Gorgon 2.3.0', seconds: 2.5}
+      - at: play
+        studio.api: {action: tracker_transport, enabled: true, playing: true, beat: 0}
+      - after: 7
+        studio.press: Space
+    hold: 1
+    mix: {programme: -10}
+    verify:
+      - "Machinemodule runs the original voice DSP and parameter routines from a user-supplied OS; no firmware is distributed (README)"
+      - "context menu: Load Machinedrum OS (.syx)…, Select machine from loaded OS (16 · TRXBD … from the OS), Latency: 1097 host samples, Missed audio blocks / dropped input blocks / overflows / coalesced / unavailable (Machinemodule.cpp appendContextMenu; stage)"
+      - "16 · TRXBD is already the MACHINE selector's value (default 16), so choosing it on camera changes nothing"
+      - "READY light green once the worker has loaded the OS; LINK light blue while Gorgon's packets are valid (Machinemodule.cpp process)"
+      - "the link needs Machinemodule immediately right of Gorgon 2.x with TRIG unpatched (MANUAL; soundPacket checks GorgonBridge 2.x)"
+      - "a hit carries machine and P1–P8 with gate, velocity and pitch in one packet (spec/sound-link.hpp)"
+      - "plays on the stage: kit-md.json's locks are audible (render box: 489/489 lock-changing hits matched offline renders)"
+  - id: locks
+    title: Track sounds and per-hit locks
+    needs: [controller, rack]
+    frames:
+      - {window: studio}
+      - {at: defaults, window: studio, rect: [0.12, 0.27, 0.70, 0.70]}
+    source: [hydrapy/docs/gorgon-tracker.md, spec/sound-locks.md#data-and-resolution]
+    setup:
+      studio: {patch: patches/gorgon_corridor.py, score: scores/kit-md.json, transport: stop}
+      rack: {patch: rack-machine}
+    narration: >
+      In the Audio page, select a hit and open External Rack instrument. {defaults}
+      Track defaults give a lane its machine and controls: the third lane plays machine twenty-two, a closed hat,
+      with P2 at thirty. {lock} Selected hit locks change one hit. This one plays machine twenty-three, the open hat,
+      and a dot in the grid marks it. Blank fields inherit. {play}
+      A lock lasts for its own hit; the next hit starts again from the track's sound.
+    actions:
+      - studio.click: '#audioPageTab'
+      - studio.click: 'button[role=gridcell][data-col="2"][data-row="0"]'
+      - studio.click: '#soundEditor summary'
+      - at: defaults
+        studio.point: '#track-machine'
+      - at: lock
+        studio.click: 'button[role=gridcell][data-col="2"][data-row="2"]'
+      - studio.click: '#soundEditor summary'   # selecting a hit closes the panel (HydraPy 0bac540: the menus' click-outside handler)
+      - studio.point: '#lock-machine'
+      - at: play
+        studio.api: {action: tracker_transport, enabled: true, playing: true, beat: 0}
+      - after: 6
+        studio.press: Space
+    hold: 1
+    mix: {programme: -10}
+    verify:
+      - "External Rack instrument holds Track defaults and Selected hit locks: Machine 0–191, P1–P8 0–127, blank inherits (index.html #soundEditor)"
+      - "a locked cell shows a dot (app.js lock-mark)"
+      - "selecting another hit closes External Rack instrument: app.js closes every open details element on an outside click, menus and this panel alike (HydraPy 0bac540); the take reopens it, as a user must"
+      - "each hit resolves fresh from the track's sound plus its own locks; nothing carries to the next hit (spec/sound-locks.md; render box)"
+      - "kit-md.json: hat lane machine 22 (TRXCH) P2 30; row 2 locks machine 23 (TRXOH) P2 40 (make_kit_md.py; OS 1.63 machine list)"
+  - id: latency
+    title: Machinemodule's buffer
+    frames:
+      - {window: rack}
+    source: [DSP_Emulation/vcv/machinemodule/README.md#timing-and-failure-behavior, rack/docs/MANUAL.md]
+    setup:
+      studio: {patch: patches/gorgon_corridor.py, score: scores/kit-md.json, transport: stop}
+      rack: {patch: rack-machine, view: {modules: [Gorgon, Machinemodule]}}
+    narration: >
+      The emulator renders ahead on its own thread, through a buffer of 1024 samples. Measured on this machine,
+      Machinemodule sounds about twenty-four milliseconds after Gorgon's gate. {offset}
+      To line it up, turn Gorgon's OFFSET, which moves all of Rack's outputs earlier, or delay your other voices to match.
+    actions:
+      - at: offset
+        rack.knob: {ref: Gorgon.param.Timing offset, value: 24, seconds: 2}
+      - after: 1.5
+        rack.knob: {ref: Gorgon.param.Timing offset, value: 0, seconds: 1}
+    hold: 1
+    mix: {programme: -10}
+    verify:
+      - "queue latency 1024 host samples plus converter delay; menu reports 1097 at 48 kHz (README; Worker converterDelay)"
+      - "kick onset 24.2 ms after Gorgon's GATE 1 at 48 kHz, 64–256-frame periods (render box runs, 2026-10-26)"
+      - "OFFSET ±100 ms; positive sends Rack's outputs earlier (Gorgon.cpp OFFSET_PARAM); +23.9 ms put Machinemodule's kick 0.5 ms after Studio's beat (render box)"
   - id: chain
     title: Spoon Bender, OTIS, Vastish
     frames:
