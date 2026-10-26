@@ -149,7 +149,7 @@ Both act on Studio, so the picture and every other Gorgon output move too.
 
 ## Timing
 
-Studio's playhead reaches the module about 30 times a second. Between updates the module runs its own beat at the score's tempo on Rack's sample clock, and trims that tempo by at most 0.5% to stay aligned with Studio. Clock pulses, gates and held automation steps therefore land on exact samples and stay evenly spaced. Seeks, tempo changes, starting and stopping are followed as soon as the next update arrives, within about 35 ms.
+Studio's playhead reaches the module about 30 times a second. Between updates the module runs its own beat at the score's tempo on Rack's sample clock, and trims that tempo by at most 0.5% to stay aligned with Studio. Clock pulses, gates and held automation steps therefore land on exact samples and stay evenly spaced. Seeks, tempo changes, starting and stopping are followed as soon as the next update arrives, within about 35 ms. A seek is followed exactly however short it is (even a fraction of a row): the module jumps on Studio's transport revision, and trims its tempo only for unmarked drift.
 
 The end-to-end test (`tests/studio_e2e.py`) reports follower phase error against a running Studio and requires less than 1 ms in that harness. It does not measure physical audio or display latency.
 

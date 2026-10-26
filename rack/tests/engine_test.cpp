@@ -198,6 +198,7 @@ static Run follow(double bpm, double ppm, double jitterMs, double seekAt = -1., 
 			if (!seeked && seekAt >= 0. && trueTime >= seekAt) {
 				head.anchorBeat = seekTo;
 				head.anchorTime = trueTime;
+				head.transportRevision++;   // Studio marks every explicit seek
 				seeked = true;
 			}
 			published = trueTime;
@@ -207,7 +208,7 @@ static Run follow(double bpm, double ppm, double jitterMs, double seekAt = -1., 
 			// Studio's (same machine) with scheduling jitter.
 			double blockStart = std::floor(double(frame) / block) * block;
 			double local = blockStart / sr / (1. + ppm * 1e-6) + jitter(rng) + (frame - blockStart) / sr;
-			f.correct(score, true, head.beatAt(score, local));
+			f.correct(score, true, head.beatAt(score, local), head.transportRevision);
 		}
 		Outputs out = evaluate(score, true, f.beat, o);
 		bool high = out.clock > 0;
@@ -251,6 +252,11 @@ static void follower() {
 	Run seek = follow(120., 50., 1., 8., 40.);
 	CHECK(seek.maxErrorMs < 1., "after a seek: %.3f ms", seek.maxErrorMs);
 	CHECK(seek.jumps == 2, "a seek is one jump (%ld)", seek.jumps);
+	// A seek shorter than the drift threshold (a fifth of a row back from beat 16 at 8 s) is still a
+	// seek: transport_revision changes, so the follower jumps instead of slewing for seconds.
+	Run shortSeek = follow(120., 50., 1., 8., 16. - .05);
+	CHECK(shortSeek.maxErrorMs < 1., "after a short seek: %.3f ms", shortSeek.maxErrorMs);
+	CHECK(shortSeek.jumps == 2, "a short seek is one jump (%ld)", shortSeek.jumps);
 }
 
 static void details() {

@@ -90,7 +90,7 @@ struct Gorgon : Module {
 				double local = APP->engine->getBlockTime() + double(args.frame - APP->engine->getBlockFrame()) * args.sampleTime;
 				double offset = params[OFFSET_PARAM].getValue() / 1000.;
 				double target = snapshot.playhead.beatAt(snapshot.score, snapshot.clock.toServer(local + offset));
-				follower.correct(snapshot.score, snapshot.playhead.moving(), target);
+				follower.correct(snapshot.score, snapshot.playhead.moving(), target, snapshot.playhead.transportRevision);
 			}
 			for (int i = 0; i < gorgon::INPUTS; i++)
 				bridge.setInput(i, inputs[CV1_INPUT + i].isConnected(), inputs[CV1_INPUT + i].getVoltage());
