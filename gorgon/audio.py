@@ -20,6 +20,15 @@ def environment(config):
     return env
 
 
+def rack_environment(config, env):
+    # Rack 2 finds a device's RtAudio ID in one RtAudio instance and opens it in another; each numbers devices
+    # in JACK port order, which PipeWire sorts by priority and then by reusable node ID. Rack's first audio
+    # client could take the number of the device the next module opens, unless Rack's clients sort last.
+    if config['audio']['backend'] != 'pipewire':
+        return env
+    return dict(env, PIPEWIRE_PROPS=env.get('PIPEWIRE_PROPS') or '{ priority.session = -1 }')
+
+
 def wrap(config, command):
     return (['pw-jack'] if config['audio']['backend'] == 'pipewire' else []) + list(command)
 

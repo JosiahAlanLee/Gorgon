@@ -77,7 +77,7 @@ use that device. Multiple unresolved devices require one explicit choice:
   "device": "Digi 003 Rack Multichannel",
   "backend": "pipewire",
   "rate": 48000,
-  "quantum": 256,
+  "quantum": 1024,
   "start_services": true,
   "connections": []
 }
@@ -85,7 +85,10 @@ use that device. Multiple unresolved devices require one explicit choice:
 
 Use the exact playback group printed by `doctor`; the example name is not a
 hardware channel map. Rate and quantum are per-client requests, not global
-forced-clock settings. The ready message reports the actual server values.
+forced-clock settings. The default 1024 frames (21 ms at 48 kHz) is what Studio's
+JACK client sustains on a desktop session: on a Ryzen 5 5600X, 256 and 512 frames
+dropped audio for the first seconds after Play. Lower it only if yours keeps up.
+The ready message reports the actual server values.
 If PipeWire is unavailable, `start_services: true` permits starting its user
 socket and WirePlumber through `systemctl --user start`. Services already in
 use are never restarted, and the launcher does not start a competing `jackd`.
@@ -97,8 +100,11 @@ client to this Studio's actual port names, including name suffixes. Other
 clients' existing connections are retained. Its saved device names are refreshed
 on startup, preserving modules, cables, settings and embedded archive assets.
 An existing custom Rack patch is
-loaded as saved. Optional explicit connection pairs can restore additional
-routes once their ports exist:
+loaded as saved. Under PipeWire, Rack's own JACK clients are listed after every
+other device (`priority.session = -1`): Rack 2 numbers devices in listing order
+when it looks one up and again when it opens it, so its first audio client could
+otherwise take the number of the device the next module opens. Optional explicit
+connection pairs can restore additional routes once their ports exist:
 
 ```json
 "connections": [
@@ -143,8 +149,9 @@ PID. Logs/discovery files are private to your account; status omits the token.
 
 ## Validation
 
-The opt-in integration test starts a private real PipeWire server, a null output
-device, the pinned Studio and Rack Free with the real Gorgon plugin. It captures
+The opt-in integration test starts a private real PipeWire server, a test output
+whose node ID sits above freed ones (as on a long-running desktop server), the
+pinned Studio and Rack Free with the real Gorgon plugin. It captures
 audio through the entire chain, checks score restoration, repeated start, stop,
 relaunch with a changed Studio client name, and survival of an unrelated client
 and the pre-existing audio server. No physical interface or firmware is used.

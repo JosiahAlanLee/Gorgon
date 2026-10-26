@@ -20,7 +20,7 @@ def initialize(path, args=None):
         if args.workspace:
             config['workspace'] = str(Path(args.workspace).expanduser().resolve())
         if args.hydrapy:
-            config['studio']['command'] = [str(Path(args.hydrapy).expanduser().resolve())]
+            config['studio']['command'] = [os.path.abspath(Path(args.hydrapy).expanduser())]
         if args.visual_patch:
             config['studio']['patch'] = args.visual_patch
         if args.rack:
