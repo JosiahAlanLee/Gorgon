@@ -21,9 +21,10 @@ shots:
     title: The scene column
     narration: >
       Enter on an empty scene cell writes the next scene after the one above it, {enter}
-      so repeated entries step through the patch. Set a fade, {fade} then press play. {play}
+      so repeated entries step through the patch. Set a fade of eight rows, {fade} write it, and then press play. {play}
       Every scene draws into the same output, so feedback carries across the change.
     actions:
+      - studio.click: '#visualPageTab'     # the scene column is on the Visual page
       - studio.click: {selector: '#trackerRows [aria-label^="Scene, row 00"]'}
       - at: enter
         studio.press: Enter                 # row 00: nothing above, so the first scene (drift)

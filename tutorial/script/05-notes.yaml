@@ -5,6 +5,8 @@ defaults:
   needs: [controller]
   setup:
     studio: {patch: patches/gorgon_corridor.py, score: scores/demo.json, transport: stop}
+    actions:
+      - studio.click: '#audioPageTab'      # notes live on the Audio page
 shots:
   - id: one-note
     title: One note
@@ -77,7 +79,7 @@ shots:
     source: [hydrapy/docs/gorgon-editor-walkthrough.md#3-build-a-phrase-with-block-operations]
     narration: >
       Shift-click to select a block. {block} The rectangle and its size show above the grid.
-      Copy it, {copy} pick a destination, and Paste. {paste} Empty cells in the copied block overwrite too.
+      Copy it, {copy} click the row where the copy should start, and Paste. {paste} Empty cells in the copied block overwrite too.
       With the pasted notes selected, plus twelve moves them up an octave. {octave}
       AIR events don't transpose, and if any note would go out of range, none of them move.
     actions:

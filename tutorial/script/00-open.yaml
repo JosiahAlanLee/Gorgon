@@ -4,23 +4,33 @@ title: Gorgon
 # A cold open: the picture and the rack playing from one score, then the title.
 shots:
   - id: cold
-    kind: render
-    title: The picture
-    render:
-      name: corridor
-      patch: patches/gorgon_corridor.py
-      seconds: 14
-    source: [Gorgon/README.md, hydrapy/patches/gorgon_corridor.py]
+    title: The picture and the rack
+    # Live: the demo score plays the corridor picture (Program) and DrumLab's kit in Rack (rack-kit) at once.
+    needs: [controller, program, rack]
+    setup:
+      studio: {patch: patches/gorgon_corridor.py, score: scores/kit.json, transport: stop}
+      rack: {patch: rack-kit, view: {modules: [Gorgon, Percussion]}}
+    source: [Gorgon/README.md, hydrapy/patches/gorgon_corridor.py, DSP_Emulation/vcv/drumlab/docs/MANUAL.md#connect-gorgon]
     narration: >
-      One score drives a picture and VCV Rack from a single playhead, and it is built to drive a modular synthesizer too.
-      This is Gorgon, a tracker inside HydraPy Studio, and the Rack modules it was built to play.
+      One score drives a picture and VCV Rack from a single playhead, {rack} and it is built to drive a modular synthesizer too.
+      This is Gorgon, a tracker inside HydraPy Studio, {picture} and the Rack modules it was built to play.
+    actions:
+      - studio.api: {action: tracker_transport, enabled: true, playing: true, beat: 0}
+    hold: 1.5
+    mix: {programme: -8}
+    frames:
+      - {window: program}
+      - {at: rack, window: rack}
+      - {at: picture, window: program}
     verify:
       - "Gorgon README: one score, four 64-row patterns, picture + modular + Rack from one playhead"
+      - "rack-kit is DrumLab's Gorgon-percussion.vcv wiring: GATES→TRIG, PITCH→V/OCT, VEL→VEL, RESET→RESET (work/patches/rack-kit.cables.txt)"
+      - "DrumLab plays from Gorgon in Rack Free's GUI on JACK on this take (DSP_Emulation #24 had not yet checked live Rack/audio-device use)"
   - id: title
     kind: card
     video: gorgon_card
     text: Gorgon
-    sub: HydraPy · Studio · the tracker · VCV Rack · OTIS · Vastish · Spoon Bender · Séance
+    sub: HydraPy · Studio · the tracker · VCV Rack · OTIS · Vastish · Spoon Bender · Séance · DrumLab
     narration: >
       In this video: what each piece is, how to install them, how to write a score,
       and how to patch it into Rack. Everything you see was recorded inside one computer,

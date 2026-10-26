@@ -71,6 +71,16 @@ def build(cat, harvested, cfg=None):
     p.cable(v, 'Left audio', a, '#0').cable(v, 'Right audio', a, '#1')
     out['rack-voice-poly'] = p
 
+    # ch0 cold open, ch10 kit: DrumLab's Percussion as a four-lane kit, wired as its Gorgon-percussion.vcv
+    # example: Gates -> TRIG, Pitch -> V/OCT, Velocity -> VEL, Reset -> RESET, stereo mix -> Audio
+    p, g = base()
+    k = p.add('DrumLab', 'Percussion', gap=2)
+    a = audio_out(p)
+    p.cable(g, 'Gates 1', k, 'Triggers').cable(g, 'Pitch', k, 'Pitch').cable(g, 'Velocity', k, 'Velocity')
+    p.cable(g, 'Reset', k, 'Reset')
+    p.cable(k, 'Stereo mix left', a, '#0').cable(k, 'Stereo mix right', a, '#1')
+    out['rack-kit'] = p
+
     # ch10 sample chain: Spoon Bender -> OTIS -> Vastish, touching, in that order (row 1);
     # Vastish plays from FM hits; its audio goes through Spoon Bender to the Audio module.
     p, g = base()

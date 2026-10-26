@@ -64,6 +64,8 @@ rack:
     - dsp_emulation:vcv/vastish
     - dsp_emulation:vcv/spoonbender
     - dsp_emulation:vcv/seance
+    - dsp_emulation:vcv/bytebus                     # Séance Bridge's feedback example needs ByteBusLab (chapter 11)
+    - dsp_emulation:vcv/drumlab                     # Percussion: Gorgon's lanes as a drum kit (chapter 10)
     - gorgon:tutorial/probe
 
 capture:

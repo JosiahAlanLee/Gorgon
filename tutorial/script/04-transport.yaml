@@ -5,20 +5,28 @@ defaults:
   needs: [controller]
   setup:
     studio: {patch: patches/gorgon_corridor.py, score: scores/demo.json, transport: stop}
+    actions:
+      - studio.click: '#audioPageTab'      # the audio lanes' cells are on the Audio page
 shots:
   - id: tour
     title: The workspace
     source: [hydrapy/docs/gorgon-tracker.md#control-surface-and-displays, hydrapy/docs/gorgon-editor-walkthrough.md#before-recording]
     narration: >
       Four patterns, each sixty-four sixteenth-note rows, run left to right along the top. {cards}
-      Below is the selected pattern: four audio lanes, then the visual lanes, Dolly Z, Roll and Feedback, and the scene column. {grid}
+      Below is the selected pattern, on two pages. Audio holds the four sound lanes. {grid}
+      Visual holds Dolly Z, Roll, Feedback and the scene column, {visual} with the automation curve beneath them.
+      Tab in the grid switches pages, at the same pattern and row. {back}
       Row numbers are hexadecimal, so 0F comes before 10, and 3F is the last row. {rows}
-      On the right are the Program monitor, the automation sliders and the patch bindings.
+      On the right, the Hydra monitor shows Program, and its buttons can inspect any of the four outputs.
     actions:
       - at: cards
         studio.point: {selector: '#patterns .pattern-card[data-pattern="1"]'}
       - at: grid
         studio.point: {selector: '#trackHeaders'}
+      - at: visual
+        studio.click: '#visualPageTab'
+      - at: back
+        studio.click: '#audioPageTab'
       - at: rows
         studio.point: {selector: '#trackerRows [data-seek-row="15"]'}
     frames:
@@ -28,7 +36,8 @@ shots:
       - {at: rows, window: studio}
     verify:
       - "four patterns x 64 rows; row labels hex (walkthrough 'Before recording')"
-      - "scene column exists in the grid for gorgon_corridor (it has no scenes: check how the column shows)"
+      - "Audio page: Breaks, FM hits, Sub, Texture; Visual page: Dolly Z, Roll, Feedback, Scene, with the curve; Tab in the grid switches at the same pattern and row (HydraPy #52; tracker guide)"
+      - "Hydra monitor: Program plus o0-o3 buttons to inspect any output (HydraPy #57)"
       - "cards show note activity green, automation keys amber"
   - id: play
     title: Play and pause
