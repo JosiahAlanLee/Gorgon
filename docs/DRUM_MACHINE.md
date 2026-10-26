@@ -37,6 +37,8 @@ machine's sound, limitations, panel or firmware.
 
 ## First implementation: DrumLab Percussion
 
+**Status: retired** (DSP_Emulation #36). Machinemodule is now the drum destination and OTIS the sampler; see [roadmap §F1](ROADMAP.md#f-retirements-and-redirections). The rest of this section describes the prototype as it was.
+
 The companion DSP_Emulation work introduces an independent `DrumLab` plugin with
 one `Percussion` module. It is a synthesis prototype, not a sampler or a complete
 Machinedrum implementation.
