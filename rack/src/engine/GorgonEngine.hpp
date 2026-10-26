@@ -235,30 +235,65 @@ inline Outputs evaluate(const Score& score, bool moving, double beat, const Opti
 	return out;
 }
 
+// Pattern and row as one index (0..255), and the phase within the row, as evaluate() finds them.
+inline int absoluteRow(double beat, double* phase = nullptr) {
+	int p = std::min(std::max(int(beat / BEATS_PER_PATTERN), 0), PATTERNS - 1);
+	double rowPos = std::max(0., std::fmod(beat, double(BEATS_PER_PATTERN)) * 4.);
+	int row = std::min(int(rowPos), ROWS - 1);
+	if (phase)
+		*phase = rowPos - row;
+	return p * ROWS + row;
+}
+
 // Stateful part of TrackerCV.render. A transport update can arrive after the
 // phase-based 5 ms reset window, so deliver a full pulse on the first available
 // samples. Repeated snapshots and ordinary score edits must not retrigger it.
+// Likewise the gates of the row it landed on (spec/cv-semantics.md, landing gate):
+// heard after the row's gate window closed, they would never open.
 struct OutputState {
 	int64_t transportRevision = -1;
 	bool wasMoving = false;
 	int resetRemaining = 0;
+	int landingRemaining = 0, landingRow = -1;
+	double stood = -1.;   // the beat while not moving: where a resume lands
 	float velocity[AUDIO_LANES] = {}, pitch[AUDIO_LANES] = {};
 
+	// `anchor` is the playhead's anchor_beat, where a transport_revision change landed.
+	// Without one, a change is taken to have landed at `beat`.
 	Outputs render(const Score& score, bool moving, double beat, int64_t transport,
-	               const Options& options, double sampleTime) {
-		if (transport != transportRevision || (moving && !wasMoving)) {
+	               const Options& options, double sampleTime, double anchor = NAN) {
+		bool changed = transport != transportRevision;
+		if (changed || (moving && !wasMoving)) {
 			resetRemaining = moving ? int(std::round(options.resetSeconds / sampleTime)) : 0;
 			std::fill(velocity, velocity + AUDIO_LANES, 0.f);
 			std::fill(pitch, pitch + AUDIO_LANES, 0.f);
+			landingRemaining = 0;
+			if (moving) {
+				double landing = (changed || stood < 0.) ? anchor : stood;
+				startLanding(score, std::isfinite(landing) ? landing : beat, beat, options, sampleTime);
+			}
 		}
-		if (!moving)
-			resetRemaining = 0;
+		if (!moving) {
+			resetRemaining = landingRemaining = 0;
+			stood = beat;
+		}
 		transportRevision = transport;
 		wasMoving = moving;
 		Outputs out = evaluate(score, moving, beat, options);
 		if (resetRemaining > 0) {
 			out.reset = float(options.high);
 			resetRemaining--;
+		}
+		if (landingRemaining > 0) {
+			// Leaving the landing row ends it for good.
+			if (absoluteRow(beat) != landingRow)
+				landingRemaining = 0;
+			else {
+				for (int l = 0; l < AUDIO_LANES; l++)
+					if (out.present[l])
+						out.gate[l] = float(options.high);
+				landingRemaining--;
+			}
 		}
 		for (int l = 0; l < AUDIO_LANES; l++) {
 			if (out.present[l])
@@ -269,6 +304,19 @@ struct OutputState {
 			out.pitch[l] = pitch[l];
 		}
 		return out;
+	}
+
+	// The landing row's gates last what they had left at the landing, from this sample,
+	// and fall 1 ms before the row ends so the next hit still rises. A landing at or after
+	// the gate length in its row, or one the playhead has already left, adds nothing.
+	void startLanding(const Score& score, double landing, double beat, const Options& options, double sampleTime) {
+		double landingPhase, phase;
+		int row = absoluteRow(landing, &landingPhase);
+		if (landingPhase >= options.gate || absoluteRow(beat, &phase) != row)
+			return;
+		double seconds = std::min(options.gate - landingPhase, 1. - phase) * 15. / score.bpm - .001;
+		landingRemaining = std::max(0, int(std::lround(seconds / sampleTime)));
+		landingRow = row;
 	}
 };
 
