@@ -148,6 +148,11 @@ tools that film, narrate, edit and check them. It is not part of the plugin.
 
 ## Working on it
 
+The [drum-machine design assessment](docs/DRUM_MACHINE.md) maps a Machinedrum-like
+workflow onto Gorgon, original Rack percussion, Otis-derived sampling and a
+shared event/pattern layer. It distinguishes the first independent synthesis
+prototype from the sequencer and sampling work still needed.
+
 Read [AGENTS.md](AGENTS.md) first: where a change goes, how the contract
 changes, how the HydraPy pin moves. Short version: the contract in `spec/`
 changes first, then HydraPy, then `rack/`.
