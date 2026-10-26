@@ -18,6 +18,10 @@ becoming true (start or resume). At a transport change the follower:
 
 - starts a reset pulse of `reset_ms` (5 ms), latched for its full length even if
   the playhead has already moved past it;
+- starts a **landing gate** when the playhead landed inside the gate window of
+  its row and the follower hears the change while the playhead is still in that
+  row (see below), so a change that reaches it late still plays the hit it
+  landed on;
 - clears every lane's held pitch and held velocity to 0;
 - if it runs its own clock (the Rack module), jumps to the playhead, however
   small the change: only differences without a `transport_revision` change are
@@ -25,6 +29,31 @@ becoming true (start or resume). At a transport change the follower:
 
 A `revision` change, a controls change or a repeated snapshot is not a transport
 change and does none of this.
+
+### Landing gate
+
+The **landing** is the beat the change starts from: the playhead's `anchor_beat`
+after a `transport_revision` change, or, when only `moving` became true, the
+beat where the playhead stood. Let `landing phase` be its row phase. If `landing
+phase < gate`, and the follower's first sample after hearing the change is in
+the same pattern and row, the landing gate lasts
+
+    min(gate − landing phase, 1 − row phase) rows − retrigger_ms
+
+from that sample, where `row phase` is that sample's and `retrigger_ms` is 1 ms,
+so the gate falls before the next row starts. While it lasts and the playhead
+stays in the landing row, `gate n` is high wherever lane `n` is **on**. It ends
+early at the next transport change or when `moving` becomes false.
+
+For a follower that hears the change at once, the landing gate ends within the
+phase-based gate and changes nothing. One that hears it later, up to the end of
+the row, still plays the hit, starting late, for the length it would have had or
+until 1 ms before the row ends; without the landing gate a change heard after
+the window closed (54 ms at 138 BPM with the default `gate`) lost that row's
+hits. A landing at or after `gate` in its row (resuming late in a row, say) adds
+nothing: that hit had already ended. The hit still starts as late as the
+change reached the follower, which for the Rack module is up to one bridge poll
+(1/30 s) plus a round trip.
 
 ## Cells
 
@@ -42,7 +71,7 @@ While a lane is muted or the cell is silent, nothing below updates for that lane
 | `clock` | high while `frac(beat · ppqn) < 0.5` and `moving`. `ppqn` default 4 (sixteenths). |
 | `reset` | high during the transport-change pulse, and while `(beat − cycle start) · 60 / bpm < reset_ms`, and `moving`. So every cycle wrap produces a pulse. |
 | `run` | high while `moving`. |
-| `gate n` | high while **on** and `row phase < gate`. `gate` default 0.5 (half a row). |
+| `gate n` | high while **on** and `row phase < gate`, and during a landing gate (above). `gate` default 0.5 (half a row). |
 | `pitch n` | held. Updated to the cell's pitch whenever **on** and the note is pitched; `AIR` leaves it. `volts = (midi + key − 2 − pitch_zero) / 12`. `pitch_zero` default 60 (C4 = 0 V); 48 (C3) is the alternative. |
 | `vel n` | held. Updated to the cell's velocity whenever **on**. Output `vel / 127 · high`. |
 | `z`, `roll`, `feedback` | the lane's interpolated value at the fractional row (score.md), mapped linearly from the lane range to its volt range. Hold while paused or disabled. |
