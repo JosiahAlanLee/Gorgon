@@ -36,19 +36,6 @@ def test_start_restore_audio_idempotency_stop_and_relaunch(tmp_path, monkeypatch
     conf = tmp_path / 'pipewire-config'
     source_conf = Path(os.environ.get('GORGON_PIPEWIRE_CONFIG', '/usr/share/pipewire'))
     shutil.copytree(source_conf, conf)
-    dropin = conf / 'pipewire.conf.d'
-    dropin.mkdir(exist_ok=True)
-    (dropin / '10-gorgon-test.conf').write_text('''context.objects = [
-      { factory = adapter args = {
-        factory.name = support.null-audio-sink
-        node.name = gorgon-test-output
-        node.description = "Gorgon Test Output"
-        media.class = "Audio/Sink"
-        audio.position = [ FL FR ]
-        adapter.auto-port-config = { mode = dsp monitor = true position = preserve }
-      }}
-    ]
-    ''')
     for key, value in dict(XDG_RUNTIME_DIR=str(runtime), PIPEWIRE_RUNTIME_DIR=str(runtime),
                            PIPEWIRE_CONFIG_DIR=str(conf), XDG_DATA_HOME=str(tmp_path / 'data'),
                            XDG_CONFIG_HOME=str(tmp_path / 'config')).items():
@@ -83,14 +70,30 @@ def test_start_restore_audio_idempotency_stop_and_relaunch(tmp_path, monkeypatch
         return result
     foreign = receiver = None
     try:
-        graph = until(lambda: audio.probe(config))
+        until(lambda: audio.probe(config))
+        import jack
+        # A long-running desktop server reuses node IDs, so a new client can sort before an existing
+        # device. Free some IDs below the output's, as there, for Studio's and Rack's clients to take.
+        placeholders = [jack.Client(f'gorgon_test_placeholder{i}', no_start_server=True) for i in range(4)]
+        for client in placeholders:
+            client.outports.register('out')
+            client.activate()
+        subprocess.run(['pw-cli', 'create-node', 'adapter', '{ factory.name = support.null-audio-sink '
+                        'node.name = gorgon-test-output node.description = "Gorgon Test Output" media.class = Audio/Sink '
+                        'audio.position = [ FL FR ] object.linger = true '
+                        'adapter.auto-port-config = { mode = dsp monitor = true position = preserve } }'],
+                       check=True, capture_output=True, timeout=10)
+        for client in placeholders:
+            client.deactivate()
+            client.close()
+        graph = until(lambda: any(p['name'].startswith('Gorgon Test Output:') for p in audio.probe(config)['ports'])
+                      and audio.probe(config))
         sinks = [p['name'].split(':', 1)[0] for p in graph['ports'] if p['flags'] & 1 and 'gorgon' in p['name'].lower()]
         assert sinks, graph
         value = json.loads(config_path.read_text())
         value['audio']['device'] = sinks[0]
         write_private(config_path, value)
         config = load(config_path)
-        import jack
         foreign = jack.Client('HydraPy', no_start_server=True)
         for name in ('optical_L', 'optical_R', 'breaks_L', 'breaks_R'):
             foreign.outports.register(name)

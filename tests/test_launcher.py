@@ -50,6 +50,17 @@ def test_profile_preserves_saved_material_and_rejects_mistakes(profile):
             load(path)
 
 
+def test_a_virtual_environment_interpreter_is_not_resolved_out_of_its_environment(profile, tmp_path):
+    venv = tmp_path / 'venv/bin'
+    venv.mkdir(parents=True)
+    (venv / 'python').symlink_to(sys.executable)
+    path = Path(profile['_path'])
+    value = json.loads(path.read_text())
+    value['studio']['command'] = [str(venv / 'python'), '-m', 'hydrapy.cli']
+    write_private(path, value)
+    assert load(path)['studio']['command'][0] == str(venv / 'python')
+
+
 def test_initialization_is_not_an_overwrite(profile):
     before = Path(profile['_path']).read_bytes()
     with pytest.raises(LaunchError, match='already exists'):
@@ -160,6 +171,8 @@ def test_readiness_order_and_failure_cleanup(profile, monkeypatch, rack_fails):
             calls.append(('spawn', self.name))
             if self.name == 'rack':
                 assert ('api', 'tracker_score') in calls
+                # Rack's own clients sort after every device, so its device IDs stay put.
+                assert kwargs['env']['PIPEWIRE_PROPS'] == '{ priority.session = -1 }'
         def poll(self):
             return self.returncode
         def wait(self, timeout=None):

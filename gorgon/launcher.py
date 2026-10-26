@@ -400,7 +400,7 @@ def supervise(config, lock_fd, nonce):
         command[0] = executable(command)
         command += ['-u', str(rack_user_dir(config)), *config['rack']['args'], str(patch)]
         previous = {p['name'] for p in audio.probe(config)['ports']}
-        spawn('rack', audio.wrap(config, command), env, Path(command[0]).parent)
+        spawn('rack', audio.wrap(config, command), audio.rack_environment(config, env), Path(command[0]).parent)
         operations = [('connect', a.replace('{studio}', sound['client']), b.replace('{studio}', sound['client']))
                       for a, b in config['audio']['connections']]
         if operations:

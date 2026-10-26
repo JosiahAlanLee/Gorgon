@@ -32,15 +32,13 @@ def discover_rack():
 
 
 def hydrapy_command():
-    command = shutil.which('hydrapy')
-    if command:
-        return [command]
+    # The environment the launcher is installed in comes first: PATH may name another one's hydrapy.
     try:
         if importlib.util.find_spec('hydrapy'):
             return [sys.executable, '-m', 'hydrapy.cli']
     except (ImportError, ValueError):
         pass
-    return ['hydrapy']
+    return [shutil.which('hydrapy') or 'hydrapy']
 
 
 def defaults():
@@ -50,7 +48,7 @@ def defaults():
                 studio=dict(command=hydrapy_command(), patch='gorgon-visual.py', backend='auto',
                             size='1280x720', fps=30, native_output='window', args=[]),
                 rack=dict(command=[discover_rack()], patch=None, user_dir=None, args=[]),
-                audio=dict(backend='pipewire', rate=48000, quantum=256, device=None,
+                audio=dict(backend='pipewire', rate=48000, quantum=1024, device=None,
                            start_services=True, connections=[]))
 
 
@@ -130,10 +128,11 @@ def load(path=None):
             if not isinstance(rack[key], str) or not rack[key]:
                 raise LaunchError(f'rack.{key} must be null or a path')
             rack[key] = str(_path(rack[key], path.parent))
-    # Resolve executable paths against the profile, while leaving PATH names intact.
+    # Resolve executable paths against the profile, while leaving PATH names intact. Symlinks stay:
+    # a virtual environment's bin/python is one, and its target runs outside the environment.
     for app in (studio, rack):
         if '/' in app['command'][0]:
-            app['command'][0] = str(_path(app['command'][0], path.parent))
+            app['command'][0] = os.path.abspath(path.parent / Path(app['command'][0]).expanduser())
     config['workspace'] = str(root)
     config['_path'] = str(path)
     return config
