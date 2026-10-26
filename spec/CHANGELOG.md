@@ -3,9 +3,11 @@
 Newest first. Each entry names the HydraPy commit and Rack module version it
 describes.
 
-## 2026-10-26 — a transport change keeps the hit it lands on (specification)
+## 2026-10-26 — a transport change keeps the hit it lands on
 
-Spec-first; HydraPy's `TrackerCV` and the Rack module follow in separate PRs.
+HydraPy `e5999b2282bd9766b6f7152b4278c3da4e72ed8e` (#60, `TrackerCV`) · Rack module
+`GorgonBridge` 2.3.1 (#33).
+
 On the workstation, 8 of 58 Seek-to-row cues lost their landing kick in Rack,
 for two reasons, and with OFFSET +24 ms the first downbeat after Play never
 fired. [cv-semantics.md](cv-semantics.md) adds two rules for a transport change:
