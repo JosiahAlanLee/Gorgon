@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/JosiahAlanLee/Gorgon/spec/score.schema.json",
-  "title": "Gorgon tracker score (hydrapy-tracker-1)",
+  "title": "Gorgon tracker score (versions 1 and 2)",
   "description": "The score document exchanged between the tracker editor, HydraPy Studio and bridge followers such as the VCV Rack module. Normative reference: spec/score.md. Validation in the reference implementation: hydrapy/studio_tracker.py validate().",
   "type": "object",
   "required": [
@@ -18,7 +18,10 @@
   ],
   "properties": {
     "format": {
-      "const": "hydrapy-tracker-1"
+      "enum": [
+        "hydrapy-tracker-1",
+        "hydrapy-tracker-2"
+      ]
     },
     "bpm": {
       "type": "number",
@@ -103,6 +106,14 @@
       "items": {
         "$ref": "#/$defs/pattern"
       }
+    },
+    "sounds": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/sound"
+      }
     }
   },
   "$defs": {
@@ -148,6 +159,9 @@
           "minimum": 0,
           "maximum": 127,
           "description": "Velocity 0-127. Zero is silent: no gate, no hit, held values unchanged."
+        },
+        "locks": {
+          "$ref": "#/$defs/locks"
         }
       }
     },
@@ -322,11 +336,176 @@
           }
         }
       }
+    },
+    "soundParams": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "p1": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 127
+        },
+        "p2": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 127
+        },
+        "p3": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 127
+        },
+        "p4": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 127
+        },
+        "p5": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 127
+        },
+        "p6": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 127
+        },
+        "p7": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 127
+        },
+        "p8": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 127
+        }
+      }
+    },
+    "sound": {
+      "type": "object",
+      "required": [
+        "machine",
+        "params"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "machine": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 191
+        },
+        "params": {
+          "$ref": "#/$defs/soundParams"
+        }
+      }
+    },
+    "locks": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "p1": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 127
+        },
+        "p2": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 127
+        },
+        "p3": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 127
+        },
+        "p4": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 127
+        },
+        "p5": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 127
+        },
+        "p6": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 127
+        },
+        "p7": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 127
+        },
+        "p8": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 127
+        },
+        "machine": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 191
+        }
+      }
     }
   },
   "x-notes": [
     "Unknown top-level and pattern-level keys are tolerated and preserved by the reference implementation (the shipped demo score carries 'version' and 'scene'); implementations must ignore keys they do not know.",
     "Row ordering (sorted, unique) within keys and scenes cannot be expressed in JSON Schema; validate it in code.",
     "Non-finite numbers (NaN, Infinity) are rejected everywhere a number is accepted."
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "format": {
+            "const": "hydrapy-tracker-2"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "sounds"
+        ]
+      },
+      "else": {
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "sounds"
+              ]
+            },
+            {
+              "properties": {
+                "patterns": {
+                  "contains": {
+                    "properties": {
+                      "audio": {
+                        "contains": {
+                          "contains": {
+                            "type": "object",
+                            "required": [
+                              "locks"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
   ]
 }

@@ -1,6 +1,7 @@
 # The score
 
-A score is one JSON document, format `hydrapy-tracker-1`. The machine-readable
+A score is one JSON document, format `hydrapy-tracker-1` or `hydrapy-tracker-2`. Version 2 adds
+[sound defaults and per-hit locks](sound-locks.md); version 1 retains its existing behavior. The machine-readable
 shape is [score.schema.json](score.schema.json); this page says what the fields
 mean. The reference validator is `validate()` in HydraPy's `studio_tracker.py`.
 
