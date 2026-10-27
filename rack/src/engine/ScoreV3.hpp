@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 
+#include "GorgonEngine.hpp"
 #include "SoundLink.hpp"
 
 namespace gorgon {
@@ -82,9 +83,20 @@ struct Geometry {
 	int rows = 64, bar = 16, bars = 4;
 };
 
+// An automation lane (z, roll or feedback): keys on rows below the pattern's, sorted by row.
+struct AutoLaneV3 {
+	Ease ease = EASE_HOLD;
+	std::vector<Key> keys;
+
+	double value(int laneIndex, double row) const {
+		return laneValue(keys.data(), int(keys.size()), ease, laneIndex, row);
+	}
+};
+
 struct PatternV3 {
 	Geometry geometry;
 	LaneV3 lanes[LANES];
+	AutoLaneV3 autos[AUTO_LANES];
 };
 
 struct Transition {

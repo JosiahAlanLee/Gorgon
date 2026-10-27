@@ -55,6 +55,26 @@ static std::string scoreJson() {
 	       "\"bindings\":{\"z\":\"Dolly Z\",\"roll\":\"Roll\",\"feedback\":\"\"},\"patterns\":[" + patterns + "]}";
 }
 
+// A version-3 document: one pattern at rate 1 with a hit on lane 6, row 0, the rest empty.
+static std::string scoreJsonV3(int bpm) {
+	std::string lanes;
+	for (int l = 0; l < 6; l++)
+		lanes += std::string(l ? "," : "") + "{\"len\":4,\"cells\":[" + (l == 5 ? "{\"note\":\"C-4\",\"vel\":90}" : "null") +
+		         ",null,null,null],\"transforms\":[]}";
+	std::string patterns = "{\"name\":\"A01\",\"rate\":1,\"bar\":4,\"bars\":1,\"lanes\":[" + lanes +
+	                       "],\"keys\":{\"z\":[{\"r\":2,\"v\":0.5}],\"roll\":[],\"feedback\":[]},"
+	                       "\"easing\":{\"z\":\"hold\",\"roll\":\"smooth\",\"feedback\":\"smooth\"},\"scenes\":[]}";
+	for (int p = 1; p < 128; p++)
+		patterns += ",null";
+	std::string sounds, mutes;
+	for (int l = 0; l < 6; l++) {
+		sounds += std::string(l ? "," : "") + "{\"machine\":null,\"params\":{}}";
+		mutes += std::string(l ? "," : "") + "false";
+	}
+	return "{\"format\":\"hydrapy-tracker-3\",\"bpm\":" + std::to_string(bpm) + ",\"key\":2,\"loop\":true,\"pattern\":0,"
+	       "\"chain\":[0],\"seed\":0,\"mutes\":[" + mutes + "],\"sounds\":[" + sounds + "],\"patterns\":[" + patterns + "]}";
+}
+
 struct FakeStudio {
 	int listener = -1, port = 0;
 	std::string token = "first-token";
@@ -62,7 +82,9 @@ struct FakeStudio {
 	std::thread thread;
 	std::mutex mutex;
 	std::vector<std::string> requests;   // request line + headers + body
-	int revision = 7;
+	std::atomic<int> revision{7};
+	std::atomic<bool> v3{false};         // serve a version-3 document and playhead
+	std::atomic<bool> busHeld{false};    // refuse bus windows: another module holds the layer
 
 	FakeStudio() {
 		listener = ::socket(AF_INET, SOCK_STREAM, 0);
@@ -135,14 +157,25 @@ struct FakeStudio {
 				body = "{\"error\":\"Local session token required\"}";
 			}
 			else if (req.compare(0, 16, "GET /api/bridge ") == 0 || req.compare(0, 16, "GET /api/bridge?") == 0) {
-				bool cached = req.find("?revision=" + std::to_string(revision) + " ") != std::string::npos;
-				body = "{\"revision\":" + std::to_string(revision) + ",\"enabled\":true,\"playing\":false,"
+				int r = revision;
+				bool cached = req.find("?revision=" + std::to_string(r) + " ") != std::string::npos;
+				std::string mutes, playhead;
+				for (int l = 0; l < 6; l++)
+					mutes += std::string(l ? "," : "") + (l == 2 ? "[{\"at\":0,\"on\":false},{\"at\":960,\"on\":true}]" : "[{\"at\":0,\"on\":false}]");
+				if (v3)
+					playhead = "\"start\":{\"tick\":1440,\"entry\":null},\"elapsed\":96,\"entry\":null,"
+					           "\"fill\":[{\"at\":0,\"on\":true}],\"bus\":{\"fill\":[{\"at\":0,\"on\":false}],\"mutes\":[" + mutes + "]},";
+				body = "{\"revision\":" + std::to_string(r) + "," + playhead + "\"enabled\":true,\"playing\":false,"
 				       "\"transport_revision\":23,\"anchor_beat\":12.5,\"anchor_time\":3.0,\"clock_time\":3.0,\"wall\":100.0,\"server_now\":100.01,"
 				       "\"controls\":[{\"name\":\"Dolly Z\",\"min\":0,\"max\":1,\"value\":0.35},"
 				       "{\"name\":\"Roll\",\"min\":-45,\"max\":45,\"value\":0},"
 				       "{\"name\":\"Warp\",\"min\":-2,\"max\":2,\"value\":0},"
 				       "{\"name\":\"Hue\",\"min\":0,\"max\":1,\"value\":0.5}]" +
-				       (cached ? std::string() : ",\"document\":" + scoreJson()) + "}";
+				       (cached ? std::string() : ",\"document\":" + (v3 ? scoreJsonV3(100 + r) : scoreJson())) + "}";
+			}
+			else if (busHeld && req.find("\"bus\":{") != std::string::npos) {
+				status = "400 Bad Request";
+				body = "{\"error\":\"bus held by another module\"}";
 			}
 			else {
 				body = "{\"applied\":[],\"ignored\":{}}";
@@ -258,13 +291,98 @@ int main() {
 	}), "transport sent");
 	CHECK(any(seenRequests, "{\"enabled\":true,\"playing\":true}"), "play body");
 
+	// A version-3 score: the score and the playhead's lists arrive by pointer.
+	studio.v3 = true;
+	studio.revision = 8;
+	CHECK(waitFor([&] { return bridge.poll(seen, snap) && snap.v3(); }), "version-3 snapshot");
+	CHECK(snap.score3->bpm == 108. && snap.score3->cycle == 4 * 480 && snap.score3->patternAt(0)->lanes[5].cells[0].present,
+	      "version-3 score");
+	CHECK(snap.score3->patternAt(0)->autos[LANE_Z].keys.size() == 1 && snap.score3->patternAt(0)->autos[LANE_ROLL].ease == EASE_SMOOTH,
+	      "version-3 automation");
+	CHECK(snap.playhead.startTick == 1440 && snap.playhead.elapsed == 96 && snap.playhead.startEntry == -1, "version-3 playhead");
+	CHECK(snap.layer->fill.size() == 1 && snap.layer->fill[0].on && snap.layer->busMutes[2].size() == 2 &&
+	      snap.layer->busMutes[2][1].at == 960, "version-3 lists");
+	CHECK(waitFor([&] { return any(studio.take(), "GET /api/bridge?revision=8 HTTP/1.0") && bridge.poll(seen, snap); }),
+	      "cached version-3 poll");
+	CHECK(snap.v3() && snap.score3->bpm == 108., "version-3 score kept across cached polls");
+	// Unchanged lists keep their pointer; a new score replaces the old, which the worker frees
+	// once the audio thread's copy has let go of it.
+	const v3::Layer* layer = snap.layer.get();
+	std::weak_ptr<const v3::ScoreV3> old = snap.score3;
+	CHECK(waitFor([&] { return bridge.poll(seen, snap); }) && snap.layer.get() == layer, "the same lists, the same layer");
+	studio.revision = 9;
+	CHECK(waitFor([&] { return bridge.poll(seen, snap) && snap.score3->bpm == 109.; }), "the new version-3 score");
+	CHECK(waitFor([&] { return old.expired(); }), "the old score is freed by the worker");
+	bridge.requestRestart();
+	seenRequests.clear();
+	CHECK(waitFor([&] {
+		for (const std::string& r : studio.take())
+			seenRequests.push_back(r);
+		return any(seenRequests, "\"beat\":0");
+	}), "version-3 reset goes to the cycle's start");
+
+	// BUS IN: the audio thread's changes reach Studio as windows of the bus layer.
+	v3::BusChange segment;
+	segment.kind = v3::BusChange::SEGMENT;
+	segment.revision = 23;
+	segment.tick = 1440;
+	bridge.pushBus(segment);
+	v3::BusChange mute;
+	mute.revision = 23;
+	mute.tick = 1440;
+	mute.function = v3::BUS_MUTE1 + 2;
+	mute.at = 100;
+	mute.on = true;
+	bridge.pushBus(mute);
+	bridge.setBusFrontier(120);
+	std::string id = bridge.busSender();
+	CHECK(id.size() == 16 && id.find_first_not_of("0123456789abcdef") == std::string::npos, "sender id '%s'", id.c_str());
+	seenRequests.clear();
+	auto collect = [&] {
+		for (const std::string& r : studio.take())
+			seenRequests.push_back(r);
+	};
+	CHECK(waitFor([&] { collect(); return any(seenRequests, "\"sender\":\"" + id + "\""); }), "a bus window is sent");
+	CHECK(any(seenRequests, "POST /api/tracker_transport") &&
+	      any(seenRequests, "{\"segment\":{\"transport_revision\":23,\"start\":{\"tick\":1440,\"entry\":null}},\"sender\":\"" + id +
+	                         "\",\"bus\":{\"from\":0,"),
+	      "the window names its segment and sender, and the segment's first starts at 0");
+	CHECK(any(seenRequests, "[{\"at\":0,\"on\":false},{\"at\":100,\"on\":true}]"), "lane 3's mute in the window");
+	CHECK(waitFor([&] { return bridge.busOutstanding() && !bridge.busRefused(); }), "the layer is this module's");
+	// Patched and quiet: a window at least once a second keeps the lease, restating from the frontier.
+	seenRequests.clear();
+	std::this_thread::sleep_for(std::chrono::milliseconds(1300));
+	collect();
+	int windows = 0;
+	for (const std::string& r : seenRequests)
+		windows += r.find("\"bus\":{\"from\":120,") != std::string::npos;
+	CHECK(windows >= 1 && windows <= 2, "%d keep-alive windows in 1.3 s", windows);
+	// Another module holds the layer: refused, then given back when it lapses.
+	studio.busHeld = true;
+	bridge.pushBus(mute);
+	CHECK(waitFor([&] { return bridge.busRefused(); }), "the refusal reaches the audio thread");
+	studio.busHeld = false;
+	CHECK(waitFor([&] { return !bridge.busRefused(); }, 3.), "the layer comes back with the next accepted window");
+	// And back to version 1: the version-3 score is dropped.
+	studio.v3 = false;
+	studio.revision = 10;
+	CHECK(waitFor([&] { return bridge.poll(seen, snap) && !snap.v3() && snap.playhead.revision == 10; }), "back to version 1");
+	CHECK(!snap.score3 && !snap.layer && snap.score.bpm == 138., "version-1 score again");
+
 	// Studio restarts with a new token: refused, then the new advertisement is read.
 	studio.setToken("second-token");
 	CHECK(waitFor([&] { return bridge.status() == "Studio refused the token"; }), "refusal status '%s'", bridge.status().c_str());
 	advertise(ad, studio.port, studio.getToken());
 	CHECK(waitFor([&] { return bridge.status().rfind("Linked", 0) == 0; }), "relinked: '%s'", bridge.status().c_str());
 
+	// Removing the module clears every bit it set: an all-clear window as the bridge stops.
+	studio.take();
 	bridge.stop();
+	std::vector<std::string> last = studio.take();
+	bool cleared = false;
+	for (const std::string& r : last)
+		cleared = cleared || (r.find("\"sender\":\"" + id + "\"") != std::string::npos && r.find("\"on\":true") == std::string::npos);
+	CHECK(cleared, "an all-clear on stop (%zu requests)", last.size());
 	std::remove(ad.c_str());
 	::rmdir(dir);
 	if (failures) {

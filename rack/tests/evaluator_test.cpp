@@ -1,6 +1,9 @@
 // The version-3 evaluator (ScoreV3.hpp) against HydraPy's own candidates (fixture3.txt,
 // from tools/make_fixture.py --v3): every score read by the module's JSON reader, every
-// candidate compared field by field, and each interval split to check invariant 2.
+// candidate compared field by field, and each interval split to check invariant 2. Then
+// the version-3 engine (EngineV3.hpp) against TrackerCV's signals, sample by sample, from
+// the same playheads: gates, clock, reset, run, velocity and pitch on every sample, the
+// automation lanes every 50 ms.
 #include <cmath>
 #include <cstdio>
 #include <fstream>
@@ -30,6 +33,112 @@ static std::vector<v3::Transition> transitions(json_t* list) {
 	json_array_foreach(list, i, t)
 		out.push_back({json_integer_value(json_object_get(t, "at")), json_is_true(json_object_get(t, "on"))});
 	return out;
+}
+
+struct Row {
+	long n = 0;
+	int bits = 0;
+	double vel[6] = {}, pitch[6] = {};
+};
+
+// The SIGNALS section: replay the playheads TrackerCV was given, block by block, through
+// EngineV3, with u computed as TrackerCV computes it, and compare.
+static long signals(v3::ScoreV3& score, std::istream& in, int s) {
+	const int SR = 48000, BLOCK = 480;
+	std::string keyword, rest;
+	int first = 0, blocks = 0, count = 0;
+	in >> keyword >> first >> blocks >> count;
+	CHECK(keyword == "SIGNALS", "score %d: no SIGNALS section", s);
+	struct Head {
+		int block = 0;
+		Playhead h;
+		v3::Layer layer;
+		double bpm = 120.;
+	};
+	std::vector<Head> heads(static_cast<size_t>(count));
+	for (Head& head : heads) {
+		in >> keyword >> head.block;
+		std::getline(in, rest);
+		json_error_t e;
+		json_t* j = json_loads(rest.c_str(), 0, &e);
+		head.h.valid = true;
+		head.h.transportRevision = json_integer_value(json_object_get(j, "transport_revision"));
+		head.h.enabled = json_is_true(json_object_get(j, "enabled"));
+		head.h.playing = json_is_true(json_object_get(j, "playing"));
+		head.h.anchorTime = json_number_value(json_object_get(j, "anchor_time"));
+		head.h.clockTime = json_number_value(json_object_get(j, "clock_time"));
+		head.h.wall = json_number_value(json_object_get(j, "wall"));
+		head.bpm = json_number_value(json_object_get(j, "bpm"));
+		CHECK(parsePlayheadV3(j, head.h, head.layer), "score %d: playhead at block %d doesn't parse", s, head.block);
+		json_decref(j);
+	}
+	std::vector<Row> rows;
+	in >> keyword >> count;
+	for (int k = 0; k < count; k++) {
+		Row r;
+		in >> r.n >> r.bits;
+		for (double& v : r.vel)
+			in >> v;
+		for (double& v : r.pitch)
+			in >> v;
+		rows.push_back(r);
+	}
+	struct Auto {
+		long n = 0;
+		double lane[3] = {};
+	};
+	std::vector<Auto> autos;
+	in >> keyword >> count;
+	for (int k = 0; k < count; k++) {
+		Auto a;
+		in >> a.n >> a.lane[0] >> a.lane[1] >> a.lane[2];
+		autos.push_back(a);
+	}
+	CHECK(!heads.empty() && !rows.empty() && heads[0].block == first && rows[0].n == long(first) * BLOCK,
+	      "score %d: the signal section starts at its first block", s);
+	if (heads.empty() || rows.empty())
+		return 0;
+	v3::EngineV3 engine;
+	Options o;   // TrackerCV's defaults: 4 PPQN, half-row gates, 5 ms reset, C4 = 0 V
+	size_t head = 0, row = 0, next = 0;
+	int failed = 0;
+	for (int k = first; k < blocks; k++) {
+		while (head + 1 < heads.size() && heads[head + 1].block <= k)
+			head++;
+		const Head& h = heads[head];
+		score.bpm = h.bpm;
+		v3::TransportV3 transport = h.layer.transport(h.h.startTick);
+		bool moving = h.h.playing && h.h.enabled;
+		for (int i = 0; i < BLOCK; i++) {
+			long n = long(k) * BLOCK + i;
+			double time = double(long(k) * BLOCK) / SR + 0. + double(i) / SR;
+			double u = v3::ticksAt(h.h, time, score.bpm);
+			Outputs out = engine.render(score, transport, moving, u, h.h.transportRevision, o, SR);
+			while (row + 1 < rows.size() && rows[row + 1].n <= n)
+				row++;
+			const Row& want = rows[row];
+			int bits = int(out.clock > 0.f) | int(out.reset > 0.f) << 1 | int(out.run > 0.f) << 2;
+			for (int l = 0; l < 6; l++)
+				bits |= int(out.gate[l] > 0.f) << (3 + l);
+			bool same = bits == want.bits;
+			for (int l = 0; l < 6; l++)
+				same = same && std::fabs(out.velocity[l] - want.vel[l]) < 1e-6 && std::fabs(out.pitch[l] - want.pitch[l]) < 1e-5;
+			if (!same && failed++ < 3)
+				CHECK(same, "score %d sample %ld (block %d, u %.6f): bits %x vs %x, vel1 %g vs %g, pitch1 %g vs %g", s, n, k, u,
+				      bits, want.bits, out.velocity[0], want.vel[0], out.pitch[0], want.pitch[0]);
+			if (next < autos.size() && autos[next].n == n) {
+				for (int a = 0; a < 3; a++)
+					CHECK(std::fabs(out.lane[a] - autos[next].lane[a]) < 1e-4 * (LANE_MAX[a] - LANE_MIN[a]),
+					      "score %d sample %ld: lane %d %g vs %g", s, n, a, out.lane[a], autos[next].lane[a]);
+				next++;
+			}
+		}
+	}
+	CHECK(next == autos.size() && row + 1 == rows.size(), "score %d: %zu of %zu automation rows and %zu of %zu signal rows reached",
+	      s, next, autos.size(), row + 1, rows.size());
+	CHECK(engine.dropped == 0, "score %d: %ld candidates dropped", s, engine.dropped);
+	std::getline(in, rest);
+	return long(blocks - first) * BLOCK;
 }
 
 static std::string text(json_t* j) {
@@ -89,7 +198,7 @@ static void fixture(const char* path) {
 	CHECK(format == "GORGON_FIXTURE_3", "regenerate fixture3 with current HydraPy");
 	if (format != "GORGON_FIXTURE_3")
 		return;
-	long compared = 0;
+	long compared = 0, samples = 0;
 	std::string keyword, rest;
 	for (int s = 0; s < scores; s++) {
 		in >> keyword;
@@ -143,8 +252,9 @@ static void fixture(const char* path) {
 				same = split[k].at == got[k].at && split[k].lane == got[k].lane && split[k].sub == got[k].sub && split[k].fires == got[k].fires;
 			CHECK(same, "score %d segment %d: a split interval differs", s, g);
 		}
+		samples += signals(score, in, s);
 	}
-	std::printf("fixture3: %ld candidates compared\n", compared);
+	std::printf("fixture3: %ld candidates compared, %ld samples of signals\n", compared, samples);
 }
 
 int main(int argc, char** argv) {

@@ -331,12 +331,18 @@ stays as it is for the legacy comparison: versions 1 and 2 keep
   FILL transitions;
 - **candidates** of each segment over a stated `[u0, u1)`, as trace lines
   without `x_` fields, which the engine's `evaluate()` must reproduce exactly;
-- **signal rows**: `u` (real, in ticks), `moving`, and the signals of
-  [cv-semantics.md](cv-semantics.md) there: clock, reset, run, and six gates,
-  velocities and pitches, and the automation lanes.
+- **signals**: the playheads a follower is sent while Studio's tracker plays
+  the score (it joins the first segment late; there are seeks, two of them
+  landing inside a hit that fires and heard after its gate window, FILL, bus
+  windows, a pause and resume, and a tempo change), and what `TrackerCV`
+  renders from them at 48 kHz in 10 ms blocks: every sample where clock,
+  reset, run, a gate, a velocity or a pitch changes, and the automation lanes
+  every 50 ms. A follower that replays the playheads, computing `u` as
+  `TrackerCV` does, must match on every sample.
 
-The rows are chosen as for version 2, with row, sub-step and FILL boundaries
-and anchor rows added.
+Replaying a stream, rather than sampling chosen beats as version 2's fixture
+does, also checks the state that fixture leaves to unit tests: reset pulses,
+retriggers, landing gates and held values, across segments.
 
 ## Vectors
 

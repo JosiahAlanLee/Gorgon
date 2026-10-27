@@ -123,3 +123,8 @@ Regenerate it with the pinned HydraPy whenever this page changes:
 ```sh
 python rack/tools/make_fixture.py > rack/tests/fixture.txt
 ```
+
+Version 3's signals are in `rack/tests/fixture3.txt` (`make_fixture.py --v3`,
+[evaluator.md](evaluator.md#fixture)): per score, a stream of playheads and
+`TrackerCV`'s output for it, which the Rack engine replays and matches on every
+sample.

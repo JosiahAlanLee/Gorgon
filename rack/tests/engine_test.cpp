@@ -8,6 +8,10 @@
 #include <string>
 #include <vector>
 
+#include "../src/engine/BusIn.hpp"
+#include "../src/engine/ByteBusInput.hpp"
+#include "../src/engine/ByteBusOutput.hpp"
+#include "../src/engine/EngineV3.hpp"
 #include "../src/engine/GorgonEngine.hpp"
 
 using namespace gorgon;
@@ -340,6 +344,355 @@ static void follower() {
 	CHECK(shortSeek.jumps == 2, "a short seek is one jump (%ld)", shortSeek.jumps);
 }
 
+// A version-3 score looping one empty pattern: `rows` rows at `perQuarter` rows a quarter.
+static v3::ScoreV3 loopV3(double bpm, int rows = 64, int perQuarter = 4) {
+	v3::ScoreV3 score;
+	score.bpm = bpm;
+	score.loop = true;
+	v3::PatternV3 p;
+	p.geometry.w = v3::TICKS / perQuarter;
+	p.geometry.rows = rows;
+	p.geometry.bar = std::min(rows, 16);
+	p.geometry.bars = rows / p.geometry.bar;
+	for (v3::LaneV3& lane : p.lanes) {
+		lane.len = rows;
+		lane.cells.assign(size_t(rows), v3::Cell());
+	}
+	score.store.push_back(p);
+	score.index[0] = 0;
+	score.buildTimeline();
+	return score;
+}
+
+// The version-3 follower: Studio's u at `bpm` on its clock, Rack's sample clock `ppm` fast with
+// block jitter, bridge updates 30 times a second. A tempo change re-anchors Studio on a tick
+// in the same segment (no jump); a seek starts a new one (one jump).
+static Run followV3(double bpm, double ppm, double jitterMs, double tempoAt = -1., double tempo = 0., double seekAt = -1.) {
+	const double sr = 48000.;
+	const int block = 256;
+	v3::ScoreV3 score = loopV3(bpm);
+	Playhead head;
+	head.valid = head.enabled = head.playing = head.v3 = true;
+	head.transportRevision = 0;
+	v3::TickFollower f;
+	v3::EngineV3 engine;
+	Options o;
+	v3::Layer layer;
+	std::mt19937 rng(7);
+	std::normal_distribution<double> jitter(0., jitterMs / 1000.);
+	double rackSeconds = 0., published = -1., lastEdge = -1., period = 60. / bpm / o.ppqn;
+	bool last = false, changed = false;
+	Run run;
+	for (long frame = 0; frame < long(sr * 20); frame++) {
+		double trueTime = rackSeconds / (1. + ppm * 1e-6);
+		if (trueTime - published >= 1. / 30.) {
+			head.wall = head.clockTime = trueTime;
+			if (!changed && tempoAt >= 0. && trueTime >= tempoAt) {
+				// Tracker._reanchor: elapsed becomes the whole tick last reached, anchor_time when.
+				double u = v3::ticksAt(head, trueTime, score.bpm);
+				head.elapsed = int64_t(std::floor(u));
+				head.anchorTime = trueTime - (u - double(head.elapsed)) * 60. / score.bpm / double(v3::TICKS);
+				score.bpm = tempo;
+				period = 60. / tempo / o.ppqn;
+				changed = true;
+			}
+			if (!changed && seekAt >= 0. && trueTime >= seekAt) {
+				head.transportRevision++;
+				head.startTick = 3 * v3::TICKS + 100;
+				head.elapsed = 0;
+				head.anchorTime = trueTime;
+				changed = true;
+			}
+			published = trueTime;
+		}
+		if (frame % 32 == 0) {
+			double blockStart = std::floor(double(frame) / block) * block;
+			double local = blockStart / sr / (1. + ppm * 1e-6) + jitter(rng) + (frame - blockStart) / sr;
+			f.correct(score.bpm, true, v3::ticksAt(head, local, score.bpm), head.transportRevision, head.startTick);
+		}
+		Outputs out = engine.render(score, layer.transport(head.startTick), true, f.u, head.transportRevision, o, sr);
+		bool high = out.clock > 0;
+		bool settling = changed && std::fabs(trueTime - std::max(tempoAt, seekAt)) < .5;
+		if (high && !last) {
+			if (lastEdge >= 0. && trueTime > 2. && !settling)
+				run.maxPeriodErrorPct = std::max(run.maxPeriodErrorPct, std::fabs((trueTime - lastEdge) - period) / period * 100.);
+			lastEdge = trueTime;
+			run.edges++;
+		}
+		last = high;
+		if (trueTime > 2. && !settling)
+			run.maxErrorMs = std::max(run.maxErrorMs, std::fabs(v3::ticksAt(head, trueTime, score.bpm) - f.u) / double(v3::TICKS) * 60. / score.bpm * 1000.);
+		f.advance(score.bpm, true, 1. / sr);
+		rackSeconds += 1. / sr;
+	}
+	run.jumps = f.jumps;
+	return run;
+}
+
+static void followerV3() {
+	Run drift = followV3(138., 300., 2.);
+	std::printf("version-3 follower at 138 BPM, 300 ppm drift, 2 ms jitter: phase error %.2f ms, period error %.2f%%, "
+	            "%d edges, %ld jump(s)\n", drift.maxErrorMs, drift.maxPeriodErrorPct, drift.edges, drift.jumps);
+	CHECK(drift.maxErrorMs < 1., "version-3 drift phase error %.3f ms", drift.maxErrorMs);
+	CHECK(drift.maxPeriodErrorPct < 1.5, "version-3 drift period error %.3f%%", drift.maxPeriodErrorPct);
+	CHECK(std::abs(drift.edges - int(20. * 138. / 60. * 4.)) <= 2, "version-3 edge count %d", drift.edges);
+	CHECK(drift.jumps == 1, "version-3 drift: locked once, then slewed (%ld jumps)", drift.jumps);
+	Run tempo = followV3(138., 50., 1., 8., 120.);
+	CHECK(tempo.maxErrorMs < 1. && tempo.jumps == 1, "a tempo change keeps the segment: %.3f ms, %ld jumps", tempo.maxErrorMs, tempo.jumps);
+	Run seek = followV3(120., 50., 1., -1., 0., 8.);
+	CHECK(seek.maxErrorMs < 1. && seek.jumps == 2, "a seek is one jump: %.3f ms, %ld jumps", seek.maxErrorMs, seek.jumps);
+}
+
+// Version 3's outputs on six lanes, and BUS OUT's word: lanes on bits 0–5 from the candidates
+// that fire, FILL on bit 6 from the row's start (bytebus-output.md#version-3).
+static void outputsV3() {
+	v3::ScoreV3 score = loopV3(120., 4, 4);   // four rows of 480 ticks
+	auto cell = [&](int lane, int row, int midi) {
+		v3::Cell& c = score.store[0].lanes[lane].cells[size_t(row)];
+		c.present = true;
+		c.vel = 100.;
+		c.midi = midi;
+		return &c;
+	};
+	cell(0, 0, 60);
+	cell(5, 1, 72);
+	cell(2, 2, -1)->cond.kind = v3::COND_FILL;   // AIR, on FILL
+	cell(3, 3, 60);
+	score.store[0].lanes[5].cells[1].hasLocks = true;
+	score.store[0].lanes[5].cells[1].locks.mask = 1;
+	score.store[0].lanes[5].cells[1].locks.values[0] = 99.f;
+	v3::Layer layer;
+	layer.fill = {{0, false}, {960, true}};
+	layer.busMutes[3] = {{0, false}, {1440, true}};
+	v3::TransportV3 t = layer.transport(0);
+	v3::EngineV3 engine;
+	Options o;
+	const double sr = 48000.;
+	auto at = [&](double u) { return engine.render(score, t, true, u, 1, o, sr); };
+	at(0.);   // the first segment an engine hears is joined at its own tick
+	Outputs a = at(10.);
+	CHECK(busWord(a, BusSource::HitMask) == 0x01 && !a.fill, "row 0: lane 1 (%02x)", busWord(a, BusSource::HitMask));
+	CHECK(a.gate[0] > 0.f && std::fabs(a.velocity[0] - 100.f / 127.f) < 1e-6f && a.pitch[0] == 0.f, "lane 1 plays C4 at 0 V");
+	CHECK(engine.sound(score, 0).mask == 0, "lane 1 has the kit sound");
+	Outputs b = at(500.);
+	CHECK(busWord(b, BusSource::HitMask) == 0x20 && b.gate[5] > 0.f && std::fabs(b.pitch[5] - 1.f) < 1e-6f, "row 1: lane 6, C5 at 1 V");
+	CHECK(engine.sound(score, 5).mask == 1 && engine.sound(score, 5).values[0] == 99.f, "lane 6's lock reaches the sound link");
+	Outputs c = at(1000.);
+	CHECK(busWord(c, BusSource::HitMask) == 0x44 && c.fill && c.gate[2] > 0.f, "row 2: FILL and lane 3's FILL hit (%02x)",
+	      busWord(c, BusSource::HitMask));
+	CHECK(c.pitch[2] == 0.f && c.pitch[5] == b.pitch[5], "AIR leaves pitch; other lanes hold theirs");
+	Outputs d = at(1500.);
+	CHECK(busWord(d, BusSource::HitMask) == 0x40 && d.gate[3] == 0.f, "row 3: lane 4 muted by the bus (%02x)", busWord(d, BusSource::HitMask));
+	Outputs e = at(1919.);
+	CHECK(busWord(e, BusSource::HitMask) == 0x40, "FILL holds to the end of row 3");
+	Outputs f = at(1920. + 10.);
+	CHECK(busWord(f, BusSource::HitMask) == 0x41 && f.fill, "the next cycle: lane 1 and FILL");
+	CHECK(engine.count <= 2, "%d hits kept", engine.count);
+	CHECK(std::string(busSourceName(BusSource::HitMask, true)) == "Hit mask (lanes 1–6, FILL)", "menu name");
+	// A version-1/2 engine's state carries across a change of format: no reset, held values kept.
+	Score old;
+	old.bpm = 120.;
+	old.patterns[0].hit[1][0] = true;
+	old.patterns[0].velocity[1][0] = 127.f;
+	OutputState state;
+	state.render(old, true, .01, 3, o, 1. / sr);
+	v3::EngineV3 next;
+	next.continueFrom(state);
+	Outputs g = next.render(score, t, true, 2000., 3, o, sr);
+	CHECK(g.reset == 0.f && g.velocity[1] == 1.f, "format change: no reset, velocity held");
+	CHECK(next.frontier == 2001, "a segment heard as it starts is evaluated from at or before its anchor row");
+}
+
+// The byte bus input's rules (BYTE_BUS_SPEC.md §3–5).
+static void busReader() {
+	ByteBusReader r;
+	float v[9] = {};
+	auto read = [&](int channels) { return r.process(channels, [&](int c) { return v[c]; }); };
+	CHECK(read(0) == -1, "disconnected");
+	v[0] = 10.f; v[2] = 1.f; v[3] = .5f;
+	CHECK(read(4) == 0x05, "unclocked: 1 V is high, 0.5 V from low stays low (%d)", r.word);
+	v[3] = 10.f; read(4);
+	v[3] = .5f;
+	CHECK(read(4) == 0x0d, "0.5 V keeps a high line high");
+	v[3] = NAN;
+	CHECK(read(4) == 0x05, "a non-finite line reads low");
+	v[7] = 10.f;
+	CHECK(read(4) == 0x05, "lines past the cable's width read low");
+	// Clocked: a CLK already high when the mode starts counts as the first edge.
+	v[8] = 10.f;
+	CHECK(read(9) == 0x85, "clocked, first edge (%02x)", r.word);
+	v[1] = 10.f;
+	CHECK(read(9) == 0x85, "held between edges");
+	v[8] = 0.f; read(9);
+	v[8] = 10.f;
+	CHECK(read(9) == 0x87, "latched on the next edge");
+	CHECK(read(0) == -1 && r.word == 0 && !r.connected, "disconnecting resets");
+}
+
+// bus-io.md's V11 and V12: stamps at the first unevaluated tick, the record a feedback loop
+// from BUS OUT through logic to BUS IN makes, and what plays.
+static v3::ScoreV3 busScore(std::initializer_list<std::pair<int, int>> cells) {
+	v3::ScoreV3 score = loopV3(120., 16, 4);   // loop A01, rate 1, bar 16, bars 1
+	for (auto [lane, row] : cells) {
+		v3::Cell& c = score.store[0].lanes[lane].cells[size_t(row)];
+		c.present = true;
+		c.vel = 100.;
+		c.midi = 60;
+	}
+	score.store[0].geometry.bar = 16;
+	score.store[0].geometry.bars = 1;
+	return score;
+}
+
+static void busStamps() {
+	const double sr = 48000.;
+	for (auto [rise, stamp, plays] : {std::tuple<long, int64_t, bool>{5988, 479, false}, {5999, 480, false}, {6000, 480, false},
+	                                  {6001, 481, true}}) {
+		v3::ScoreV3 score = busScore({{2, 1}});
+		v3::EngineV3 engine;
+		v3::BusInput bus;
+		v3::BusMap map;
+		v3::Layer layer;
+		v3::BusChange out[10];
+		Options o;
+		int64_t stamped = -1;
+		bool gate = false;
+		for (long s = 0; s < 6400; s++) {
+			double u = double(s) / 12.5;   // 120 BPM at 48 kHz: 12.5 samples a tick
+			int n = bus.process(s >= rise ? 0x04 : 0, map, score, 0, 0, -1, engine.firstUnevaluated(0, 0, u), out);
+			for (int k = 0; k < n; k++)
+				if (out[k].kind == v3::BusChange::CHANGE)
+					stamped = out[k].at;
+			Outputs r = engine.render(score, bus.overlay(layer.transport(0)), true, u, 0, o, sr);
+			gate = gate || r.gate[2] > 0.f;
+		}
+		CHECK(stamped == stamp, "V11: bit 2 rising on sample %ld is stamped %lld (want %lld)", rise, (long long)stamped, (long long)stamp);
+		CHECK(gate == plays, "V11: rising on sample %ld, row 1's lane-2 hit %s", rise, plays ? "plays" : "is muted");
+	}
+}
+
+static void busFeedback() {
+	const double sr = 48000.;
+	std::vector<std::pair<int, int>> cells;
+	for (int row = 0; row < 16; row++) {
+		cells.push_back({2, row});
+		if (row % 4 == 0)
+			cells.push_back({0, row});
+	}
+	v3::ScoreV3 score = loopV3(120., 16, 4);
+	for (auto [lane, row] : cells) {
+		v3::Cell& c = score.store[0].lanes[lane].cells[size_t(row)];
+		c.present = true;
+		c.vel = 100.;
+		c.midi = 60;
+	}
+	v3::EngineV3 engine;
+	v3::BusInput bus;
+	v3::BusMap map;
+	v3::BusRecord record;
+	v3::Layer layer;
+	v3::BusChange out[10];
+	ByteBusOutput busOut;
+	ByteBusReader reader;
+	Options o;
+	BusFrame sent[2], fun[2];   // one sample per cable: BUS OUT → FUN → BUS IN
+	bool lane2[16] = {};
+	for (long s = 0; s < 96000; s++) {
+		double u = double(s) / 12.5;
+		// FUN: bit 0 of its input on bit 2, every other bit 0, its input's clock passed through.
+		BusFrame f;
+		f.word = (sent[(s + 1) % 2].word & 1) << 2;
+		f.strobe = sent[(s + 1) % 2].strobe;
+		const BusFrame& in = fun[(s + 1) % 2];
+		int word = reader.process(9, [&](int c) { return c < 8 ? ((in.word >> c & 1) ? 10.f : 0.f) : (in.strobe ? 10.f : 0.f); });
+		int n = bus.process(word, map, score, 0, 0, -1, engine.firstUnevaluated(0, 0, u), out);
+		for (int k = 0; k < n; k++)
+			record.apply(out[k], &score);
+		Outputs r = engine.render(score, bus.overlay(layer.transport(0)), true, u, 0, o, sr);
+		if (r.gate[2] > 0.f)
+			lane2[std::min(15, int(u / 480.))] = true;
+		fun[s % 2] = f;
+		sent[s % 2] = busOut.render(r, true, 0, BusSource::HitMask);
+	}
+	const std::vector<v3::Transition>& mute = record.lists[v3::BUS_MUTE1 + 2];
+	std::vector<std::pair<int64_t, bool>> want = {{0, false}, {1, true}, {481, false}, {1921, true}, {2401, false},
+	                                              {3841, true}, {4321, false}, {5761, true}, {6241, false}};
+	bool same = mute.size() == want.size();
+	for (size_t k = 0; same && k < want.size(); k++)
+		same = mute[k].at == want[k].first && mute[k].on == want[k].second;
+	CHECK(same, "V12: lane 2's bus mute (%zu transitions, the second at %lld)", mute.size(),
+	      (long long)(mute.size() > 1 ? mute[1].at : -1));
+	for (int row = 0; row < 16; row++)
+		CHECK(lane2[row] == (row % 4 != 1), "V12: lane 2's row %d %s", row, row % 4 == 1 ? "is muted" : "plays");
+	// The record's window: every list from `from`, each starting there with its state.
+	uint64_t upTo = 0;
+	std::string w = record.window(2000, "0123456789abcdef", upTo);
+	CHECK(w.find("\"from\":0") != std::string::npos, "the first window of a segment starts at 0");
+	record.acknowledge(upTo);
+	w = record.window(2000, "0123456789abcdef", upTo);
+	CHECK(w.find("\"bus\":{\"from\":2000,\"fill\":[{\"at\":2000,\"on\":false}],\"mutes\":[[{\"at\":2000,\"on\":false}],"
+	             "[{\"at\":2000,\"on\":false}],[{\"at\":2000,\"on\":true},{\"at\":2401,\"on\":false},{\"at\":3841,\"on\":true},"
+	             "{\"at\":4321,\"on\":false},{\"at\":5761,\"on\":true},{\"at\":6241,\"on\":false}],") != std::string::npos,
+	      "a later window restates from the first unevaluated tick, lane 2 muted there: %s", w.c_str());
+	CHECK(w.find("\"segment\":{\"transport_revision\":0,\"start\":{\"tick\":0,\"entry\":null}},\"sender\":\"0123456789abcdef\"") == 1,
+	      "segment and sender: %s", w.substr(0, 120).c_str());
+}
+
+// Rack's record: coalesced between read ticks, a stamp of 0 sets the anchor's state, and
+// disconnecting sends an all-clear and then nothing.
+static void busRecord() {
+	v3::ScoreV3 score = loopV3(120., 16, 4);   // W 480: FILL read every 480 ticks, mutes every 40
+	v3::BusRecord record;
+	v3::BusChange c;
+	c.kind = v3::BusChange::SEGMENT;
+	c.revision = 3;
+	c.tick = 100;   // anchored 100 ticks into the cycle: rows start at elapsed 380, 860, …
+	record.apply(c, &score);
+	auto change = [&](int f, int64_t at, bool on) {
+		v3::BusChange x;
+		x.revision = 3;
+		x.tick = 100;
+		x.function = uint8_t(f);
+		x.at = at;
+		x.on = on;
+		record.apply(x, &score);
+	};
+	change(v3::BUS_FILL, 10, true);
+	change(v3::BUS_FILL, 300, false);    // same read tick (380) as 10, back where it began: none
+	CHECK(record.lists[v3::BUS_FILL].size() == 1, "FILL on and off before one row start leaves nothing");
+	change(v3::BUS_FILL, 381, true);
+	change(v3::BUS_FILL, 500, false);
+	change(v3::BUS_FILL, 860, true);     // a row start: read there
+	CHECK(record.lists[v3::BUS_FILL].size() == 2 && record.lists[v3::BUS_FILL][1].at == 860, "only the last change before a read tick");
+	change(v3::BUS_MUTE1, 0, true);
+	CHECK(record.lists[v3::BUS_MUTE1].size() == 1 && record.lists[v3::BUS_MUTE1][0].on, "a stamp of 0 sets the anchor's state");
+	change(v3::BUS_MUTE1 + 1, 21, true);
+	change(v3::BUS_MUTE1 + 1, 22, false);   // mutes are read every 40 ticks from a row start (20, 60, …)
+	change(v3::BUS_MUTE1 + 1, 23, true);
+	CHECK(record.lists[v3::BUS_MUTE1 + 1].size() == 2 && record.lists[v3::BUS_MUTE1 + 1][1].at == 23, "mutes coalesce at W/12");
+	uint64_t upTo = 0;
+	record.window(900, "s", upTo);
+	record.acknowledge(upTo);
+	CHECK(!record.pending() && record.active, "acknowledged, still connected");
+	v3::BusChange d;
+	d.kind = v3::BusChange::DISCONNECT;
+	d.revision = 3;
+	d.tick = 100;
+	change(v3::BUS_FILL, 900, false);
+	record.apply(d, &score);
+	CHECK(record.pending() && record.active, "the all-clear is outstanding");
+	record.acknowledge(record.sequence);
+	CHECK(!record.active, "nothing more to send once the all-clear is through");
+	// The audio thread's ring.
+	v3::SpscRing<int, 4> ring;
+	for (int k = 0; k < 5; k++)
+		ring.push(k);
+	int x = -1, got = 0;
+	while (ring.pop(x))
+		got++;
+	CHECK(got == 4 && x == 3 && ring.lost == 1, "a full ring drops and counts");
+}
+
 static void details() {
 	Score score;
 	score.loop = true;
@@ -376,6 +729,12 @@ int main(int argc, char** argv) {
 	heldOutputsAndTransport();
 	landingGate();
 	follower();
+	followerV3();
+	outputsV3();
+	busReader();
+	busStamps();
+	busFeedback();
+	busRecord();
 	fixture(argc > 1 ? argv[1] : "tests/fixture.txt");
 	if (failures) {
 		std::printf("%d failure(s)\n", failures);

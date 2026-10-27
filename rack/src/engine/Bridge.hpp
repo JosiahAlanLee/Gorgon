@@ -5,28 +5,38 @@
 // functions, which never block. The UI thread reads status(), controls() and
 // the bindings. Everything else happens on the worker.
 #pragma once
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
 #include <functional>
+#include <memory>
 #include <mutex>
+#include <random>
 #include <string>
 #include <thread>
 #include <vector>
 
 #include "BridgeJson.hpp"
+#include "BusIn.hpp"
 #include "LoopbackHttp.hpp"
 
 namespace gorgon {
 
 constexpr int INPUTS = 4;
 
-// What the audio thread follows.
+// What the audio thread follows. A version-3 score and its playhead's lists are too big to
+// copy on the audio thread, so they come by shared pointer; the bridge frees them (see bury).
 struct Snapshot {
 	Playhead playhead;
-	Score score;
+	Score score;                                  // versions 1 and 2
+	std::shared_ptr<const v3::ScoreV3> score3;    // version 3, else null
+	std::shared_ptr<const v3::Layer> layer;       // version 3's FILL and bus layer
 	BridgeClock clock;
+
+	bool v3() const { return score3 && layer && playhead.v3; }
+	double bpm() const { return v3() ? score3->bpm : score.bpm; }
 };
 
 class Bridge {
@@ -36,11 +46,16 @@ public:
 	// `now` is the local monotonic clock in seconds (Rack's system::getTime in
 	// the module). `period` is the poll interval.
 	explicit Bridge(Now now, std::string advertisement = advertisementPath(), double period = 1. / 30.)
-	    : now(std::move(now)), advertisement(std::move(advertisement)), period(period) {
+	    : now(std::move(now)), advertisement(std::move(advertisement)), period(period), busRing(new BusRing) {
 		for (int i = 0; i < INPUTS; i++) {
 			volts[i] = 0.f;
 			connected[i] = false;
 		}
+		// The bus layer's sender (bus-io.md): random per module instance, never saved.
+		std::random_device random;
+		char id[17];
+		std::snprintf(id, sizeof id, "%08x%08x", unsigned(random()), unsigned(random()));
+		sender = id;
 	}
 	~Bridge() { stop(); }
 	Bridge(const Bridge&) = delete;
@@ -56,6 +71,7 @@ public:
 		running = false;
 		if (worker.joinable())
 			worker.join();
+		clearBus();
 	}
 
 	// -- audio thread ---------------------------------------------------------
@@ -79,6 +95,13 @@ public:
 	// and the audio thread never makes a system call here.
 	void requestPlayToggle() { playToggle = true; }
 	void requestRestart() { restart = true; }
+	// BUS IN: a change for the worker to send, and the first tick not yet evaluated.
+	void pushBus(const v3::BusChange& change) { busRing->push(change); }
+	void setBusFrontier(int64_t tick) { busFrontier.store(tick, std::memory_order_relaxed); }
+	// Whether this module plays its own bus layer: a window is outstanding or held, and
+	// Studio hasn't given the layer to another module.
+	bool busOutstanding() const { return busActive.load(std::memory_order_relaxed); }
+	bool busRefused() const { return refused.load(std::memory_order_relaxed); }
 
 	// -- UI thread ------------------------------------------------------------
 	std::string status() {
@@ -106,6 +129,7 @@ public:
 		return resolve(i);
 	}
 	const std::string& advertisementFile() const { return advertisement; }
+	const std::string& busSender() const { return sender; }
 
 private:
 	Now now;
@@ -118,9 +142,23 @@ private:
 	std::mutex snapshotMutex;
 	Snapshot latest;
 	std::atomic<uint64_t> version{0};
+	// Every version-3 score and layer published, kept until no one else holds it. The audio
+	// thread only ever lets go of a reference this still holds, so a score is never freed
+	// there; the worker frees it on its next pass.
+	std::vector<std::shared_ptr<const void>> graveyard;
 
 	std::atomic<float> volts[INPUTS];
 	std::atomic<bool> connected[INPUTS];
+
+	// BUS IN: changes from the audio thread, Rack's record and the lease, on the worker.
+	typedef v3::SpscRing<v3::BusChange, 8192> BusRing;
+	std::unique_ptr<BusRing> busRing;
+	std::atomic<int64_t> busFrontier{0};
+	std::atomic<bool> busActive{false}, refused{false};
+	v3::BusRecord record;
+	std::string sender;
+	double busSentAt = -1e9;
+	std::shared_ptr<const v3::ScoreV3> busScore;   // the score the record's read ticks come from
 
 	// UI-visible, guarded by uiMutex.
 	std::mutex uiMutex;
@@ -169,13 +207,25 @@ private:
 		return out;
 	}
 
+	void bury(const std::shared_ptr<const void>& p) {
+		if (p)
+			graveyard.push_back(p);
+	}
+	void sweep() {
+		graveyard.erase(std::remove_if(graveyard.begin(), graveyard.end(),
+		                               [](const std::shared_ptr<const void>& p) { return p.use_count() == 1; }),
+		                graveyard.end());
+	}
+
 	void loop() {
 		Snapshot working;
 		while (running) {
 			double started = now();
+			sweep();
 			pollStudio(working);
 			sendTransport(working);
 			sendInputs();
+			sendBus(working);
 			// Sleep in short slices so stop() and transport presses are prompt
 			// without a condition variable (see the note on requestPlayToggle).
 			while (running && !playToggle && !restart && now() - started < period)
@@ -197,7 +247,14 @@ private:
 		std::string error;
 		if (r.status == 200 && parseBridge(r.body, state, &error)) {
 			if (state.hasScore) {
-				working.score = state.score;
+				if (state.score3) {
+					working.score3 = state.score3;
+					bury(working.score3);
+				}
+				else {
+					working.score = state.score;
+					working.score3.reset();
+				}
 				scoreRevision = state.playhead.revision;
 				std::vector<std::string> lanes = laneBindings(r.body);
 				std::lock_guard<std::mutex> lock(uiMutex);
@@ -206,6 +263,16 @@ private:
 			else if (scoreRevision != state.playhead.revision) {
 				scoreRevision = -1;   // ask for the score again
 				return;
+			}
+			if (state.playhead.v3 != bool(working.score3)) {
+				scoreRevision = -1;   // a playhead for the other format: the score changed under us
+				return;
+			}
+			if (!state.layer)
+				working.layer.reset();
+			else if (!working.layer || !(*working.layer == *state.layer)) {
+				working.layer = state.layer;
+				bury(working.layer);
 			}
 			working.playhead = state.playhead;
 			working.clock.observe(sent, received, state.serverNow);
@@ -218,7 +285,7 @@ private:
 				std::lock_guard<std::mutex> lock(uiMutex);
 				controlList = state.controls;
 				char text[96];
-				std::snprintf(text, sizeof text, "Linked  %.0f BPM%s", working.score.bpm,
+				std::snprintf(text, sizeof text, "Linked  %.0f BPM%s", working.bpm(),
 				              state.playhead.moving() ? "" : state.playhead.enabled ? "  paused" : "  auto off");
 				statusText = text;
 			}
@@ -266,9 +333,62 @@ private:
 		}
 		if (restart.exchange(false)) {
 			json_t* body = json_object();
-			json_object_set_new(body, "beat", json_real(s.score.cycleStart()));
+			// A version-3 beat counts from the cycle's start (score-v3.md#transport).
+			json_object_set_new(body, "beat", json_real(s.v3() ? 0. : s.score.cycleStart()));
 			http.request(port, "/api/tracker_transport", token, dump(body));
 		}
+	}
+
+	// One window per poll while there are changes to send, and at least one a second while
+	// BUS IN is patched, which keeps the lease (bus-io.md#bus-in).
+	void sendBus(const Snapshot& s) {
+		v3::BusChange change;
+		if (s.v3())
+			busScore = s.score3;
+		while (busRing->pop(change))
+			record.apply(change, busScore.get());
+		busActive = record.active;
+		if (port == 0 || !record.active || !s.v3())
+			return;
+		double t = now();
+		if (!record.pending() && t - busSentAt < 1.)
+			return;
+		uint64_t upTo = 0;
+		std::string body = record.window(busFrontier.load(std::memory_order_relaxed), sender, upTo);
+		HttpResponse r = http.request(port, "/api/tracker_transport", token, body);
+		busSentAt = t;
+		if (r.status == 200) {
+			record.acknowledge(upTo);   // applied, or dropped as a stale segment: answered either way
+			refused = false;
+		}
+		else if (r.status == 400 && r.body.find("bus held by another module") != std::string::npos)
+			refused = true;
+		busActive = record.active;
+	}
+
+	// Removing the module or closing the patch clears every bit, sent as an all-clear.
+	void clearBus() {
+		v3::BusChange change;
+		while (busRing->pop(change))
+			record.apply(change, busScore.get());
+		if (!record.active || port == 0)
+			return;
+		int64_t at = std::max<int64_t>(0, busFrontier.load(std::memory_order_relaxed));
+		for (int f = 0; f < v3::BUS_FUNCTIONS; f++) {
+			v3::BusChange off;
+			off.revision = record.revision;
+			off.tick = record.tick;
+			off.entry = record.entry;
+			off.at = at;
+			off.function = uint8_t(f);
+			off.on = false;
+			if (!record.lists[f].empty() && record.lists[f].back().on)
+				record.apply(off, busScore.get());
+		}
+		uint64_t upTo = 0;
+		http.request(port, "/api/tracker_transport", token, record.window(at, sender, upTo));
+		record.active = false;
+		busActive = false;
 	}
 
 	void sendInputs() {

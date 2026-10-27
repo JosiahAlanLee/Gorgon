@@ -3,6 +3,49 @@
 Newest first. Each entry names the HydraPy commit and Rack module version it
 describes.
 
+## 2026-10-27 — the Rack module's BUS IN
+
+HydraPy `3c01f32eb0c5a396d4e854e20d0b0d9b14de27d7` (pin unchanged) · Rack module
+`GorgonBridge` 2.4.0.
+
+The Rack module implements [bus-io.md](bus-io.md)'s BUS IN, input 6. It reads
+the word before evaluating each sample, unclocked or clocked. It stamps each
+change with the first tick it hasn't evaluated and plays its own layer at once.
+Rack's record keeps one change per read tick, and windows carry it to Studio:
+one per bridge poll while there are changes, and at least one a second while
+BUS IN is patched, which keeps the lease. A refusal, `bus held by another
+module`, makes the module follow Studio's bus until the lease lapses.
+Unpatching BUS IN, removing the module or closing the patch sends an all-clear.
+The context menu remaps the bit map, which is saved with the patch.
+`engine_test` reproduces vectors V11 and V12 exactly, and the end-to-end test
+has a real Studio accept the windows and give the probe the lease.
+
+## 2026-10-27 — score format 3 in the Rack module; sound link version 2
+
+HydraPy `3c01f32eb0c5a396d4e854e20d0b0d9b14de27d7` (pin moved from `a479932`; HydraPy #67 and #68) · Rack module
+`GorgonBridge` 2.4.0.
+
+- **The Rack module plays version-3 scores.** `rack/src/engine/EngineV3.hpp`
+  plays `evaluate()`'s candidates by [cv-semantics.md](cv-semantics.md)'s rules,
+  one sample at a time, on a follower of elapsed ticks. Six lanes reach GATES,
+  VEL and V/OCT (four channels for a version-1 or -2 score, as before) and new
+  GATE 5 and 6 jacks, outputs 18 and 19. BUS IN, input 6, is on the panel and not
+  read yet. The panel is 14 HP. Versions 1 and 2 play exactly as before.
+- **fixture3 gains its signals** ([evaluator.md](evaluator.md#fixture)). It was
+  to hold signal rows at chosen ticks. It holds, per score, the playheads a
+  follower is sent while Studio plays it, and every sample where `TrackerCV`'s
+  discrete signals change, with the automation lanes every 50 ms. The engine
+  replays the playheads and matches on every sample, so reset pulses,
+  retriggers, landing gates and held values are checked across segments too.
+  `fixture.txt` is byte-identical at the new pin.
+- **BUS OUT's version-3 word**, as [bytebus-output.md](bytebus-output.md#version-3)
+  specifies. The menu item is now *BUS OUT source*, beside BUS IN.
+- **Sound link version 2** ([sound-locks.md](sound-locks.md#rack-sound-link),
+  [sound-link.hpp](sound-link.hpp)): six lanes, and a `Header` by which a
+  receiver's buffers declare the version they read. Version 1's layout stays as
+  `gorgon_sound::v1`; the module writes whichever the receiver declares.
+  Machinemodule 2.2.0 reads version 2.
+
 ## 2026-10-27 — score format 3: the Rack module's evaluator and fixture3
 
 HydraPy `a4799320efd7f6dae924f216a14708cbd8851abf` (pin moved from `e5999b2`; HydraPy #63–#65) · Rack module
