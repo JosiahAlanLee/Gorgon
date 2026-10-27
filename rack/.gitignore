@@ -20,3 +20,6 @@ tests/bytebus_asan
 
 tests/sound_test
 tests/sound_asan
+tests/ping_test
+tests/ping_tsan
+tests/ping_module_test

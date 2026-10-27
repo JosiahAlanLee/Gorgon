@@ -11,5 +11,10 @@
     "name": "Gorgon",
     "description": "HydraPy tracker bridge: audio, clock, six lanes of pitch and gates, automation and clocked ByteBus out; CV back into the visuals and transport.",
     "tags": ["Clock generator", "Sequencer", "Controller", "Visual", "Polyphonic"]
+  }, {
+    "slug": "Ping",
+    "name": "Ping",
+    "description": "Latency meter: sends a pulse (or takes a trigger) and times the sound that comes back, in samples and milliseconds, saved with the patch.",
+    "tags": ["Utility", "Visual"]
   }]
 }

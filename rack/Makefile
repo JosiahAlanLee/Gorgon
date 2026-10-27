@@ -1,5 +1,5 @@
 RACK_DIR ?= ../../deps/Rack-SDK
-SOURCES += src/plugin.cpp src/Gorgon.cpp
+SOURCES += src/plugin.cpp src/Gorgon.cpp src/Ping.cpp
 DISTRIBUTABLES += res README.md LICENSE docs examples
 EXTRA_CXXFLAGS += -std=c++17
 include $(RACK_DIR)/arch.mk
