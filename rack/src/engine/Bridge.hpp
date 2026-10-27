@@ -5,11 +5,13 @@
 // functions, which never block. The UI thread reads status(), controls() and
 // the bindings. Everything else happens on the worker.
 #pragma once
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
 #include <functional>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -22,11 +24,17 @@ namespace gorgon {
 
 constexpr int INPUTS = 4;
 
-// What the audio thread follows.
+// What the audio thread follows. A version-3 score and its playhead's lists are too big to
+// copy on the audio thread, so they come by shared pointer; the bridge frees them (see bury).
 struct Snapshot {
 	Playhead playhead;
-	Score score;
+	Score score;                                  // versions 1 and 2
+	std::shared_ptr<const v3::ScoreV3> score3;    // version 3, else null
+	std::shared_ptr<const v3::Layer> layer;       // version 3's FILL and bus layer
 	BridgeClock clock;
+
+	bool v3() const { return score3 && layer && playhead.v3; }
+	double bpm() const { return v3() ? score3->bpm : score.bpm; }
 };
 
 class Bridge {
@@ -118,6 +126,10 @@ private:
 	std::mutex snapshotMutex;
 	Snapshot latest;
 	std::atomic<uint64_t> version{0};
+	// Every version-3 score and layer published, kept until no one else holds it. The audio
+	// thread only ever lets go of a reference this still holds, so a score is never freed
+	// there; the worker frees it on its next pass.
+	std::vector<std::shared_ptr<const void>> graveyard;
 
 	std::atomic<float> volts[INPUTS];
 	std::atomic<bool> connected[INPUTS];
@@ -169,10 +181,21 @@ private:
 		return out;
 	}
 
+	void bury(const std::shared_ptr<const void>& p) {
+		if (p)
+			graveyard.push_back(p);
+	}
+	void sweep() {
+		graveyard.erase(std::remove_if(graveyard.begin(), graveyard.end(),
+		                               [](const std::shared_ptr<const void>& p) { return p.use_count() == 1; }),
+		                graveyard.end());
+	}
+
 	void loop() {
 		Snapshot working;
 		while (running) {
 			double started = now();
+			sweep();
 			pollStudio(working);
 			sendTransport(working);
 			sendInputs();
@@ -197,7 +220,14 @@ private:
 		std::string error;
 		if (r.status == 200 && parseBridge(r.body, state, &error)) {
 			if (state.hasScore) {
-				working.score = state.score;
+				if (state.score3) {
+					working.score3 = state.score3;
+					bury(working.score3);
+				}
+				else {
+					working.score = state.score;
+					working.score3.reset();
+				}
 				scoreRevision = state.playhead.revision;
 				std::vector<std::string> lanes = laneBindings(r.body);
 				std::lock_guard<std::mutex> lock(uiMutex);
@@ -206,6 +236,16 @@ private:
 			else if (scoreRevision != state.playhead.revision) {
 				scoreRevision = -1;   // ask for the score again
 				return;
+			}
+			if (state.playhead.v3 != bool(working.score3)) {
+				scoreRevision = -1;   // a playhead for the other format: the score changed under us
+				return;
+			}
+			if (!state.layer)
+				working.layer.reset();
+			else if (!working.layer || !(*working.layer == *state.layer)) {
+				working.layer = state.layer;
+				bury(working.layer);
 			}
 			working.playhead = state.playhead;
 			working.clock.observe(sent, received, state.serverNow);
@@ -218,7 +258,7 @@ private:
 				std::lock_guard<std::mutex> lock(uiMutex);
 				controlList = state.controls;
 				char text[96];
-				std::snprintf(text, sizeof text, "Linked  %.0f BPM%s", working.score.bpm,
+				std::snprintf(text, sizeof text, "Linked  %.0f BPM%s", working.bpm(),
 				              state.playhead.moving() ? "" : state.playhead.enabled ? "  paused" : "  auto off");
 				statusText = text;
 			}
@@ -266,7 +306,8 @@ private:
 		}
 		if (restart.exchange(false)) {
 			json_t* body = json_object();
-			json_object_set_new(body, "beat", json_real(s.score.cycleStart()));
+			// A version-3 beat counts from the cycle's start (score-v3.md#transport).
+			json_object_set_new(body, "beat", json_real(s.v3() ? 0. : s.score.cycleStart()));
 			http.request(port, "/api/tracker_transport", token, dump(body));
 		}
 	}

@@ -32,38 +32,46 @@ def text(s, x, y, size=9, color='#d9e2e5', anchor='middle'):
     return ''.join(out)
 
 
-W, H = 180, 380  # 12 HP
+W, H = 210, 380  # 14 HP: six gate jacks, and BUS IN beside BUS OUT
 ACCENT, LABEL, DIM, OUT = '#f0b46a', '#d9e2e5', '#7f949c', '#8fdcc4'
-COLUMNS = (30, 70, 110, 150)
+FIVE = (25, 65, 105, 145, 185)                     # five jacks across
+SIX = (25, 57, 89, 121, 153, 185)                  # the six gates
 
 display = (12, 46, W - 24, 52)                      # x, y, w, h
 # Transport row: button and trigger input for PLAY and RESET, then the offset trimpot.
 TRANSPORT_Y = 130
-buttons = {'PLAY': (22, TRANSPORT_Y), 'RESET': (90, TRANSPORT_Y)}
-lights = {'PLAY_LIGHT': (22, TRANSPORT_Y), 'LINK_LIGHT': (162, 58), 'CLOCK_LIGHT': (162, 74)}
-trimpots = {'OFFSET': (158, TRANSPORT_Y)}
-jacks_in = {'PLAY_IN': (56, TRANSPORT_Y), 'RESET_IN': (124, TRANSPORT_Y),
-            'CV1': (COLUMNS[0], 200), 'CV2': (COLUMNS[1], 200), 'CV3': (COLUMNS[2], 200), 'CV4': (COLUMNS[3], 200)}
-jacks_out = {'CLOCK': (22, 246), 'RESET_OUT': (56, 246), 'RUN': (90, 246), 'VEL': (124, 246), 'PITCH': (158, 246),
-             'GATE1': (COLUMNS[0], 278), 'GATE2': (COLUMNS[1], 278), 'GATE3': (COLUMNS[2], 278), 'GATE4': (COLUMNS[3], 278),
-             'Z': (COLUMNS[0], 310), 'ROLL': (COLUMNS[1], 310), 'FEEDBACK': (COLUMNS[2], 310), 'GATES': (COLUMNS[3], 310),
-             'OPTICAL_L': (26, 342), 'OPTICAL_R': (58, 342), 'BREAKS_L': (90, 342), 'BREAKS_R': (122, 342), 'BUS': (154, 342)}
-transport_labels = {'PLAY': (22, 'PLAY'), 'PLAY_IN': (56, 'TRIG'), 'RESET': (90, 'RESET'), 'RESET_IN': (124, 'TRIG'),
-                    'OFFSET': (158, 'OFFSET')}
-labels = {'CV1': 'CV 1', 'CV2': 'CV 2', 'CV3': 'CV 3', 'CV4': 'CV 4',
-          'CLOCK': 'CLOCK', 'RESET_OUT': 'RESET', 'RUN': 'RUN', 'VEL': 'VEL', 'PITCH': 'V/OCT', 'GATE1': 'GATE 1', 'GATE2': 'GATE 2',
-          'GATE3': 'GATE 3', 'GATE4': 'GATE 4', 'Z': 'Z', 'ROLL': 'ROLL', 'FEEDBACK': 'FDBK', 'GATES': 'GATES', 'OPTICAL_L': 'OPT L', 'OPTICAL_R': 'OPT R', 'BREAKS_L': 'BRK L', 'BREAKS_R': 'BRK R', 'BUS': 'BUS'}
+buttons = {'PLAY': (FIVE[0], TRANSPORT_Y), 'RESET': (FIVE[2], TRANSPORT_Y)}
+lights = {'PLAY_LIGHT': (FIVE[0], TRANSPORT_Y), 'LINK_LIGHT': (W - 18, 58), 'CLOCK_LIGHT': (W - 18, 74)}
+trimpots = {'OFFSET': (FIVE[4], TRANSPORT_Y)}
+jacks_in = {'PLAY_IN': (FIVE[1], TRANSPORT_Y), 'RESET_IN': (FIVE[3], TRANSPORT_Y),
+            'CV1': (FIVE[0], 200), 'CV2': (FIVE[1], 200), 'CV3': (FIVE[2], 200), 'CV4': (FIVE[3], 200),
+            'BUS_IN': (FIVE[4], 310)}
+jacks_out = {'CLOCK': (FIVE[0], 246), 'RESET_OUT': (FIVE[1], 246), 'RUN': (FIVE[2], 246), 'VEL': (FIVE[3], 246), 'PITCH': (FIVE[4], 246),
+             **{f'GATE{n}': (x, 278) for n, x in enumerate(SIX, 1)},
+             'Z': (FIVE[0], 310), 'ROLL': (FIVE[1], 310), 'FEEDBACK': (FIVE[2], 310), 'GATES': (FIVE[3], 310),
+             'OPTICAL_L': (FIVE[0], 342), 'OPTICAL_R': (FIVE[1], 342), 'BREAKS_L': (FIVE[2], 342), 'BREAKS_R': (FIVE[3], 342),
+             'BUS': (FIVE[4], 342)}
+transport_labels = {'PLAY': (FIVE[0], 'PLAY'), 'PLAY_IN': (FIVE[1], 'TRIG'), 'RESET': (FIVE[2], 'RESET'),
+                    'RESET_IN': (FIVE[3], 'TRIG'), 'OFFSET': (FIVE[4], 'OFFSET')}
+labels = {'CV1': 'CV 1', 'CV2': 'CV 2', 'CV3': 'CV 3', 'CV4': 'CV 4', 'BUS_IN': 'BUS IN',
+          'CLOCK': 'CLOCK', 'RESET_OUT': 'RESET', 'RUN': 'RUN', 'VEL': 'VEL', 'PITCH': 'V/OCT',
+          **{f'GATE{n}': f'GATE {n}' for n in range(1, 7)},
+          'Z': 'Z', 'ROLL': 'ROLL', 'FEEDBACK': 'FDBK', 'GATES': 'GATES', 'OPTICAL_L': 'OPT L', 'OPTICAL_R': 'OPT R',
+          'BREAKS_L': 'BRK L', 'BREAKS_R': 'BRK R', 'BUS': 'BUS OUT'}
+# BUS IN sits in the outputs block beside BUS OUT, on a cut-out of the inputs' lighter panel.
+BUS_IN_PAD = (FIVE[4] - 19, 299, 38, 32)            # x, y, w, h
 
 p = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">',
      f'<rect width="{W}" height="{H}" fill="#161d22"/>',
      f'<rect x="1" y="1" width="{W-2}" height="{H-2}" fill="none" stroke="#5c6d74"/>',
      f'<rect x="6" y="226" width="{W-12}" height="148" rx="4" fill="#0e1417"/>',            # outputs block
+     f'<rect x="{BUS_IN_PAD[0]}" y="{BUS_IN_PAD[1]}" width="{BUS_IN_PAD[2]}" height="{BUS_IN_PAD[3]}" rx="3" fill="#161d22"/>',
      f'<rect x="{display[0]}" y="{display[1]}" width="{display[2]}" height="{display[3]}" rx="3" fill="#0a0f11" stroke="#41545c"/>']
 p += [text('Gorgon', 12, 30, 20, OUT, 'start'),
       text('BRIDGE', 12 + width('Gorgon', 20) + 8, 30, 8, LABEL, 'start')]
 # XI Reflexive loop (the map moves it): Rack follows Gorgon's clock and moves it back.
 p.append(glyph(11, W - 26, 22, 26, LABEL, ACCENT))
-p += [text('LINK', 154, 61, 6, DIM, 'end'), text('CLK', 154, 77, 6, DIM, 'end')]
+p += [text('LINK', W - 26, 61, 6, DIM, 'end'), text('CLK', W - 26, 77, 6, DIM, 'end')]
 for y in (106, 168, 224):
     p.append(f'<path d="M12 {y}H{W-12}" stroke="#41545c"/>')
 p += [text('TRANSPORT', 12, 117, 7, ACCENT, 'start'), text('TO GORGON', 12, 180, 7, ACCENT, 'start'),
@@ -73,8 +81,11 @@ for name, (x, label) in transport_labels.items():
 for name, (x, y) in jacks_in.items():
     if name.startswith('CV'):
         p.append(text(labels[name], x, y + 22, 6.5))
+    elif name == 'BUS_IN':
+        p.append(text(labels[name], x, y + 19, 6, ACCENT))
 for name, (x, y) in jacks_out.items():
-    p.append(text(labels[name], x, y + 19, 6.5, ACCENT if name == 'BUS' else OUT))
+    p.append(text(labels[name], x, y + 19, 6 if name == 'BUS' or name.startswith('GATE') and name != 'GATES' else 6.5,
+                  ACCENT if name == 'BUS' else OUT))
 panel = ''.join(p) + '</svg>'
 (root / 'res').mkdir(exist_ok=True)
 (root / 'res/Gorgon.svg').write_text(panel)

@@ -1,14 +1,17 @@
 // Parse HydraPy Studio's GET /api/bridge reply (jansson) into engine structs,
 // and find Studio's advertised port and token.
 #pragma once
+#include <climits>
 #include <cstdlib>
 #include <fstream>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
 
 #include <jansson.h>
 
+#include "EngineV3.hpp"
 #include "GorgonEngine.hpp"
 #include "ScoreV3.hpp"
 
@@ -22,7 +25,9 @@ struct Control {
 struct BridgeState {
 	Playhead playhead;
 	bool hasScore = false;   // false when Studio left the score out (unchanged revision)
-	Score score;
+	Score score;             // a version-1 or -2 document
+	std::shared_ptr<v3::ScoreV3> score3;   // a version-3 document, built here off the audio thread
+	std::shared_ptr<v3::Layer> layer;      // version 3's FILL and bus layer, with the playhead
 	std::vector<Control> controls;
 	double serverNow = 0.;
 };
@@ -303,6 +308,31 @@ inline bool parsePatternV3(json_t* j, v3::PatternV3& pattern) {
 		if (product > 4)
 			return false;
 	}
+	// The automation lanes, as in versions 1 and 2 but on the pattern's own rows.
+	static const char* names[AUTO_LANES] = {"z", "roll", "feedback"};
+	json_t* keys = json_object_get(j, "keys");
+	json_t* easing = json_object_get(j, "easing");
+	for (int k = 0; k < AUTO_LANES; k++) {
+		v3::AutoLaneV3& lane = pattern.autos[k];
+		const char* ease = json_string_value(json_object_get(easing, names[k]));
+		std::string e = ease ? ease : "";
+		if (e != "hold" && e != "linear" && e != "smooth")
+			return false;
+		lane.ease = e == "linear" ? EASE_LINEAR : e == "smooth" ? EASE_SMOOTH : EASE_HOLD;
+		json_t* list = json_object_get(keys, names[k]);
+		if (!json_is_array(list) || json_array_size(list) > size_t(pattern.geometry.rows))
+			return false;
+		long long previous = -1;
+		for (size_t i = 0; i < json_array_size(list); i++) {
+			json_t* key = json_array_get(list, i);
+			long long row = 0;
+			json_t* v = json_object_get(key, "v");
+			if (!integerIn(json_object_get(key, "r"), previous + 1, pattern.geometry.rows - 1, row) || !json_is_number(v))
+				return false;
+			lane.keys.push_back({int(row), json_number_value(v)});
+			previous = row;
+		}
+	}
 	return true;
 }
 
@@ -371,6 +401,43 @@ inline bool parseScoreV3(json_t* d, v3::ScoreV3& score) {
 	return true;
 }
 
+// An [{at, on}…] list: sorted, never empty, the first at 0 (evaluator.md#fill).
+inline bool parseTransitions(json_t* j, std::vector<v3::Transition>& out) {
+	out.clear();
+	size_t i;
+	json_t* t;
+	json_array_foreach(j, i, t) {
+		long long at = 0;
+		json_t* on = json_object_get(t, "on");
+		if (!integerIn(json_object_get(t, "at"), out.empty() ? 0 : out.back().at, LLONG_MAX, at) || !json_is_boolean(on) ||
+		    (out.empty() && at != 0))
+			return false;
+		out.push_back({at, json_is_true(on)});
+	}
+	return !out.empty();
+}
+
+// Version 3's playhead fields: the anchor, elapsed ticks, FILL and the bus layer.
+inline bool parsePlayheadV3(json_t* root, Playhead& h, v3::Layer& layer) {
+	json_t* start = json_object_get(root, "start");
+	json_t* entry = json_object_get(start, "entry");
+	json_t* bus = json_object_get(root, "bus");
+	json_t* mutes = json_object_get(bus, "mutes");
+	long long tick = 0, elapsed = 0, e = -1;
+	if (!integerIn(json_object_get(start, "tick"), 0, LLONG_MAX, tick) || !integerIn(json_object_get(root, "elapsed"), 0, LLONG_MAX, elapsed) ||
+	    !(json_is_null(entry) || integerIn(entry, 0, 255, e)) || !parseTransitions(json_object_get(root, "fill"), layer.fill) ||
+	    !parseTransitions(json_object_get(bus, "fill"), layer.busFill) || json_array_size(mutes) != size_t(v3::LANES))
+		return false;
+	for (int l = 0; l < v3::LANES; l++)
+		if (!parseTransitions(json_array_get(mutes, size_t(l)), layer.busMutes[l]))
+			return false;
+	h.v3 = true;
+	h.startTick = tick;
+	h.elapsed = elapsed;
+	h.startEntry = int(e);
+	return true;
+}
+
 inline bool parseBridge(const std::string& body, BridgeState& state, std::string* error = nullptr) {
 	json_error_t e;
 	json_t* root = json_loads(body.c_str(), 0, &e);
@@ -394,13 +461,33 @@ inline bool parseBridge(const std::string& body, BridgeState& state, std::string
 		h.clockTime = number(json_object_get(root, "clock_time"));
 		h.wall = number(json_object_get(root, "wall"));
 		state.serverNow = number(json_object_get(root, "server_now"));
-		json_t* doc = json_object_get(root, "document");
-		state.hasScore = doc != nullptr;
-		if (doc && !parseScore(doc, state.score)) {
-			ok = false;
-			if (error)
-				*error = "Studio sent an unknown score format";
+		h.v3 = false;
+		state.layer.reset();
+		if (json_object_get(root, "start")) {
+			auto layer = std::make_shared<v3::Layer>();
+			if (parsePlayheadV3(root, h, *layer))
+				state.layer = layer;
+			else {
+				ok = false;
+				if (error)
+					*error = "Studio sent a playhead this module can't read";
+			}
 		}
+		json_t* doc = json_object_get(root, "document");
+		const char* format = json_string_value(json_object_get(doc, "format"));
+		state.hasScore = doc != nullptr;
+		state.score3.reset();
+		if (doc && format && std::string(format) == "hydrapy-tracker-3") {
+			state.score3 = std::make_shared<v3::ScoreV3>();
+			if (!parseScoreV3(doc, *state.score3)) {
+				state.score3.reset();
+				ok = false;
+			}
+		}
+		else if (doc && !parseScore(doc, state.score))
+			ok = false;
+		if (doc && !ok && error && error->empty())
+			*error = "Studio sent an unknown score format";
 		state.controls.clear();
 		size_t i;
 		json_t* c;

@@ -1,5 +1,6 @@
 CXX ?= g++
-CXXFLAGS = -std=c++17 -O2 -Wall -Wextra -Wno-unused-parameter
+# No fused multiply-adds: the fixtures compare HydraPy's doubles to the sample.
+CXXFLAGS = -std=c++17 -O2 -Wall -Wextra -Wno-unused-parameter -ffp-contract=off
 RACK_DIR ?= ../../../deps/Rack-SDK
 RACK_TEST_LDFLAGS = -Wl,--allow-shlib-undefined
 JANSSON ?= -ljansson

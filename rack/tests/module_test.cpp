@@ -185,7 +185,8 @@ int main() {
 		// The appended pitch port must not change existing patch cable IDs.
 		assert(Gorgon::GATES_OUTPUT == 11 && Gorgon::PITCH_OUTPUT == 12);
 		assert(Gorgon::OPTICAL_L_OUTPUT == 13 && Gorgon::BREAKS_R_OUTPUT == 16);
-		assert(Gorgon::BUS_OUTPUT == 17 && Gorgon::NUM_OUTPUTS == 18);
+		assert(Gorgon::BUS_OUTPUT == 17 && Gorgon::GATE5_OUTPUT == 18 && Gorgon::GATE6_OUTPUT == 19 && Gorgon::NUM_OUTPUTS == 20);
+		assert(Gorgon::CV4_INPUT == 5 && Gorgon::BUS_INPUT == 6 && Gorgon::NUM_INPUTS == 7);   // bus-io.md: BUS IN is input 6
 
 		// Device PCM -1..1 maps to -10..10 V, independent of the CV level profile.
 		settings::sampleRate = sr;
@@ -215,6 +216,99 @@ int main() {
 		for (int c = 0; c < 4; c++) assert(m.outputs[Gorgon::OPTICAL_L_OUTPUT + c].getVoltage() == 0.f);
 		m.audioInput.setDriverId(-1);
 		context.engine->removeModule(&m);
+	}
+	{
+		// A version-3 score: six lanes on the polyphonic jacks and GATE 5 and 6, and the sound
+		// link to a Machinemodule on the right, in whichever version its buffers declare.
+		Gorgon m;
+		for (auto& o : m.outputs)
+			o.channels = 1;
+		auto score = std::make_shared<gorgon::v3::ScoreV3>();
+		score->bpm = 120.;
+		score->loop = true;
+		gorgon::v3::PatternV3 p;
+		p.geometry.w = 480;                 // rate 1: a row is a sixteenth
+		p.geometry.rows = p.geometry.bar = 16;
+		p.geometry.bars = 1;
+		for (auto& lane : p.lanes) {
+			lane.len = 16;
+			lane.cells.assign(16, gorgon::v3::Cell());
+		}
+		auto& five = p.lanes[4].cells[0];
+		five.present = true; five.vel = 127.; five.midi = 69;          // A4 = +0.75 V
+		auto& six = p.lanes[5].cells[2];
+		six.present = true; six.vel = 63.5; six.midi = -1;            // AIR
+		six.hasLocks = true; six.locks.machine = 48; six.locks.mask = 1; six.locks.values[0] = 7.f;
+		score->sounds[5].machine = 16;
+		score->sounds[5].mask = 2;
+		score->sounds[5].values[1] = 50.f;
+		score->store.push_back(p);
+		score->index[0] = 0;
+		score->buildTimeline();
+		gorgon::Snapshot s;
+		s.score3 = score;
+		s.layer = std::make_shared<gorgon::v3::Layer>();
+		s.playhead.valid = s.playhead.enabled = s.playhead.playing = s.playhead.v3 = true;
+		s.playhead.transportRevision = 1;
+		s.clock.observe(0., 0., 0.);
+		args.frame = 0;
+		// The engine ran above, so its block clock has moved: Studio's segment starts now.
+		s.playhead.anchorTime = s.playhead.clockTime = s.playhead.wall =
+			APP->engine->getBlockTime() - double(APP->engine->getBlockFrame()) * args.sampleTime;
+		m.snapshot = s;
+		m.haveSnapshot = true;
+
+		plugin::Plugin machinePlugin;
+		machinePlugin.slug = "MachinemoduleRack";
+		machinePlugin.version = "2.2.0";
+		plugin::Model machineModel;
+		machineModel.slug = "Machinemodule";
+		machineModel.plugin = &machinePlugin;
+		Module receiver;
+		receiver.model = &machineModel;
+		gorgon_sound::Packet packets[2];
+		receiver.leftExpander.producerMessage = &packets[0];
+		receiver.leftExpander.consumerMessage = &packets[1];
+		m.rightExpander.module = &receiver;
+
+		run(m, 1, args);
+		assert(m.outputs[Gorgon::GATES_OUTPUT].getChannels() == 6 && m.outputs[Gorgon::VEL_OUTPUT].getChannels() == 6);
+		assert(m.outputs[Gorgon::PITCH_OUTPUT].getChannels() == 6);
+		assert(m.outputs[Gorgon::GATE5_OUTPUT].getVoltage() == 10.f && m.outputs[Gorgon::GATES_OUTPUT].getVoltage(4) == 10.f);
+		assert(m.outputs[Gorgon::GATE1_OUTPUT].getVoltage() == 0.f && m.outputs[Gorgon::GATE6_OUTPUT].getVoltage() == 0.f);
+		assert(std::abs(m.outputs[Gorgon::VEL_OUTPUT].getVoltage(4) - 10.f) < 1e-4f);
+		assert(std::abs(m.outputs[Gorgon::PITCH_OUTPUT].getVoltage(4) - .75f) < 1e-4f);
+		assert(packets[0].version == 2 && packets[0].frame == 0 && packets[0].moving == 1 && packets[0].transport == 1);
+		assert(packets[0].lanes[4].gate == 10.f && packets[0].lanes[4].velocity == 1.f && std::abs(packets[0].lanes[4].pitch - .75f) < 1e-6f);
+		assert(packets[0].lanes[5].gate == 0.f && packets[0].lanes[5].sound.machine == 16 && packets[0].lanes[5].sound.mask == 2);
+		assert(receiver.leftExpander.messageFlipRequested);
+		assert(m.shownV3.load() && m.shownPattern.load() == 0);
+		// Row 2, a quarter second in: lane 6's AIR hit with its lock over the kit sound.
+		run(m, 12100, args);
+		assert(m.outputs[Gorgon::GATE6_OUTPUT].getVoltage() == 10.f && m.outputs[Gorgon::GATE5_OUTPUT].getVoltage() == 0.f);
+		assert(std::abs(m.outputs[Gorgon::VEL_OUTPUT].getVoltage(5) - 5.f) < 1e-4f);
+		assert(m.outputs[Gorgon::PITCH_OUTPUT].getVoltage(5) == 0.f);    // AIR sets no pitch
+		assert(std::abs(m.outputs[Gorgon::PITCH_OUTPUT].getVoltage(4) - .75f) < 1e-4f);
+		const auto& lane6 = packets[0].lanes[5];
+		assert(lane6.gate == 10.f && lane6.sound.machine == 48 && lane6.sound.mask == 3 && lane6.sound.values[0] == 7.f &&
+		       lane6.sound.values[1] == 50.f);
+		assert(gorgon_sound::valid(packets[0], args.frame - 1));
+		assert(m.shownRow.load() == 2 && m.shownBar.load() == 16);
+		// A receiver built before version 2 gets a version-1 packet: four lanes.
+		gorgon_sound::v1::Packet old[2];
+		receiver.leftExpander.producerMessage = &old[0];
+		run(m, 1, args);
+		assert(gorgon_sound::v1::valid(old[0], args.frame - 1) && old[0].frame == args.frame - 1);
+		// A buffer of an unknown version is left alone.
+		gorgon_sound::Packet future;
+		future.version = 3;
+		receiver.leftExpander.producerMessage = &future;
+		receiver.leftExpander.messageFlipRequested = false;
+		run(m, 1, args);
+		assert(future.frame == -1 && !receiver.leftExpander.messageFlipRequested);
+		m.rightExpander.module = nullptr;
+		machineModel.plugin = nullptr;
+		std::cout << "version 3: six lanes, GATE 5/6 and the sound link (versions 1 and 2) passed\n";
 	}
 	std::cout << "module_test: all passed\n";
 	return 0;

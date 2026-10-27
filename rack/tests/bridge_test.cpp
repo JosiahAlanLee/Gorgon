@@ -55,6 +55,26 @@ static std::string scoreJson() {
 	       "\"bindings\":{\"z\":\"Dolly Z\",\"roll\":\"Roll\",\"feedback\":\"\"},\"patterns\":[" + patterns + "]}";
 }
 
+// A version-3 document: one pattern at rate 1 with a hit on lane 6, row 0, the rest empty.
+static std::string scoreJsonV3(int bpm) {
+	std::string lanes;
+	for (int l = 0; l < 6; l++)
+		lanes += std::string(l ? "," : "") + "{\"len\":4,\"cells\":[" + (l == 5 ? "{\"note\":\"C-4\",\"vel\":90}" : "null") +
+		         ",null,null,null],\"transforms\":[]}";
+	std::string patterns = "{\"name\":\"A01\",\"rate\":1,\"bar\":4,\"bars\":1,\"lanes\":[" + lanes +
+	                       "],\"keys\":{\"z\":[{\"r\":2,\"v\":0.5}],\"roll\":[],\"feedback\":[]},"
+	                       "\"easing\":{\"z\":\"hold\",\"roll\":\"smooth\",\"feedback\":\"smooth\"},\"scenes\":[]}";
+	for (int p = 1; p < 128; p++)
+		patterns += ",null";
+	std::string sounds, mutes;
+	for (int l = 0; l < 6; l++) {
+		sounds += std::string(l ? "," : "") + "{\"machine\":null,\"params\":{}}";
+		mutes += std::string(l ? "," : "") + "false";
+	}
+	return "{\"format\":\"hydrapy-tracker-3\",\"bpm\":" + std::to_string(bpm) + ",\"key\":2,\"loop\":true,\"pattern\":0,"
+	       "\"chain\":[0],\"seed\":0,\"mutes\":[" + mutes + "],\"sounds\":[" + sounds + "],\"patterns\":[" + patterns + "]}";
+}
+
 struct FakeStudio {
 	int listener = -1, port = 0;
 	std::string token = "first-token";
@@ -62,7 +82,8 @@ struct FakeStudio {
 	std::thread thread;
 	std::mutex mutex;
 	std::vector<std::string> requests;   // request line + headers + body
-	int revision = 7;
+	std::atomic<int> revision{7};
+	std::atomic<bool> v3{false};         // serve a version-3 document and playhead
 
 	FakeStudio() {
 		listener = ::socket(AF_INET, SOCK_STREAM, 0);
@@ -135,14 +156,21 @@ struct FakeStudio {
 				body = "{\"error\":\"Local session token required\"}";
 			}
 			else if (req.compare(0, 16, "GET /api/bridge ") == 0 || req.compare(0, 16, "GET /api/bridge?") == 0) {
-				bool cached = req.find("?revision=" + std::to_string(revision) + " ") != std::string::npos;
-				body = "{\"revision\":" + std::to_string(revision) + ",\"enabled\":true,\"playing\":false,"
+				int r = revision;
+				bool cached = req.find("?revision=" + std::to_string(r) + " ") != std::string::npos;
+				std::string mutes, playhead;
+				for (int l = 0; l < 6; l++)
+					mutes += std::string(l ? "," : "") + (l == 2 ? "[{\"at\":0,\"on\":false},{\"at\":960,\"on\":true}]" : "[{\"at\":0,\"on\":false}]");
+				if (v3)
+					playhead = "\"start\":{\"tick\":1440,\"entry\":null},\"elapsed\":96,\"entry\":null,"
+					           "\"fill\":[{\"at\":0,\"on\":true}],\"bus\":{\"fill\":[{\"at\":0,\"on\":false}],\"mutes\":[" + mutes + "]},";
+				body = "{\"revision\":" + std::to_string(r) + "," + playhead + "\"enabled\":true,\"playing\":false,"
 				       "\"transport_revision\":23,\"anchor_beat\":12.5,\"anchor_time\":3.0,\"clock_time\":3.0,\"wall\":100.0,\"server_now\":100.01,"
 				       "\"controls\":[{\"name\":\"Dolly Z\",\"min\":0,\"max\":1,\"value\":0.35},"
 				       "{\"name\":\"Roll\",\"min\":-45,\"max\":45,\"value\":0},"
 				       "{\"name\":\"Warp\",\"min\":-2,\"max\":2,\"value\":0},"
 				       "{\"name\":\"Hue\",\"min\":0,\"max\":1,\"value\":0.5}]" +
-				       (cached ? std::string() : ",\"document\":" + scoreJson()) + "}";
+				       (cached ? std::string() : ",\"document\":" + (v3 ? scoreJsonV3(100 + r) : scoreJson())) + "}";
 			}
 			else {
 				body = "{\"applied\":[],\"ignored\":{}}";
@@ -257,6 +285,41 @@ int main() {
 		return any(seenRequests, "\"beat\":0");
 	}), "transport sent");
 	CHECK(any(seenRequests, "{\"enabled\":true,\"playing\":true}"), "play body");
+
+	// A version-3 score: the score and the playhead's lists arrive by pointer.
+	studio.v3 = true;
+	studio.revision = 8;
+	CHECK(waitFor([&] { return bridge.poll(seen, snap) && snap.v3(); }), "version-3 snapshot");
+	CHECK(snap.score3->bpm == 108. && snap.score3->cycle == 4 * 480 && snap.score3->patternAt(0)->lanes[5].cells[0].present,
+	      "version-3 score");
+	CHECK(snap.score3->patternAt(0)->autos[LANE_Z].keys.size() == 1 && snap.score3->patternAt(0)->autos[LANE_ROLL].ease == EASE_SMOOTH,
+	      "version-3 automation");
+	CHECK(snap.playhead.startTick == 1440 && snap.playhead.elapsed == 96 && snap.playhead.startEntry == -1, "version-3 playhead");
+	CHECK(snap.layer->fill.size() == 1 && snap.layer->fill[0].on && snap.layer->busMutes[2].size() == 2 &&
+	      snap.layer->busMutes[2][1].at == 960, "version-3 lists");
+	CHECK(waitFor([&] { return any(studio.take(), "GET /api/bridge?revision=8 HTTP/1.0") && bridge.poll(seen, snap); }),
+	      "cached version-3 poll");
+	CHECK(snap.v3() && snap.score3->bpm == 108., "version-3 score kept across cached polls");
+	// Unchanged lists keep their pointer; a new score replaces the old, which the worker frees
+	// once the audio thread's copy has let go of it.
+	const v3::Layer* layer = snap.layer.get();
+	std::weak_ptr<const v3::ScoreV3> old = snap.score3;
+	CHECK(waitFor([&] { return bridge.poll(seen, snap); }) && snap.layer.get() == layer, "the same lists, the same layer");
+	studio.revision = 9;
+	CHECK(waitFor([&] { return bridge.poll(seen, snap) && snap.score3->bpm == 109.; }), "the new version-3 score");
+	CHECK(waitFor([&] { return old.expired(); }), "the old score is freed by the worker");
+	bridge.requestRestart();
+	seenRequests.clear();
+	CHECK(waitFor([&] {
+		for (const std::string& r : studio.take())
+			seenRequests.push_back(r);
+		return any(seenRequests, "\"beat\":0");
+	}), "version-3 reset goes to the cycle's start");
+	// And back to version 1: the version-3 score is dropped.
+	studio.v3 = false;
+	studio.revision = 10;
+	CHECK(waitFor([&] { return bridge.poll(seen, snap) && !snap.v3() && snap.playhead.revision == 10; }), "back to version 1");
+	CHECK(!snap.score3 && !snap.layer && snap.score.bpm == 138., "version-1 score again");
 
 	// Studio restarts with a new token: refused, then the new advertisement is read.
 	studio.setToken("second-token");

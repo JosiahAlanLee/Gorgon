@@ -82,7 +82,7 @@ def rack_patch(config, client, device):
             return dict(audio=dict(driver=4, deviceName=name, sampleRate=config['audio']['rate'],
                                    blockSize=config['audio']['quantum'], inputOffset=0, outputOffset=0))
         document = dict(version='2.6.4', modules=[
-            dict(id=1, plugin='GorgonBridge', model='Gorgon', version='2.3.1', pos=[0, 0], params=[], data=audio(client)),
+            dict(id=1, plugin='GorgonBridge', model='Gorgon', version='2.4.0', pos=[0, 0], params=[], data=audio(client)),
             dict(id=2, plugin='Core', model='AudioInterface2', version='2.6.4', pos=[32, 0], params=[], data=audio(device))],
             cables=[dict(id=i, outputModuleId=1, outputId=15+i, inputModuleId=2, inputId=i)
                     for i in range(2)])
