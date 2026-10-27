@@ -10,6 +10,7 @@
 #include <jansson.h>
 
 #include "GorgonEngine.hpp"
+#include "ScoreV3.hpp"
 
 namespace gorgon {
 
@@ -161,6 +162,212 @@ inline bool parseScore(json_t* d, Score& score) {
 			}
 		}
 	}
+	return true;
+}
+
+// -- score format 3 (spec/score-v3.md, evaluator.md, transforms.md) -------------------
+
+inline bool integerIn(json_t* j, long long low, long long high, long long& value) {
+	if (!json_is_integer(j))
+		return false;
+	value = json_integer_value(j);
+	return value >= low && value <= high;
+}
+
+// One transform node and, for every, its inner, appended to the lane in pre-order.
+inline bool parseTransform(json_t* j, v3::LaneV3& lane, int top, int depth, int& product) {
+	const char* kind = json_string_value(json_object_get(j, "kind"));
+	if (!json_is_object(j) || !kind)
+		return false;
+	std::string k(kind);
+	v3::Node node;
+	node.top = top;
+	node.depth = depth;
+	long long value = 0, a = 0, b = 0;
+	size_t fields = json_object_size(j);
+	if (k == "every") {
+		if (depth >= 2 || fields != 4 || !integerIn(json_object_get(j, "a"), 1, 8, a) || !integerIn(json_object_get(j, "b"), 1, 8, b) || a > b)
+			return false;
+		node.kind = v3::NODE_EVERY;
+		node.a = int(a);
+		node.b = int(b);
+		lane.nodes.push_back(node);
+		return parseTransform(json_object_get(j, "inner"), lane, top, depth + 1, product);
+	}
+	if (k == "rev") {
+		if (fields != 1)
+			return false;
+		node.kind = v3::NODE_REV;
+	}
+	else if (k == "rot" && fields == 2 && integerIn(json_object_get(j, "k"), -127, 127, value))
+		node.kind = v3::NODE_ROT;
+	else if (k == "ply" && fields == 2 && integerIn(json_object_get(j, "n"), 2, 4, value)) {
+		node.kind = v3::NODE_PLY;
+		product *= int(value);
+	}
+	else if (k == "degrade" && fields == 2 && integerIn(json_object_get(j, "p"), 1, 99, value))
+		node.kind = v3::NODE_DEGRADE;
+	else
+		return false;
+	node.value = int(value);
+	lane.nodes.push_back(node);
+	return true;
+}
+
+inline bool parseCond(json_t* j, v3::Cond& cond) {
+	const char* kind = json_string_value(json_object_get(j, "kind"));
+	if (!json_is_object(j) || !kind)
+		return false;
+	json_t* negate = json_object_get(j, "not");
+	if (negate && !json_is_boolean(negate))
+		return false;
+	cond.negate = json_is_true(negate);
+	size_t fields = json_object_size(j) - (negate ? 1 : 0);
+	std::string k(kind);
+	long long a = 0, b = 0, p = 0;
+	if (k == "every" && fields == 3 && integerIn(json_object_get(j, "a"), 1, 8, a) && integerIn(json_object_get(j, "b"), 1, 8, b) && a <= b) {
+		cond.kind = v3::COND_EVERY;
+		cond.a = int(a);
+		cond.b = int(b);
+	}
+	else if (k == "prob" && fields == 2 && integerIn(json_object_get(j, "p"), 1, 99, p)) {
+		cond.kind = v3::COND_PROB;
+		cond.p = int(p);
+	}
+	else if (k == "fill" && fields == 1)
+		cond.kind = v3::COND_FILL;
+	else if (k == "first" && fields == 1)
+		cond.kind = v3::COND_FIRST;
+	else
+		return false;
+	return true;
+}
+
+inline bool parsePatternV3(json_t* j, v3::PatternV3& pattern) {
+	double rate = number(json_object_get(j, "rate"), -1.);
+	long long bar = 0, bars = 0;
+	int perQuarter = int(std::lround(rate * 4.));
+	if (perQuarter < 1 || perQuarter > 32 || (perQuarter & (perQuarter - 1)) || perQuarter != rate * 4.)
+		return false;
+	if (!integerIn(json_object_get(j, "bar"), 1, 32, bar) || !integerIn(json_object_get(j, "bars"), 1, 8, bars) || bar * bars > v3::MAX_ROWS)
+		return false;
+	pattern.geometry.w = v3::TICKS / perQuarter;
+	pattern.geometry.bar = int(bar);
+	pattern.geometry.bars = int(bars);
+	pattern.geometry.rows = int(bar * bars);
+	json_t* lanes = json_object_get(j, "lanes");
+	if (json_array_size(lanes) != v3::LANES)
+		return false;
+	for (int l = 0; l < v3::LANES; l++) {
+		json_t* lj = json_array_get(lanes, size_t(l));
+		v3::LaneV3& lane = pattern.lanes[l];
+		long long len = 0;
+		json_t* cells = json_object_get(lj, "cells");
+		if (!integerIn(json_object_get(lj, "len"), 1, pattern.geometry.rows, len) || json_array_size(cells) != size_t(len))
+			return false;
+		lane.len = int(len);
+		lane.cells.assign(size_t(len), v3::Cell());
+		for (long long r = 0; r < len; r++) {
+			json_t* hit = json_array_get(cells, size_t(r));
+			if (json_is_null(hit))
+				continue;
+			const char* note = json_string_value(json_object_get(hit, "note"));
+			json_t* vel = json_object_get(hit, "vel");
+			if (!json_is_object(hit) || !note || !json_is_number(vel))
+				return false;
+			v3::Cell& cell = lane.cells[size_t(r)];
+			int midi = noteMidi(note);
+			if (midi < 0 && std::string(note) != "AIR")
+				return false;
+			cell.midi = midi;
+			std::snprintf(cell.note, sizeof cell.note, "%s", note);
+			cell.vel = json_number_value(vel);
+			if (!(cell.vel >= 0. && cell.vel <= 127.))
+				return false;
+			cell.present = cell.vel > 0.;
+			json_t* locks = json_object_get(hit, "locks");
+			if (locks && !parseSoundParams(locks, cell.locks, true))
+				return false;
+			cell.hasLocks = locks != nullptr;
+			json_t* cond = json_object_get(hit, "cond");
+			if (cond && !parseCond(cond, cell.cond))
+				return false;
+		}
+		json_t* transforms = json_object_get(lj, "transforms");
+		if (!json_is_array(transforms) || json_array_size(transforms) > 8)
+			return false;
+		int product = 1;
+		for (size_t t = 0; t < json_array_size(transforms); t++)
+			if (!parseTransform(json_array_get(transforms, t), lane, int(t), 0, product))
+				return false;
+		if (product > 4)
+			return false;
+	}
+	return true;
+}
+
+// A hydrapy-tracker-3 document into a ScoreV3, its timeline built. Built off the audio
+// thread: it allocates. Returns false for anything that isn't a valid version-3 score.
+inline bool parseScoreV3(json_t* d, v3::ScoreV3& score) {
+	const char* format = json_string_value(json_object_get(d, "format"));
+	if (!format || std::string(format) != "hydrapy-tracker-3")
+		return false;
+	score = v3::ScoreV3();
+	score.bpm = number(json_object_get(d, "bpm"), 120.);
+	score.key = int(number(json_object_get(d, "key"), 2.));
+	if (!(score.bpm >= 1.) || !json_is_boolean(json_object_get(d, "loop")))
+		return false;
+	score.loop = json_is_true(json_object_get(d, "loop"));
+	long long value = 0;
+	if (!integerIn(json_object_get(d, "pattern"), 0, v3::PATTERNS - 1, value))
+		return false;
+	score.pattern = int(value);
+	if (!integerIn(json_object_get(d, "seed"), 0, 0xffffffffLL, value))
+		return false;
+	score.seed = uint32_t(value);
+	json_t* chain = json_object_get(d, "chain");
+	size_t entries = json_array_size(chain);
+	if (entries < 1 || entries > 256)
+		return false;
+	score.chain.clear();
+	for (size_t i = 0; i < entries; i++) {
+		if (!integerIn(json_array_get(chain, i), 0, v3::PATTERNS - 1, value))
+			return false;
+		score.chain.push_back(int(value));
+	}
+	json_t* mutes = json_object_get(d, "mutes");
+	json_t* sounds = json_object_get(d, "sounds");
+	if (json_array_size(mutes) != v3::LANES || json_array_size(sounds) != v3::LANES)
+		return false;
+	for (int l = 0; l < v3::LANES; l++) {
+		score.mutes[l] = json_is_true(json_array_get(mutes, size_t(l)));
+		json_t* s = json_array_get(sounds, size_t(l));
+		json_t* m = json_object_get(s, "machine");
+		int machine;
+		if (!json_is_object(s) || json_object_size(s) != 2)
+			return false;
+		if (!json_is_null(m)) {
+			if (!rawControl(m, 191, machine))
+				return false;
+			score.sounds[l].machine = int16_t(machine);
+		}
+		if (!parseSoundParams(json_object_get(s, "params"), score.sounds[l], false))
+			return false;
+	}
+	json_t* patterns = json_object_get(d, "patterns");
+	if (json_array_size(patterns) != v3::PATTERNS)
+		return false;
+	for (int p = 0; p < v3::PATTERNS; p++) {
+		json_t* pj = json_array_get(patterns, size_t(p));
+		if (json_is_null(pj))
+			continue;
+		v3::PatternV3 pattern;
+		if (!json_is_object(pj) || !parsePatternV3(pj, pattern))
+			return false;
+		score.index[p] = int16_t(score.store.size());
+		score.store.push_back(std::move(pattern));
+	}
+	score.buildTimeline();
 	return true;
 }
 

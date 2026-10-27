@@ -64,6 +64,12 @@ jobs:
             exit 1
           fi
           step rack/tests/engine_test /tmp/gorgon-current-fixture.txt
+          python rack/tools/make_fixture.py --v3 > /tmp/gorgon-current-fixture3.txt
+          if ! cmp rack/tests/fixture3.txt /tmp/gorgon-current-fixture3.txt; then
+            echo "::error::rack/tests/fixture3.txt differs from what HydraPy ${{ steps.pin.outputs.ref }} produces. A change to evaluate() needs spec/evaluator.md, spec/CHANGELOG.md and a regenerated fixture3 in the same pull request."
+            exit 1
+          fi
+          step rack/tests/evaluator_test /tmp/gorgon-current-fixture3.txt
           step make -C rack/tests e2e
           sudo sysctl -w vm.mmap_rnd_bits=28   # ThreadSanitizer on newer runner kernels
           step make -C rack/tests sanitize

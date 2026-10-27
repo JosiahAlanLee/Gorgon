@@ -5,6 +5,8 @@ dist/
 *.dylib
 *.vcvplugin
 tests/engine_test
+tests/evaluator_test
+tests/evaluator_asan
 tests/bridge_test
 tests/bridge_tsan
 tests/bridge_asan
