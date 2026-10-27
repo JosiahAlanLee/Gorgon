@@ -109,6 +109,16 @@ struct Gorgon : Module {
 
 	~Gorgon() override { audioInput.setDriverId(-1); bridge.stop(); }
 
+	// The sound-link receivers this module writes to (spec/sound-locks.md): Machinemodule (the
+	// Machinedrum) and Monomodule (the Monomachine), version 2.x.
+	static bool soundReceiver(const Module* m) {
+		if (!m || !m->model || !m->model->plugin || m->model->plugin->version.rfind("2.", 0) != 0)
+			return false;
+		const std::string& plugin = m->model->plugin->slug;
+		const std::string& model = m->model->slug;
+		return (plugin == "MachinemoduleRack" && model == "Machinemodule") || (plugin == "MonomoduleRack" && model == "Monomodule");
+	}
+
 	// The sound link to an adjacent receiver (spec/sound-locks.md): one packet per sample, in
 	// whichever version the receiver's buffer declares.
 	template <class P>
@@ -216,9 +226,7 @@ struct Gorgon : Module {
 		// Receiver owns both buffers. Gates and resolved controls share this
 		// flip: patch order cannot pair a new trigger with the previous lock.
 		Module* receiver = rightExpander.module;
-		if (receiver && receiver->model && receiver->model->plugin &&
-		    receiver->model->plugin->slug == "MachinemoduleRack" && receiver->model->slug == "Machinemodule" &&
-		    receiver->model->plugin->version.rfind("2.", 0) == 0 && receiver->leftExpander.producerMessage) {
+		if (soundReceiver(receiver) && receiver->leftExpander.producerMessage) {
 			void* message = receiver->leftExpander.producerMessage;
 			gorgon_sound::Header header;
 			std::memcpy(static_cast<void*>(&header), message, sizeof header);

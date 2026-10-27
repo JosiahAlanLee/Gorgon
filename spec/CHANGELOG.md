@@ -3,6 +3,16 @@
 Newest first. Each entry names the HydraPy commit and Rack module version it
 describes.
 
+## 2026-10-27 — Monomodule is a sound-link receiver
+
+HydraPy `3c01f32eb0c5a396d4e854e20d0b0d9b14de27d7` (pin unchanged) · Rack module
+`GorgonBridge` 2.4.0 (unreleased).
+
+The Rack module writes the sound link to `MonomoduleRack`/`Monomodule` 2.x, the
+Monomachine (roadmap C2b), as well as to Machinemodule
+([sound-locks.md](sound-locks.md#rack-sound-link)). Nothing else changes: the same
+packet, version 2 with six lanes, with the note in its C4 = 0 V pitch.
+
 ## 2026-10-27 — the sound link's pitch is C4 = 0 V
 
 HydraPy `3c01f32eb0c5a396d4e854e20d0b0d9b14de27d7` (pin unchanged) · Rack module
