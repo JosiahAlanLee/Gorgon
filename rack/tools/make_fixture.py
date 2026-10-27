@@ -1,13 +1,21 @@
 #!/usr/bin/env python3
-"""Reference outputs from HydraPy itself, for tests/engine_test.cpp.
+"""Reference outputs from HydraPy itself, for tests/engine_test.cpp and tests/evaluator_test.cpp.
 
 Random scores are evaluated by hydrapy.tracker_cv.TrackerCV (the code that
 drives the ES-3 from Gorgon), one sample at each chosen beat, and written as
 plain text the C++ test reads. Regenerate with HydraPy installed:
 
     python rack/tools/make_fixture.py > rack/tests/fixture.txt
+    python rack/tools/make_fixture.py --v3 > rack/tests/fixture3.txt
+
+The version-3 fixture (spec/evaluator.md#fixture) holds random hydrapy-tracker-3
+scores as JSON, segments (anchor, transport_revision, FILL and the bus layer)
+and each segment's candidates over a stated interval, as hydrapy.tracker_v3
+writes them in its trace.
 """
+import json
 import random
+import sys
 
 import numpy as np
 
@@ -86,5 +94,92 @@ def main():
                   *[f'{x:.9g}' for x in vel], *[f'{x:.9g}' for x in lanes], *[f'{x:.9g}' for x in v[14:18]])
 
 
+def random_score_v3(rng):
+    """A random version-3 score: chains, rates, short lanes, conditions and transform trees."""
+    from hydrapy.tracker_v3 import empty_pattern, upgrade, validate
+    d = upgrade(Tracker().document)
+    patterns = [None] * 128
+    used = rng.sample(range(128), rng.randint(1, 4))
+
+    def node(depth):
+        kind = rng.choice(['rot', 'rev', 'degrade', 'ply'] + ['every'] * (depth > 1))
+        if kind == 'every':
+            b = rng.randint(1, 8)
+            return {'kind': 'every', 'a': rng.randint(1, b), 'b': b, 'inner': node(depth - 1)}
+        return {'kind': kind, **{'rot': {'k': rng.randint(-127, 127)}, 'rev': {}, 'degrade': {'p': rng.randint(1, 99)},
+                                 'ply': {'n': rng.randint(2, 4)}}[kind]}
+
+    def plies(nodes):
+        product = 1
+        for n in nodes:
+            product *= n['n'] if n['kind'] == 'ply' else plies([n['inner']]) if n['kind'] == 'every' else 1
+        return product
+
+    for index in used:
+        p = empty_pattern(index)
+        p['bar'] = rng.choice([3, 4, 7, 8, 12, 16])
+        p.update(rate=rng.choice([.25, .5, 1, 2, 4, 8]), bars=rng.randint(1, min(8, 128 // p['bar'])))
+        rows = p['bar'] * p['bars']
+        for lane in p['lanes']:
+            lane['len'] = rng.randint(1, rows)
+            lane['cells'] = [None] * lane['len']
+            for k in range(lane['len']):
+                if rng.random() < .35:
+                    cell = {'note': rng.choice(['C0', 'C-4', 'D#4', 'A-5', 'G9', 'AIR']), 'vel': rng.choice([0, 1, 64, 127])}
+                    if rng.random() < .15:
+                        cell['locks'] = {'p1': rng.randrange(128)}
+                    if rng.random() < .4:
+                        kind = rng.choice(['every', 'prob', 'fill', 'first'])
+                        b = rng.randint(1, 8)
+                        cell['cond'] = {'kind': kind, **{'every': {'a': rng.randint(1, b), 'b': b},
+                                                         'prob': {'p': rng.randint(1, 99)}}.get(kind, {})}
+                        if rng.random() < .3:
+                            cell['cond']['not'] = True
+                    lane['cells'][k] = cell
+            while True:
+                lane['transforms'] = [node(3) for _ in range(rng.randint(0, 3))]
+                if plies(lane['transforms']) <= 4:
+                    break
+        patterns[index] = p
+    d.update(patterns=patterns, loop=rng.random() < .4, pattern=rng.choice(used), seed=rng.randrange(1 << 32),
+             chain=[rng.choice(used + [rng.randrange(128)]) for _ in range(rng.randint(1, 5))],
+             mutes=[rng.random() < .15 for _ in range(6)])
+    return validate(d)
+
+
+def transitions(rng, span):
+    changes = sorted((rng.randrange(span), rng.random() < .5) for _ in range(rng.randint(0, 4)))
+    return [{'at': 0, 'on': rng.random() < .3}] + [{'at': at, 'on': on} for at, on in changes]
+
+
+def main_v3():
+    from hydrapy.tracker_v3 import TICKS, Timeline, anchor, evaluate, trace_line
+    rng = random.Random(20261027)
+    scores = [random_score_v3(rng) for _ in range(8)]
+    print('GORGON_FIXTURE_3', len(scores))
+    for revision, score in enumerate(scores):
+        print('SCORE', json.dumps(score, separators=(',', ':')))
+        cycle = Timeline(score).cycle
+        segments = []
+        for k in range(3):
+            tick = rng.randrange(cycle)
+            transport = {'tick': tick, 'fill': transitions(rng, 2 * cycle)}
+            if k:
+                transport['bus'] = {'fill': transitions(rng, 2 * cycle),
+                                    'mutes': [transitions(rng, 2 * cycle) for _ in range(6)]}
+            u0 = -TICKS if k != 1 else rng.randrange(cycle)
+            u1 = u0 + min(rng.randrange(cycle, 2 * cycle), 16 * TICKS)
+            segments.append((tick, transport, u0, u1))
+        print('SEGMENTS', len(segments))
+        for tick, transport, u0, u1 in segments:
+            start = anchor(score, tick)
+            candidates = evaluate(score, transport, u0, u1)
+            print('SEGMENT', json.dumps(dict(transport_revision=revision, start=start, fill=transport['fill'],
+                                             bus=transport.get('bus'), u0=u0, u1=u1), separators=(',', ':')))
+            print('CANDIDATES', len(candidates))
+            for c in candidates:
+                print(trace_line(c, revision, start))
+
+
 if __name__ == '__main__':
-    main()
+    main_v3() if sys.argv[1:] == ['--v3'] else main()

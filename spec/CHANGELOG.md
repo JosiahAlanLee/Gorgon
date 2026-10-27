@@ -3,6 +3,21 @@
 Newest first. Each entry names the HydraPy commit and Rack module version it
 describes.
 
+## 2026-10-27 — score format 3: the Rack module's evaluator and fixture3
+
+HydraPy `a4799320efd7f6dae924f216a14708cbd8851abf` (pin moved from `e5999b2`; HydraPy #63–#65) · Rack module
+`GorgonBridge` 2.3.1, unchanged in behaviour.
+
+- `rack/src/engine/ScoreV3.hpp` is the C++ `evaluate()` ([evaluator.md](evaluator.md),
+  [transforms.md](transforms.md), [bus-io.md](bus-io.md)). It allocates nothing,
+  so the audio thread can call it; `BridgeJson.hpp` reads a version-3 document
+  into it on the bridge thread. The module doesn't play version 3 yet: its
+  engine, six lanes and BUS IN come next.
+- `rack/tests/fixture3.txt`, header `GORGON_FIXTURE_3`, holds HydraPy's
+  candidates for random version-3 scores; `evaluator_test` reproduces every
+  field of every one. CI regenerates it from the pin like the version-2 fixture,
+  which this pin leaves unchanged.
+
 ## 2026-10-27 — score format 3: Play on the anchor's own tick
 
 HydraPy `e5999b2282bd9766b6f7152b4278c3da4e72ed8e` (pin unchanged; implemented in
