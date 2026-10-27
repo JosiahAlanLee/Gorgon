@@ -4,9 +4,10 @@
 [roadmap](../docs/ROADMAP.md) (§2.A, §4). It defines a lane's `transforms`:
 an ordered list of typed nodes that change which cell a lane plays on a row,
 how many times, and whether it sounds. They run inside `evaluate()`
-([evaluator.md](evaluator.md)); bus I/O is A-spec-4. No implementation accepts
-version 3 until all four parts have merged and HydraPy implements them. Written
-against HydraPy `e5999b2282bd9766b6f7152b4278c3da4e72ed8e` and Gorgon `6995cf4`.
+([evaluator.md](evaluator.md)); bus I/O is [bus-io.md](bus-io.md) (A-spec-4).
+No implementation accepts version 3 until all four parts have merged and
+HydraPy implements them. Written against HydraPy
+`e5999b2282bd9766b6f7152b4278c3da4e72ed8e` and Gorgon `6995cf4`.
 
 The five node types are an original subset with familiar names. No Strudel
 code is imported ([DRUM_MACHINE.md](../docs/DRUM_MACHINE.md)'s position).
@@ -92,7 +93,8 @@ cycle; it applies to every occurrence within a qualifying bar, as a condition
 does (V9).
 
 **Mutes.** A muted lane's events are still returned, with `fires: false` and
-`why: "muted"` ([evaluator.md](evaluator.md#evaluate)).
+`why` `"muted (score)"` or `"muted (bus)"` ([evaluator.md](evaluator.md#evaluate)).
+Each sub-step reads the bus layer's mute at its own `at`.
 
 ## Candidates
 

@@ -3,6 +3,52 @@
 Newest first. Each entry names the HydraPy commit and Rack module version it
 describes.
 
+## 2026-10-26 — score format 3, part 4: bus I/O (proposal)
+
+HydraPy `e5999b2282bd9766b6f7152b4278c3da4e72ed8e` · Rack module `GorgonBridge` 2.3.1,
+both unchanged. A-spec-4 of the [roadmap](../docs/ROADMAP.md), on top of A-spec-3.
+
+[bus-io.md](bus-io.md) proposes the **bus layer**: FILL and six lane mutes that Rack
+sets live from a new BUS IN, input ID 6. The user decided the bus's role (roadmap
+§5.4):
+
+- **One word layout:** BUS IN and BUS OUT share it. Lane `n` is on bit `n − 1`
+  (hit going out, mute coming in), FILL is on bit 6, and bit 7 is reserved, so
+  OUT → logic → IN patches are coherent.
+- **Polarity:** high means mute or fill, and an all-zero word does nothing.
+- **Disconnected** means no effect.
+- **Merge by OR:** the bus can mute but not unmute, and can fill but not unfill.
+  `why` says `"muted (score)"` or `"muted (bus)"`.
+- **Both bus modes,** with the same transition record.
+- **The bit map is the Rack module's,** remappable in its menu.
+
+The page proposes how the layer moves:
+
+- **Stamps:** the first tick Rack has not yet evaluated, read before the sample's
+  evaluation, never below 0.
+- **Rack's record:** at most one change per bit between two ticks that read it.
+- **Windows:** each request restates Rack's record from a tick `from` onwards, and
+  Studio replaces its lists from there. A lost, repeated or stale request
+  therefore heals within a second. `from` covers every change no reply has yet
+  acknowledged.
+- **Lease and sender:** one module holds the layer by a random `sender` id. Three
+  seconds of silence ends the lease and clears the layer, so a crashed Rack can't
+  leave lanes muted.
+- **Mutes are judged at each candidate's `at`,** so a mute doesn't cut a sounding
+  gate.
+- **Folding:** transitions more than 10 seconds old can be folded.
+- **Endpoint:** `POST /api/tracker_transport` gains `segment`, `sender` and `bus`,
+  never mixed with a seek; the playhead gains `bus`.
+
+[bytebus-output.md](bytebus-output.md) gains the version-3 hit mask: lanes 1–6 on
+bits 0–5, FILL on bit 6, and bit 7 reserved for "entry start". Version-1/2 output is
+unchanged. [evaluator.md](evaluator.md) takes the bus layer as input and reads
+FILL as Studio's or the bus layer's. [cv-semantics.md](cv-semantics.md),
+[bridge-api.md](bridge-api.md) and [score-v3.md](score-v3.md) point to the new
+page. Vectors V10–V12 cover the two layers, stamping at a sample boundary, and
+OUT → FUN → IN feedback, which acts on the next row because it is causal. The
+schema, the version-1/2 rules and the fixture are unchanged.
+
 ## 2026-10-26 — score format 3, part 3: lane transforms (proposal), and the #42 amendments
 
 HydraPy `e5999b2282bd9766b6f7152b4278c3da4e72ed8e` · Rack module `GorgonBridge` 2.3.1,
