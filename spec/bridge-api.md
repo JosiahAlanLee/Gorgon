@@ -88,7 +88,8 @@ The playhead, the patch's controls, and the score if it changed.
   ([evaluator.md](evaluator.md#playhead-fields)), and the transport endpoint's
   `beat` ranges over the current cycle ([score-v3.md](score-v3.md#transport));
   Studio rounds it to the nearest tick. `beat` and `anchor_beat` stay
-  floating-point beats.
+  floating-point beats. The playhead's `bus` carries the bus layer
+  ([bus-io.md](bus-io.md#the-bus-layer)).
 
 ### `POST /api/tracker_transport`
 
@@ -97,7 +98,10 @@ The playhead, the patch's controls, and the score if it changed.
 ```
 
 Every field is optional and keeps its current value when absent. `beat` is
-0–64. A request that contains `beat`, or that changes `enabled`, is a seek:
+0–64. For a version-3 document a Rack module may instead send `segment`,
+`sender` and `bus`, a window of the bus layer, without `beat`, `enabled` or
+`playing`; such a request is not a seek
+([bus-io.md](bus-io.md#transport-endpoint)). A request that contains `beat`, or that changes `enabled`, is a seek:
 `transport_revision` increments. Enabling automation while an external clock
 is armed in Studio is refused with `400`. The reply is the tracker snapshot:
 

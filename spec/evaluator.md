@@ -4,7 +4,8 @@
 [roadmap](../docs/ROADMAP.md) (§2.A, §4). It defines what a version-3 score
 ([score-v3.md](score-v3.md)) plays: the event record, `evaluate()` and its
 invariants, cell conditions, the bar counter, the seed and FILL. Lane
-transforms are [transforms.md](transforms.md) (A-spec-3) and bus I/O A-spec-4.
+transforms are [transforms.md](transforms.md) (A-spec-3) and bus I/O
+[bus-io.md](bus-io.md) (A-spec-4).
 No implementation accepts version 3 until all four parts have merged and HydraPy
 implements them. Written against HydraPy
 `e5999b2282bd9766b6f7152b4278c3da4e72ed8e` and Gorgon `a293984`.
@@ -150,23 +151,24 @@ FILL is transport state owned by Studio, not part of the score. It changes
 from a tick, not from when a follower hears about it: Studio keeps the
 transitions of the current segment as `[{at, on}…]`, with `at` in elapsed
 ticks, sorted, the first at 0 holding the state at the anchor, so the list is
-never empty. FILL is `on` at
-`u` if the last transition with `at ≤ u` is on, so a transition exactly on an
-occurrence's tick applies to it; before the anchor (`u < 0`, the anchor's row
-below) it has the anchor's state. A new segment starts with the state that was
-in force when it began.
+never empty; of two at the same `at`, the later one counts. A list is `on` at
+`u` if the last transition with `at ≤ u` is on,
+so a transition exactly on an occurrence's tick applies to it; before the
+anchor (`u < 0`, the anchor's row below) it has the anchor's state. A new
+segment starts with the state that was in force when it began.
 
-Rack applies a FILL change it makes itself at once, stamped with its own `u`,
-and Studio adopts the stamp, so every implementation agrees on which bar the
-change took effect in even when Studio hears it a poll later. A-spec-4 defines
-how Rack sends it (BUS IN and the transport endpoint). This page defines only
-the state and its effect.
+Rack's FILL comes from its BUS IN and lives in a second list with the same
+rules, in the **bus layer** with the bus mutes ([bus-io.md](bus-io.md)). FILL
+is in force at `u` when Studio's list or the bus layer's is on. Rack applies a
+change it makes at once, stamped with its own `u`, and Studio adopts the stamp,
+so every implementation agrees on which bar the change took effect in even when
+Studio hears it a poll later.
 
-**Late transitions.** Because Rack stamps its own changes, Studio can receive a
-transition whose `at` is earlier than one it already holds, or than ticks it
-has already evaluated. It inserts the transition in order of `at`, after any
-with the same `at` (so the later arrival wins a tie), replays nothing it has
-already sent, and writes a trace line for it (below). The candidates Studio
+**Late transitions.** Because Rack stamps its own changes, Studio can receive
+transitions earlier than ticks it has already evaluated. It merges them into
+its lists in order of `at` (a bus-layer window replaces everything from its
+`from` on, [bus-io.md](bus-io.md#bus-in)), replays nothing it has already sent,
+and writes a trace line for each change to its record (below). The candidates Studio
 evaluated between the stamp and the receipt were judged under the old state.
 That window, about one poll, is the accepted cost; from then on every
 implementation holds the same record.
@@ -175,7 +177,7 @@ implementation holds the same record.
 
 ```
 evaluate(score, transport, [u0, u1)) → candidates
-transport = {tick: a, fill: [{at, on}…]}
+transport = {tick: a, fill: [{at, on}…], bus: {fill: [{at, on}…], mutes: [[{at, on}…] ×6]}}
 ```
 
 The anchor's entry is the one containing cycle tick `a`
@@ -187,9 +189,10 @@ It returns one **candidate** for every occurrence of a present cell (not null,
 That is every occurrence from the anchor on, and those of the **anchor's row**,
 which start before it with a negative `at`; earlier rows are never returned.
 When the anchor is on a row boundary the anchor's row starts at 0. The bounds
-are integers and may be negative, so a follower starts a segment's first query
-at or before the anchor row's start, `−((a − S) mod W)` for the anchor's entry
-start `S`. Candidates are sorted by `at`, then lane.
+are integers and may be negative, so a follower that hears of a segment as it
+starts begins its first query at or before the anchor row's start,
+`−((a − S) mod W)` for the anchor's entry start `S`. One that joins a segment
+late, connecting in the middle of it, begins at its own current tick. Candidates are sorted by `at`, then lane.
 
 A follower's landing gate ([cv-semantics.md](cv-semantics.md#landing-gate))
 decides whether to play an anchor-row candidate: the gate fraction is the
@@ -207,14 +210,14 @@ decision to it.
 | `why` | the deciding value (below), or null |
 | `origin` | `{play, entry, pattern, row, lane_row, cell, sub, of, bar, cond, via}`; `bar` is `bar_count`, `entry` null when looping, `cond` the code or null; `cell`, `sub`, `of` and `via` are [transforms.md](transforms.md#candidates)'s |
 
-A candidate **fires** when its lane is not muted, its condition holds and no
-transform dropped it. `why` names the first of these that fails, in that order;
-for a candidate that fires it is the condition's deciding value, or null without
-a condition:
+A candidate **fires** when its lane is not muted at its `at`, by the score or
+by the bus layer, its condition holds and no transform dropped it. `why` names
+the first of these that fails, in that order; for a candidate that fires it is
+the condition's deciding value, or null without a condition:
 
 | Reason | `why` |
 | --- | --- |
-| muted lane | `"muted"` |
+| muted lane | `"muted (score)"`, `"muted (bus)"`; the score first when both hold |
 | `every` | `"bar 2 mod 3 = 2"` |
 | `prob` | `"chance 1284988505 mod 100 = 5"` |
 | `fill` | `"fill on"`, `"fill off"` |
@@ -223,7 +226,7 @@ a condition:
 
 Followers play the candidates that fire. The others are returned so a trace can
 say why: a muted lane's cells are candidates too, which tells "muted" from "no
-cell". A-spec-4 makes mutes transitions with FILL's `{at, on}` shape.
+cell". The bus layer's mutes have FILL's `{at, on}` shape ([bus-io.md](bus-io.md)).
 
 Invariants every implementation keeps:
 
@@ -249,7 +252,7 @@ segment it ends, at which the next segment starts. In this part every change is
 immediate, so its effective beat is the moment it is made. A queued change
 (Elektron's switch at the end of the current pattern) is later the same record
 with a later effective beat, needing no format change. It takes the same
-`{at, …}` shape as FILL, and as mutes in A-spec-4.
+`{at, …}` shape as FILL and the bus layer.
 
 ## Playhead fields
 
@@ -263,6 +266,7 @@ ignore them, as the bridge API requires. Times are integer ticks.
 | `elapsed` | Elapsed ticks `u` at `anchor_time`, an integer |
 | `entry` | The chain entry at `anchor_beat`, null when looping |
 | `fill` | The current segment's FILL transitions, `[{at, on}…]` |
+| `bus` | The bus layer, `{fill, mutes}`, in the same shape ([bus-io.md](bus-io.md#the-bus-layer)) |
 | `pending` | A transport change not yet in effect, `{at, tick, entry}`, or absent. Always absent in this part |
 
 A follower computes `u(now) = elapsed + (clock(now) − anchor_time) · bpm / 60 · 1920`
@@ -290,14 +294,24 @@ packet carries the producer frame). Lines are ordered as the candidates are.
             "sub": 0, "of": 1, "bar": 1, "cond": "%50", "via": []}}
 ```
 
-A FILL transition an implementation adopts is a line of its own, with
-`received`, the first tick it had not yet evaluated when the transition
-arrived. `received > at` is a late insert, and `[at, received)` is the window
-that was judged under the old state:
+A change an implementation makes to its record of FILL or the bus layer is a
+line of its own, with `received`, the first tick it had not yet evaluated when
+the change arrived. `received > at` is a late insert, and `[at, received)` is
+the interval that was judged under the old state. A bus-layer change names
+`fill` or a lane's `mute`; a window Studio drops or refuses, and the end of a
+lease, are lines too:
 
 ```json
 {"transport_revision": 3, "start": {"tick": 0, "entry": null},
  "fill": {"at": 4800, "on": true}, "received": 4867}
+{"transport_revision": 3, "start": {"tick": 0, "entry": null},
+ "bus": {"mute": {"lane": 2, "at": 1921, "on": true}}, "received": 1990}
+{"transport_revision": 3, "start": {"tick": 0, "entry": null},
+ "bus": {"fill": {"at": 7680, "on": false}}, "received": 7702}
+{"transport_revision": 3, "start": {"tick": 0, "entry": null},
+ "bus": {"window": "dropped", "reason": "stale segment", "from": 0}, "received": 7710}
+{"transport_revision": 3, "start": {"tick": 0, "entry": null},
+ "bus": {"lease": "ended", "sender": "4f1c9a7e2b6d0835"}, "received": 19230}
 ```
 
 ## Fixture
@@ -420,12 +434,12 @@ and 5; lane 1 a cell on row 4 with `ply 4`; lane 2 is muted, with a cell on row
 | `at` | id | `duration` | | `why` |
 | --- | --- | --- | --- | --- |
 | −120 | 0.0.4 | 480 | ✓ | |
-| −120 | 0.2.4 | 480 | ✗ | `muted` |
+| −120 | 0.2.4 | 480 | ✗ | `muted (score)` |
 | 0 | 0.1.4.1 | 120 | ✓ | |
 | 120 | 0.1.4.2 | 120 | ✓ | |
 | 240 | 0.1.4.3 | 120 | ✓ | |
 | 360 | 0.0.5 | 480 | ✓ | |
-| 1800 | 0.2.8 | 480 | ✗ | `muted`, though its `1ST` holds |
+| 1800 | 0.2.8 | 480 | ✗ | `muted (score)`, though its `1ST` holds |
 
 Not returned: lane 0's row 3, which ended at −120, and lane 1's sub-step 0, at
 −120 with `duration` 120, which ends exactly at the anchor. With the default
@@ -443,7 +457,7 @@ occurrence's own tick (invariant 2).
 ## Not in this part
 
 Lane transforms, `ply` and `degrade` are [transforms.md](transforms.md)
-(A-spec-3). BUS IN, FILL and mutes from Rack, the transport endpoint's new
-fields, the wider BUS OUT hit mask and BUS OUT bit 7 reserved for "entry start"
-are A-spec-4. The Rack sound link's six lanes are C1, and the trace in Rack is
-G2's implementation.
+(A-spec-3). BUS IN, the bus layer, the transport endpoint's new fields and the
+wider BUS OUT hit mask, with bit 7 reserved for "entry start", are
+[bus-io.md](bus-io.md) (A-spec-4). The Rack sound link's six lanes are C1, and
+the trace in Rack is G2's implementation.

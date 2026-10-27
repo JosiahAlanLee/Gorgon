@@ -11,11 +11,12 @@ here, and the fixture checks that they agree.
 | [score-v3.md](score-v3.md) + [score.schema.json](score.schema.json) | Score format 3 (`hydrapy-tracker-3`), part 1: six lanes, 128 patterns and a chain, per-pattern rate, bar and bars, per-lane length, the timeline and its transport changes, and how versions 1 and 2 map onto it | Contract (A-spec-1 of 4, ratified); not implemented |
 | [evaluator.md](evaluator.md) | Format 3, part 2: time in ticks, the event record, `evaluate()` and its invariants, cell conditions, the bar counter, seed and chance, FILL, effective beats, the version-3 playhead fields, the trace format, the version-3 fixture, and hand-checked vectors | Contract (A-spec-2 of 4, ratified); not implemented |
 | [transforms.md](transforms.md) | Format 3, part 3: lane transforms (`rot`, `rev`, `ply`, `degrade`, `every`), how they evaluate per occurrence, and hand-checked vectors | Proposed (A-spec-3 of 4); not implemented |
+| [bus-io.md](bus-io.md) | Format 3, part 4: the bus layer of live FILL and lane mutes, Rack's BUS IN and its stamps, the transport endpoint's `segment` and `bus` fields, BUS OUT's version-3 hit mask, and vectors | Proposed (A-spec-4 of 4); not implemented |
 | [pattern-timing.md](pattern-timing.md) | Proposed ¼×–8× pattern rates, beat/row conversion and shared audio/visual row timing | Superseded by score-v3.md, which carries its rates and rules into format 3; kept as the design record |
 | [bridge-api.md](bridge-api.md) | How a follower finds Studio, authenticates, reads the playhead and score, and sends control values and transport | Normative |
 | [cv-semantics.md](cv-semantics.md) | What every output signal does at every beat: clock, reset, run, gates, pitch, velocity, automation lanes, levels | Normative; checked by the fixture |
 | [audio-ports.md](audio-ports.md) | The JACK/PipeWire listening-audio ports Studio publishes and the Rack module captures | Informative |
-| [bytebus-output.md](bytebus-output.md) | Rack's nine-channel encoding of existing lanes and hit state for DSP_Emulation ByteBus modules | Normative; Rack-side connector only |
+| [bytebus-output.md](bytebus-output.md) | Rack's nine-channel encoding of existing lanes and hit state for DSP_Emulation ByteBus modules | Normative; Rack-side connector only. Its version-3 hit mask is proposed with bus-io.md |
 
 ## What is and isn't the contract
 
