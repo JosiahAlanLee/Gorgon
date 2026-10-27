@@ -54,9 +54,14 @@ rough: **S** an evening, **M** a few sessions, **L** a multi-PR feature.
 | --- | --- | --- | --- | --- |
 | A | Score v3: lanes, timing, conditions, transforms, bus I/O | Gorgon spec → HydraPy → Gorgon rack | L | — |
 | B1 | Ratify byte bus §11 | DSP_Emulation docs | S | — |
-| B2 | Counter module | DSP_Emulation bytebus | M | B1 |
+| B2 | Counter module — shipped, ByteBusLab 2.3.0 | DSP_Emulation bytebus | M | B1 |
+| B2b | Counter run modes (Loop, One-shot, Pendulum), ByteBusLab 2.4 | DSP_Emulation bytebus | S→M | B2 |
 | B3 | Machinemodule BUS TRIG mode | DSP_Emulation machinemodule | S | B1 |
-| B4 | Switch, then Pipeline | DSP_Emulation bytebus | M | B2 |
+| B4 | Switch (with MIX), then Pipeline | DSP_Emulation bytebus | M | B2 |
+| B5 | Lookup JUMP: clocked SHAPE step | DSP_Emulation bytebus | S | — |
+| B6 | Lookup2: two-input transfer module | DSP_Emulation bytebus | M | B5 |
+| B7 | Counter 2: rational increments and ratio tables | DSP_Emulation bytebus | M | B2 |
+| B8 | Lookup library v2: envelope, sequence and density-ordered rhythm families | DSP_Emulation bytebus tools | M | — |
 | C1 | Sound link v2: six lanes | Gorgon spec/rack + Machinemodule | M | A |
 | C2a | Machinemodule adapter refactor, no behavior change | DSP_Emulation machinemodule | M | — |
 | C2b | Monomodule Rack adapter | DSP_Emulation (new `vcv/monomodule`) | L | C1, C2a |
@@ -68,7 +73,7 @@ rough: **S** an evening, **M** a few sessions, **L** a multi-PR feature.
 | F2 | Diffusion model as offline renderer | outside these repos | M | — |
 | G1 | Latency measurement and per-destination offsets | Gorgon rack | M | — |
 | G2 | Event trace in all three evaluators | Gorgon spec → HydraPy → rack | M | A |
-| H1 | A4/Rytm as MIDI destinations | documentation only | S | — |
+| H1 | A4/Rytm as MIDI destinations — deferred | documentation only | S | — |
 
 ### A. Score v3 — `hydrapy-tracker-3`
 
@@ -124,14 +129,31 @@ follows the same rules (it is the third implementation, per `spec/README.md`).
   §11 as written (name aside). The sample-rate vs latched question is already
   settled by "mode by channel count" and "latching modules own an internal
   clock"; nothing downstream should wait on it.
-- **B2. Counter** moves ahead of Pipeline. It is the missing piece of
-  Counter → Lookup (rhythm family) → Machinemodule TRIG, which is the whole
-  bytebeat-kit chain, and of Counter → Lookup → Converter DAC → any filter,
-  which is an ESQ-1/SQ-80-style DOC oscillator for free. Contract first
-  (`vcv/bytebus/docs/COUNTER.md`), then build: a latching module per §5, with
-  increment (from a second bus or a knob), direction, wrap/saturate, RESET to a
-  seed word, internal clock in Hz. Erfurt is the reference role; the module is
-  original.
+- **B2. Counter** — shipped as ByteBusLab 2.3.0 (DSP_Emulation #32, #33;
+  contract `vcv/bytebus/docs/COUNTER.md`): a latching module per §5 with an
+  increment from a knob or a second bus, a modulus, a CARRY pulse, RESET to a
+  seed word and Register's clock ownership. It was the missing piece of
+  Counter → Lookup (rhythm family) → Machinemodule TRIG, the bytebeat-kit chain,
+  and of Counter → Lookup → Converter DAC → any filter, an ESQ-1/SQ-80-style
+  DOC oscillator. Erfurt is the reference role; the module is original.
+- **B2b. Counter run modes.** A contract change to `COUNTER.md` and
+  ByteBusLab 2.4, adding **One-shot** (count until an addition would wrap, then
+  hold) and **Pendulum** (up to the top, reflect, down to zero, reflect) beside
+  today's **Loop**, so Counter → Lookup → Converter is a ramp, an envelope or a
+  triangle as well as a phase. The reference for a bouncing count is SCANNER's
+  edge reflection rather than META's pendulum, which reverses on a trigger. The
+  contract has to settle, and the proposal is: one-shot counts up only and
+  holds at `MOD − 1` whatever the overshoot, with CARRY once on the edge that
+  reaches the hold, so `MOD − k` is a large step up rather than "down by k" and
+  a falling envelope is the rising one through Lookup's Curve shape 32;
+  pendulum treats the increment, knob or bus, as a magnitude and carries the
+  direction as its own state, saved with the patch, set to up by RESET/LOAD,
+  with CARRY on each reflection; an overshoot clamps to the end word rather
+  than folding back, so every swing reaches 0 and `MOD − 1` and shows each for
+  one edge (`MOD` 8, increment 3: 0 3 6 7 4 1 0 3 …); Engine rate follows the
+  same rules every sample; MODE changes take effect on the next edge from the
+  current word. In Loop nothing changes, including `MOD − k` meaning "down by
+  k".
 - **B3. Machinemodule BUS TRIG.** Today a poly cable into TRIG is sixteen tracks,
   channel = track, and a bus works only by accident: bit *k* rising fires track
   *k*+1, channel 9 fires track 9 on every publication, and a bit held high
@@ -143,11 +165,79 @@ follows the same rules (it is the third implementation, per `spec/README.md`).
   reports a rising CLK edge at *s* and bit *k* of `rawWord` is high at *s*.
   Data and CLK share the cable, so module processing order cannot split them;
   the one-sample hop is the documented latency. Bus spec untouched. With B2
-  this is the first playable result of the whole bus effort.
+  this is the first playable result of the whole bus effort. Shipped as
+  MachinemoduleRack 2.1.0 (`vcv/machinemodule/docs/BUS_TRIG.md`).
+
+  Two usage rules that the manual should carry, because the v3 BUS OUT word
+  (A-spec-4) is not a trigger stream: it is a state word — bits 0–5 the hit
+  mask, bit 6 FILL, bit 7 reserved — published on CLOCK edges and transport
+  changes, and Machinemodule's bus mode fires on *every* publication where a
+  bit is high. Patched straight in, FILL would retrigger track 7 while held and
+  a long hit would retrigger on every clock. So: Gorgon drives Machinemodule
+  through the sound link or GATES, never BUS OUT; BUS TRIG is for Counter,
+  Lookup and Register sources, where "a hit on each clock while the bit is
+  high" is the rhythm the chain is for. A v3 word that must reach BUS TRIG goes
+  through an AND mask that clears bits 6–7 (Vastish FUN today, Lookup2 later).
+  The mask removes FILL, not the per-clock retrigger: a hit still fires on every
+  CLOCK edge its span covers, so the word gives one trigger per hit only when
+  CLOCK pulses once per row (4 PPQN at rate 1) and the lane has no `ply`;
+  faster clocks repeat each hit and slower ones skip rows. A patched TRIG also
+  takes that instance off the sound link, so it gets no per-hit locks.
 - **B4. Switch, then Pipeline.** Order flipped from the current roadmap.
   Pipeline is the canon-of-the-kit effect; Switch is the A/B pattern-byte
-  commutator and reclocker. Both are small once Counter has set the pattern for
-  latching modules.
+  commutator and reclocker, plus a MIX mode, `out = A + (B − A) · c / 255` with
+  `c` a third byte — the Via's crossfade-under-a-contour as a word. Both are
+  small once Counter has set the pattern for latching modules.
+- **B5. Lookup JUMP.** A SHAPE step on the existing Lookup, so logic patched
+  in changes the transfer function rhythmically. JUMP is a **bus input with a
+  bit selector**, not a gate: SHAPE advances by one (wrapping) on each
+  publication where the selected bit is high, exactly the BUS TRIG rule, so two
+  adjacent high words make two steps and a bit held across publications steps
+  on each. A gate-edge JUMP would merge adjacent highs. The step is persistent;
+  a held offset ("+1 while high") is a different thing and already exists as
+  attenuated SHAPE CV (SHAPE CV adds 64 positions per 10 V, so one shape is
+  10/64 V, about 0.156 V; a 10 V bit straight in is one full turn and lands
+  where it started). SCANNER's JUMP, which reverses the scan or teleports it
+  to its origin, is the inspiration, not the behaviour.
+
+  Gorgon offers JUMP no play-start event. A **play start** meaning for BUS OUT
+  bit 7 was proposed in review and dropped (2026-10-27): its publications off
+  the CLOCK grid would be extra clocks for every receiver on the cable. The v3
+  word stays a state word with bit 7 reserved, so B5 needs nothing from
+  A-spec-4; a BUS OUT lane bit patched into JUMP steps once per publication
+  its hit covers, the B3 rule.
+- **B6. Lookup2.** A two-input transfer module, `f[family][shape][A][B]` → byte,
+  with JUMP from B5. It subsumes the bit-logic roles (Lipsk, Gera) as the
+  shapes `A XOR B` and `A AND B` and adds everything between — product,
+  min/max, difference, 2D folds, Walsh of two words. Sizing: a 64 KiB table
+  per shape is nothing, but 64 shapes per family is 4 MiB per family, so the
+  algebraic shapes (logic, arithmetic, min/max, comparison) are computed in
+  code and only the genuinely tabular families are stored, at most two, with
+  sixteen shapes or fewer each. SCANNER's two-input scan is the inspiration:
+  there the MAP parameter chooses the combining operation (add, multiply,
+  difference, lighten; OR, AND, XOR, > on the logic outputs) and Z deforms the
+  terrain. The tables here are original and ship through the same generator
+  and library-identity rules as Lookup's. When it lands, `BYTE_BUS_SPEC.md`'s
+  role table moves Lipsk/Gera from Vastish FUN to Lookup2.
+- **B7. Counter 2.** A RATIO mode: the increment is `256 · N / D` per clock with
+  a fractional accumulator, giving a phase word at N/D of CLK — SYNC's
+  clock-ratio contour as a byte, and a polymeter source for the modular locked
+  to Gorgon's CLOCK. SYNC's scale grids (integers, odds, multiples of three;
+  rhythmic harmonics, no-triplet, triplet, dotted) become a Lookup family that
+  maps a byte to a ratio. This changes Counter's "increment is a byte" model,
+  so it is a second version, not part of B2.
+- **B8. Lookup library v2.** Three families the v1 library lacks, all authoring
+  work in `generate_lookup.py` rather than DSP: an **envelope** family
+  (expo/log pairs, plateaus and cliffs, lumps, variable sustain) so a one-shot
+  Counter through Lookup is an envelope generator; a **sequence** family
+  (steps, ridges, Euclidean ridges, bounce) for stepped CV from a counter; and
+  a **density-ordered rhythm** family in which each SHAPE step adds a hit
+  without removing one, so SHAPE CV is a deterministic fill control: Gorgon's
+  FILL bit through an attenuator at 10/64 V onto SHAPE CV is "fill = density
+  + 1" while held — GATESEQ's PTN knob, whose documentation says only that
+  density increases clockwise; the nesting property is our design — and the
+  non-random counterpart of `%p`. Library v1 is immutable, so this is a new
+  library identity.
 - **Not needed:** a bus-aware control machine in Machinemodule. Converter DAC →
   a P1–P8 CV input is already byte-as-parameter-lock, latched at the hit, and
   mono CV broadcasts to all tracks. Per-track byte values don't fit on one cable;
@@ -256,7 +346,8 @@ follows the same rules (it is the third implementation, per `spec/README.md`).
 
 ### H. External MIDI destinations
 
-- **H1.** Analog Four and Rytm MKI: each track answers to a note on its own
+- **H1.** Deferred as far-future (2026-10-26); kept here as written.
+  Analog Four and Rytm MKI: each track answers to a note on its own
   channel and the parameter set is exposed over CC/NRPN. Gorgon's lanes →
   Rack → Core **CV-MIDI** (gate/pitch/velocity → notes) and **CV-CC** (a lane's
   automation or a Lookup byte through Converter → CC). No new code; a documented
@@ -270,13 +361,13 @@ follows the same rules (it is the third implementation, per `spec/README.md`).
 **Phase 0 — ratify (no code).** B1. The §5 questions. Agree this document.
 
 **Phase 1 — cheap, independent, immediately playable.** No contract change;
-each is one PR in DSP_Emulation.
+each is one PR in DSP_Emulation. **Done 2026-10-26:**
 
-1. D1 Vastish AUDIO IN, mono. It exploits everything that already exists.
-2. B2 Counter (contract, then module).
-3. B3 Machinemodule BUS TRIG mode.
-4. F1 DrumLab retirement.
-5. H1 written up; G1's measurement utility if time allows.
+1. D1 Vastish AUDIO IN — mono (2.6.0), then polyphonic (2.7.0, #37).
+2. B2 Counter — ByteBusLab 2.3.0 (#32, #33). B2b run modes are a follow-up.
+3. B3 Machinemodule BUS TRIG — MachinemoduleRack 2.1.0.
+4. F1 DrumLab retired from README, dev docs and CI; directory kept.
+5. H1 deferred as far-future; G1's measurement utility still open.
 
 After phase 1 the chain Counter → Lookup → Machinemodule plays, the modular
 and the drum machine run through Vastish, and the bus experiment has had its
@@ -297,9 +388,10 @@ rushed to fit around phase 1.
 **Phase 4 — destinations on the new contract.** C2a refactor, then C2b
 Monomodule; E1 OTIS patch select; G1 offsets table.
 
-**Phase 5 — depth.** B4 Switch and Pipeline; D2 chain mode; E2 Otis Kit and
-Capture; F2's manifest and renderer workflow; the tutorial video kit updated
-for six lanes.
+**Phase 5 — depth.** B2b Counter run modes; B4 Switch and Pipeline; B5 Lookup
+JUMP, then B6 Lookup2, B7 Counter 2 and B8 library v2 in whatever order the
+patches ask for; D2 chain mode; E2 Otis Kit and Capture; F2's manifest and
+renderer workflow; the tutorial video kit updated for six lanes.
 
 ## 4. Score v3 proposal (for A-spec-1..3)
 
@@ -470,7 +562,32 @@ These are not guidance; CI fails without them, and the plan relies on that:
   `bytebus-output.md` already check old output IDs).
 - v1 and v2 scores load and play unchanged; opening or saving never upgrades.
 
-## 7. Not in this plan
+## 7. Parked
+
+Pinned as interesting, with no phase and no claim on time. Each is written down
+so the engines and generators built above are built in a way that keeps it
+possible.
+
+- **A bus firmware for the Via dev board.** The ByteBusLab engines are
+  header-only C++ with no Rack dependency, and the Lookup library comes from a
+  Python generator, which is the same shape as Via's own dev environment. The
+  board (STM32F373, 1V/oct on a 12-bit ADC, two 16-bit CV inputs, a DAC that
+  drives the A/B crossfader and comes out as CV, main and aux logic I/O, six
+  touch sensors) has two logic lines and no ribbon, so the byte cannot leave the
+  module: the product is one Leibniz chain in a box — CV or logic in → byte →
+  Counter/Register → Lookup → DAC — with the touch sensors choosing family,
+  shape and mode. That is META's architecture with the slope generator replaced
+  by a byte pipeline, driving the Via's own crossfader and S&H. Rule for the
+  Rack work: keep the engines Rack-free and the tables generator-produced, so
+  the engines re-target without a rewrite. The library does not: Lookup's
+  `Library` today owns a mutable 96 KiB array loaded with `std::ifstream`, and
+  the STM32F373 has at most 32 KiB of SRAM, so the tables would have to become
+  flash-resident constant arrays, probably reduced, behind a different loader,
+  with flash and real-time budgets checked. Not started; it is an embedded
+  project with a flash cycle and the agent cannot hold the module.
+- **New applets for the uO_C pair.** Same status.
+
+## 8. Not in this plan
 
 - Real-time model inference as a voice.
 - Strudel or Vortex code import. An original pattern subset is not Strudel
@@ -480,7 +597,7 @@ These are not guidance; CI fails without them, and the plan relies on that:
 - A Leibniz-compatible hardware interface. The bus is Rack-only by design.
 - New hardware.
 
-## 8. Review notes (2026-10-26)
+## 9. Review notes (2026-10-26)
 
 A second review (GPT Sol) of the first draft led to these changes: the
 evaluator named as the central artifact with a stable event record; spec-level
@@ -495,3 +612,22 @@ the fixture stateful and the three implementations harder to compare; PRE/NEI
 are deferred instead. "Complete the shared fixtures before modifying HydraPy"
 inverts the repository's process, where the fixture is generated from HydraPy;
 hand-computed spec vectors fill that role before HydraPy, the fixture after.
+
+A second pass the same evening extracted four concepts from the Starling Via
+firmwares (SCANNER, META, SYNC, GATESEQ) into B4–B8 and the Counter run modes,
+and opened §7 for the Via dev-board firmware and the uO_C applets.
+
+The Via extraction was reviewed on #45 (Code, then GPT). Taken: Counter had
+already shipped, so its run modes became B2b with their open decisions listed;
+a 10 V bit on SHAPE CV is a full turn, so the density claim now goes through an
+attenuator and JUMP is a persistent step, not a held offset; JUMP became
+bus-aware so adjacent high words each step; Lookup2's tables are bounded and
+its algebraic shapes computed; the Via references were corrected (MAP, not Z,
+selects SCANNER's operation; its JUMP reverses or teleports; META's pendulum
+reverses on a trigger; GATESEQ promises only that density rises); the v3 BUS
+OUT word is a state word, not a trigger stream, with usage rules under B3; the
+parked firmware's library needs a real port to a 32 KiB-SRAM part. A follow-up
+pass recorded H1 as deferred, proposed One-shot as up-only and Pendulum as
+clamping at its ends, and noted that the AND mask doesn't stop per-clock
+retriggers. A "play start" definition for bit 7 was proposed and dropped: the
+v3 BUS OUT word stays a state word with bit 7 reserved.
