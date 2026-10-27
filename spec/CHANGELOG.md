@@ -3,6 +3,16 @@
 Newest first. Each entry names the HydraPy commit and Rack module version it
 describes.
 
+## 2026-10-27 — score format 3: Play on the anchor's own tick
+
+HydraPy `e5999b2282bd9766b6f7152b4278c3da4e72ed8e` (pin unchanged; implemented in
+HydraPy #67) · Rack module `GorgonBridge` 2.3.1, unchanged.
+
+A Play that lands on the segment anchor's own tick continues that segment
+([evaluator.md](evaluator.md#ticks)). Play doesn't change `transport_revision`, so a
+new segment there would share the old one's key, `transport_revision` and `start`,
+while `elapsed` restarted: followers would keep their place in the old one.
+
 ## 2026-10-27 — score format 3: follow-ups from the HydraPy implementation
 
 HydraPy `e5999b2282bd9766b6f7152b4278c3da4e72ed8e` (pin unchanged; the

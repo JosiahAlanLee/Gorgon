@@ -54,7 +54,10 @@ number holds ticks exactly for over 40,000 years at 200 BPM.
 
 - **Anchors** are integer cycle ticks, `0 ≤ a < C`. Studio rounds a seek's beat
   to the nearest tick, `⌊beat · 1920 + ½⌋ mod C`, and anchors Play at the tick
-  nearest the playhead.
+  nearest the playhead. A Play that lands on the anchor's own tick (after a
+  pause right after a seek, or after whole cycles) continues the segment
+  instead: a new one would have the same `transport_revision` and `start`, the
+  key that tells segments apart, while `elapsed` restarted.
 - **Elapsed ticks at the playhead** are an integer. Studio re-anchors for a tempo
   change on a tick: `elapsed` is a whole tick and `anchor_time` the clock time
   at which the playhead reached it.
