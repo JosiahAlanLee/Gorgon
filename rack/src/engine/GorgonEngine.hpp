@@ -210,6 +210,7 @@ struct Outputs {
 	float velocity[OUTPUT_LANES] = {};  // 0..1 from that hit; read only where present is set
 	bool pitched[OUTPUT_LANES] = {};
 	float pitch[OUTPUT_LANES] = {};     // volts, read only where pitched is set
+	float linkPitch[OUTPUT_LANES] = {}; // held pitch for the sound link: C4 = 0 V whatever pitchZero is
 	float lane[AUTO_LANES] = {};        // in the lane's own units (z 0..1, roll degrees, feedback 0..0.9)
 	bool fill = false;                  // version 3: FILL in force on the current row (BUS OUT bit 6)
 };
@@ -271,7 +272,7 @@ struct OutputState {
 	double stood = -1.;   // the beat while not moving: where a resume lands
 	bool gateWas[AUDIO_LANES] = {};
 	int retrigger[AUDIO_LANES] = {};
-	float velocity[AUDIO_LANES] = {}, pitch[AUDIO_LANES] = {};
+	float velocity[AUDIO_LANES] = {}, pitch[AUDIO_LANES] = {}, linkPitch[AUDIO_LANES] = {};
 
 	// `anchor` is the playhead's anchor_beat, where a transport_revision change landed.
 	// Without one, a change is taken to have landed at `beat`.
@@ -282,6 +283,7 @@ struct OutputState {
 			resetRemaining = moving ? int(std::round(options.resetSeconds / sampleTime)) : 0;
 			std::fill(velocity, velocity + AUDIO_LANES, 0.f);
 			std::fill(pitch, pitch + AUDIO_LANES, 0.f);
+			std::fill(linkPitch, linkPitch + AUDIO_LANES, 0.f);
 			landingRemaining = 0;
 			// A gate the change interrupts closes for 1 ms, so a hit it lands on rises again.
 			for (int l = 0; l < AUDIO_LANES; l++)
@@ -324,10 +326,13 @@ struct OutputState {
 		for (int l = 0; l < AUDIO_LANES; l++) {
 			if (out.present[l])
 				velocity[l] = out.velocity[l];
-			if (out.pitched[l])
+			if (out.pitched[l]) {
 				pitch[l] = out.pitch[l];
+				linkPitch[l] = out.pitch[l] + float(options.pitchZero - 60) / 12.f;
+			}
 			out.velocity[l] = velocity[l];
 			out.pitch[l] = pitch[l];
+			out.linkPitch[l] = linkPitch[l];
 		}
 		return out;
 	}

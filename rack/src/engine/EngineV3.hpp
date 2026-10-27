@@ -161,7 +161,7 @@ struct EngineV3 {
 	double stood = NAN;            // u while not moving: where a resume lands
 	bool gateWas[LANES] = {};
 	int retrigger[LANES] = {};
-	float velocity[LANES] = {}, pitch[LANES] = {};
+	float velocity[LANES] = {}, pitch[LANES] = {}, linkPitch[LANES] = {};   // linkPitch: C4 = 0 V, for the sound link
 	int covering[LANES] = {-1, -1, -1, -1, -1, -1};   // the firing hit under u, per lane
 	TraceRing* trace = nullptr;    // where evaluated candidates are traced, if anywhere
 	int64_t frame = 0;             // the engine frame being rendered, for the trace
@@ -176,6 +176,7 @@ struct EngineV3 {
 			gateWas[l] = old.gateWas[l];
 			velocity[l] = old.velocity[l];
 			pitch[l] = old.pitch[l];
+			linkPitch[l] = old.linkPitch[l];
 		}
 		stood = NAN;
 	}
@@ -186,6 +187,7 @@ struct EngineV3 {
 			next.gateWas[l] = gateWas[l];
 			next.velocity[l] = velocity[l];
 			next.pitch[l] = pitch[l];
+			next.linkPitch[l] = linkPitch[l];
 		}
 		next.stood = -1.;
 	}
@@ -266,6 +268,7 @@ struct EngineV3 {
 			resetRemaining = moving ? int(std::nearbyint(o.resetSeconds * sampleRate)) : 0;
 			std::fill(velocity, velocity + LANES, 0.f);
 			std::fill(pitch, pitch + LANES, 0.f);
+			std::fill(linkPitch, linkPitch + LANES, 0.f);
 			std::fill(landing, landing + LANES, 0);
 			// A gate the change interrupts closes for 1 ms, so a hit it lands on rises again.
 			for (int l = 0; l < LANES; l++)
@@ -312,13 +315,16 @@ struct EngineV3 {
 			if (moving && covering[l] >= 0) {
 				const Hit& h = hits[covering[l]];
 				velocity[l] = float(h.vel / 127.);
-				if (h.midi >= 0)
+				if (h.midi >= 0) {
 					pitch[l] = float(h.midi + score.key - 2 - o.pitchZero) / 12.f;
+					linkPitch[l] = float(h.midi + score.key - 2 - 60) / 12.f;
+				}
 			}
 			out.present[l] = moving && covering[l] >= 0;
 			out.pitched[l] = out.present[l] && hits[covering[l]].midi >= 0;
 			out.velocity[l] = velocity[l];
 			out.pitch[l] = pitch[l];
+			out.linkPitch[l] = linkPitch[l];
 		}
 		for (int l = 0; l < LANES; l++)
 			retrigger[l] = std::max(0, retrigger[l] - 1);

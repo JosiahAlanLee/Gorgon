@@ -3,6 +3,18 @@
 Newest first. Each entry names the HydraPy commit and Rack module version it
 describes.
 
+## 2026-10-27 — the sound link's pitch is C4 = 0 V
+
+HydraPy `3c01f32eb0c5a396d4e854e20d0b0d9b14de27d7` (pin unchanged) · Rack module
+`GorgonBridge` 2.4.0 (unreleased).
+
+A sound-link lane's `pitch` is now defined as 1 V/oct with C4 = 0 V, whatever the
+Rack module's *Pitch zero* menu says ([sound-locks.md](sound-locks.md#rack-sound-link)).
+Before this, it followed that menu, so a receiver couldn't tell C3 from C4. The
+Monomachine (roadmap C2b) is pitched and needs the note. Machinemodule ignores
+pitch, so nothing changes for it, and the packet layout and version stay the same.
+The module's own V/OCT outputs still follow the menu.
+
 ## 2026-10-27 — the Rack module's event trace
 
 HydraPy `3c01f32eb0c5a396d4e854e20d0b0d9b14de27d7` (pin unchanged) · Rack module
