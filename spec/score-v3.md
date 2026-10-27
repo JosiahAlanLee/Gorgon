@@ -64,8 +64,8 @@ scenes     [{r, name, fade}…]             optional, as version 2; r 0–(rows 
 - **Codes.** Pattern `i` is shown as bank `"ABCDEFGH"[⌊i / 16⌋]` and number
   `i mod 16 + 1`: index 0 is `A01`, 17 is `B02`, 127 is `H16`.
 - **Empty patterns.** A `null` entry is an empty pattern: rate 1, bar 16,
-  bars 4, every lane `len` 64 with all cells null and no transforms, the
-  default keys and easing, no scenes, named by its code. It plays as four bars
+  bars 4, every lane `len` 64 with all cells null and no transforms, no keys,
+  `smooth` easing on all three lanes, no scenes, named by its code. It plays as four bars
   of silence at rate 1, with each automation lane at its default. An editor writes the object on the first
   edit, and that object must equal these defaults exactly; only the edit itself
   changes it. Keeping empty entries in the chain arithmetic keeps `S[]`
@@ -191,14 +191,15 @@ These change the timeline, so each is a **transport change**: it increments
 | `pattern`, while `loop` is true | The new pattern, keeping the elapsed beats, wrapped into its length. |
 | `chain`, while `loop` is false | The same entry index if it still plays the same pattern, keeping the elapsed beats; otherwise beat 0. |
 | `rate`, `bar` or `bars` of the playing pattern | The same entry, keeping the elapsed quarter-note beats, wrapped into the new length (pattern-timing.md's rule). |
+| `rate`, `bar` or `bars` of another pattern in the chain, while `loop` is false | The same entry, keeping the elapsed beats. The edit moves every later entry and the cycle's length `C`, and followers place the playhead at `(a + u) mod C`, so once the playhead has wrapped it would jump without a new segment. |
 
 Every transport change has an **effective beat**, by default the moment it is
 made; in this part every change is immediate. Queued switching later is the
 same record with a later effective beat ([evaluator.md](evaluator.md)).
 
 Passing from one chain entry to the next, editing cells, keys, scenes or a
-lane's `len`, and editing a pattern that is not playing are ordinary edits: the
-timeline is unchanged, or changes only after the playhead. Reapplying a value
+lane's `len`, and editing a pattern the timeline doesn't play are ordinary
+edits: the timeline is unchanged. Reapplying a value
 that is already set is not a change. Undo and redo follow the same rules.
 Queued pattern changes (switching at the end of the current pattern, as
 Elektron machines do) are a later feature.
