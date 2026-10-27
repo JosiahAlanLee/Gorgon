@@ -3,6 +3,23 @@
 Newest first. Each entry names the HydraPy commit and Rack module version it
 describes.
 
+## 2026-10-27 — the Rack module's BUS IN
+
+HydraPy `3c01f32eb0c5a396d4e854e20d0b0d9b14de27d7` (pin unchanged) · Rack module
+`GorgonBridge` 2.4.0.
+
+The Rack module implements [bus-io.md](bus-io.md)'s BUS IN, input 6. It reads
+the word before evaluating each sample, unclocked or clocked. It stamps each
+change with the first tick it hasn't evaluated and plays its own layer at once.
+Rack's record keeps one change per read tick, and windows carry it to Studio:
+one per bridge poll while there are changes, and at least one a second while
+BUS IN is patched, which keeps the lease. A refusal, `bus held by another
+module`, makes the module follow Studio's bus until the lease lapses.
+Unpatching BUS IN, removing the module or closing the patch sends an all-clear.
+The context menu remaps the bit map, which is saved with the patch.
+`engine_test` reproduces vectors V11 and V12 exactly, and the end-to-end test
+has a real Studio accept the windows and give the probe the lease.
+
 ## 2026-10-27 — score format 3 in the Rack module; sound link version 2
 
 HydraPy `3c01f32eb0c5a396d4e854e20d0b0d9b14de27d7` (pin moved from `a479932`; HydraPy #67 and #68) · Rack module

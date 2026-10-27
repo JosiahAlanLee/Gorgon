@@ -13,11 +13,13 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <random>
 #include <string>
 #include <thread>
 #include <vector>
 
 #include "BridgeJson.hpp"
+#include "BusIn.hpp"
 #include "LoopbackHttp.hpp"
 
 namespace gorgon {
@@ -44,11 +46,16 @@ public:
 	// `now` is the local monotonic clock in seconds (Rack's system::getTime in
 	// the module). `period` is the poll interval.
 	explicit Bridge(Now now, std::string advertisement = advertisementPath(), double period = 1. / 30.)
-	    : now(std::move(now)), advertisement(std::move(advertisement)), period(period) {
+	    : now(std::move(now)), advertisement(std::move(advertisement)), period(period), busRing(new BusRing) {
 		for (int i = 0; i < INPUTS; i++) {
 			volts[i] = 0.f;
 			connected[i] = false;
 		}
+		// The bus layer's sender (bus-io.md): random per module instance, never saved.
+		std::random_device random;
+		char id[17];
+		std::snprintf(id, sizeof id, "%08x%08x", unsigned(random()), unsigned(random()));
+		sender = id;
 	}
 	~Bridge() { stop(); }
 	Bridge(const Bridge&) = delete;
@@ -64,6 +71,7 @@ public:
 		running = false;
 		if (worker.joinable())
 			worker.join();
+		clearBus();
 	}
 
 	// -- audio thread ---------------------------------------------------------
@@ -87,6 +95,13 @@ public:
 	// and the audio thread never makes a system call here.
 	void requestPlayToggle() { playToggle = true; }
 	void requestRestart() { restart = true; }
+	// BUS IN: a change for the worker to send, and the first tick not yet evaluated.
+	void pushBus(const v3::BusChange& change) { busRing->push(change); }
+	void setBusFrontier(int64_t tick) { busFrontier.store(tick, std::memory_order_relaxed); }
+	// Whether this module plays its own bus layer: a window is outstanding or held, and
+	// Studio hasn't given the layer to another module.
+	bool busOutstanding() const { return busActive.load(std::memory_order_relaxed); }
+	bool busRefused() const { return refused.load(std::memory_order_relaxed); }
 
 	// -- UI thread ------------------------------------------------------------
 	std::string status() {
@@ -114,6 +129,7 @@ public:
 		return resolve(i);
 	}
 	const std::string& advertisementFile() const { return advertisement; }
+	const std::string& busSender() const { return sender; }
 
 private:
 	Now now;
@@ -133,6 +149,16 @@ private:
 
 	std::atomic<float> volts[INPUTS];
 	std::atomic<bool> connected[INPUTS];
+
+	// BUS IN: changes from the audio thread, Rack's record and the lease, on the worker.
+	typedef v3::SpscRing<v3::BusChange, 8192> BusRing;
+	std::unique_ptr<BusRing> busRing;
+	std::atomic<int64_t> busFrontier{0};
+	std::atomic<bool> busActive{false}, refused{false};
+	v3::BusRecord record;
+	std::string sender;
+	double busSentAt = -1e9;
+	std::shared_ptr<const v3::ScoreV3> busScore;   // the score the record's read ticks come from
 
 	// UI-visible, guarded by uiMutex.
 	std::mutex uiMutex;
@@ -199,6 +225,7 @@ private:
 			pollStudio(working);
 			sendTransport(working);
 			sendInputs();
+			sendBus(working);
 			// Sleep in short slices so stop() and transport presses are prompt
 			// without a condition variable (see the note on requestPlayToggle).
 			while (running && !playToggle && !restart && now() - started < period)
@@ -310,6 +337,58 @@ private:
 			json_object_set_new(body, "beat", json_real(s.v3() ? 0. : s.score.cycleStart()));
 			http.request(port, "/api/tracker_transport", token, dump(body));
 		}
+	}
+
+	// One window per poll while there are changes to send, and at least one a second while
+	// BUS IN is patched, which keeps the lease (bus-io.md#bus-in).
+	void sendBus(const Snapshot& s) {
+		v3::BusChange change;
+		if (s.v3())
+			busScore = s.score3;
+		while (busRing->pop(change))
+			record.apply(change, busScore.get());
+		busActive = record.active;
+		if (port == 0 || !record.active || !s.v3())
+			return;
+		double t = now();
+		if (!record.pending() && t - busSentAt < 1.)
+			return;
+		uint64_t upTo = 0;
+		std::string body = record.window(busFrontier.load(std::memory_order_relaxed), sender, upTo);
+		HttpResponse r = http.request(port, "/api/tracker_transport", token, body);
+		busSentAt = t;
+		if (r.status == 200) {
+			record.acknowledge(upTo);   // applied, or dropped as a stale segment: answered either way
+			refused = false;
+		}
+		else if (r.status == 400 && r.body.find("bus held by another module") != std::string::npos)
+			refused = true;
+		busActive = record.active;
+	}
+
+	// Removing the module or closing the patch clears every bit, sent as an all-clear.
+	void clearBus() {
+		v3::BusChange change;
+		while (busRing->pop(change))
+			record.apply(change, busScore.get());
+		if (!record.active || port == 0)
+			return;
+		int64_t at = std::max<int64_t>(0, busFrontier.load(std::memory_order_relaxed));
+		for (int f = 0; f < v3::BUS_FUNCTIONS; f++) {
+			v3::BusChange off;
+			off.revision = record.revision;
+			off.tick = record.tick;
+			off.entry = record.entry;
+			off.at = at;
+			off.function = uint8_t(f);
+			off.on = false;
+			if (!record.lists[f].empty() && record.lists[f].back().on)
+				record.apply(off, busScore.get());
+		}
+		uint64_t upTo = 0;
+		http.request(port, "/api/tracker_transport", token, record.window(at, sender, upTo));
+		record.active = false;
+		busActive = false;
 	}
 
 	void sendInputs() {

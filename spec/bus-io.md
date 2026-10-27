@@ -253,5 +253,5 @@ anywhere (invariant 2).
   as a version-3.1 condition kind.
 - **A plain FILL gate jack**, as the roadmap sketched, is not added. One gate
   into a Merge on channel 7 (bit 6) and on to BUS IN does the same.
-- **BUS IN's panel position**, with the gate jacks for lanes 5 and 6, is
-  Phase 3's (C1).
+- **BUS IN's panel position** is the Rack module's: above BUS OUT on its 14 HP
+  panel, with GATE 5 and 6 ([the manual](../rack/docs/MANUAL.md#bus-in)).

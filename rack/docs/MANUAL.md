@@ -71,8 +71,40 @@ does: the same candidates from the same evaluator, so conditions, `ply`,
 - The display shows the playing pattern's code and its bar and row, as the
   editor does: `A01 002:03` is pattern A01, bar 2, row 3.
 
-**BUS IN** takes lane mutes and FILL from a byte bus for version-3 scores
-([bus-io.md](../../spec/bus-io.md)). This version doesn't read it yet.
+## BUS IN
+
+**BUS IN** mutes lanes and turns on FILL from a byte bus, for version-3 scores
+([bus-io.md](../../spec/bus-io.md)). High is on:
+
+| Bit (channel) | Default |
+| --- | --- |
+| 0–5 (1–6) | Mute lanes 1–6 |
+| 6 (7) | FILL |
+| 7 (8) | Unused |
+
+This is the layout BUS OUT's hit mask publishes, so a word that goes out, through
+logic and back in means the same lanes both ways. *BUS IN bits* in the context
+menu moves any of the seven to another bit, or to none, and shows the word as it
+arrives. The map is saved with the patch.
+
+- The bus adds to the score: a lane muted in the editor stays muted, and FILL
+  from the editor stays on. An all-zero word, which a fresh Register or Counter
+  sends, does nothing.
+- Unclocked (8 channels or fewer), every sample is read. Clocked (9 or more,
+  CLK on channel 9), the word changes on CLK's rising edges: a Register latched
+  on Gorgon's CLOCK changes mutes on rows, a Counter's CARRY at modulus 16 on bars.
+- A change counts from the first tick Gorgon hasn't played yet. A mute that
+  arrives while a note sounds doesn't cut it; the lane's next hit is muted.
+- A loop from BUS OUT through logic back into BUS IN acts on the next row: the
+  word comes back at least two samples after the row it describes.
+- Gorgon plays its own BUS IN at once and sends it to Studio, so the picture,
+  direct CV and other Gorgon modules follow, about one bridge poll later. One
+  module holds the bus at a time. If another module's BUS IN already holds it,
+  the menu says so, and this one follows that bus until the other lets go (3
+  seconds after it last sends).
+- Unpatching BUS IN, removing the module or closing the patch clears every
+  mute and FILL it set.
+- A version-1 or -2 score ignores BUS IN.
 
 ## ByteBus
 

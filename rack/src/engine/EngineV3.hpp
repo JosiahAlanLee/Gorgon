@@ -187,6 +187,14 @@ struct EngineV3 {
 		next.stood = -1.;
 	}
 
+	// The first tick of segment `revision`/`tick` not yet evaluated, where a live change made
+	// now is stamped (evaluator.md#ticks), including on the sample render() begins that segment.
+	int64_t firstUnevaluated(int64_t revision, int64_t tick, double u) const {
+		if (begun && revision == segmentRevision && tick == segmentTick)
+			return frontier;
+		return heard ? -TICKS : int64_t(std::floor(u));
+	}
+
 	// Evaluate through tick ⌊u⌋, keeping the candidates that haven't ended by u. Earlier ones
 	// are skipped unevaluated: nothing would hear them, and evaluate() partitions exactly.
 	void advance(const ScoreV3& score, const TransportV3& transport, double u) {

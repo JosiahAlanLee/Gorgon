@@ -1,13 +1,17 @@
 // Runs the bridge and follower against a real HydraPy Studio, the way the
 // module does, and prints what it sees. Driven by studio_e2e.py.
 //
-// Usage: studio_probe <seconds> <cv1 volts>
+// Usage: studio_probe <seconds> <cv1 volts> [offset ms] [pitch zero] [BUS IN schedule]
+// The schedule, "0.5:32,1.5:-1", patches BUS IN with word 0x20 from 0.5 s and unpatches it
+// at 1.5 s (-1).
 // Prints one line per 50 ms: block_time follower_beat linked moving jumps; for a
 // version-3 score, an "out3" line from the version-3 follower and engine instead.
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <thread>
+#include <utility>
+#include <vector>
 
 #include "../src/engine/Bridge.hpp"
 
@@ -24,6 +28,17 @@ int main(int argc, char** argv) {
 	double offset = argc > 3 ? std::atof(argv[3]) / 1000. : 0.;
 	Options options;
 	options.pitchZero = argc > 4 ? std::atoi(argv[4]) : 60;
+	std::vector<std::pair<double, int>> schedule;
+	for (const char* p = argc > 5 ? argv[5] : ""; *p;) {
+		char* end = nullptr;
+		double at = std::strtod(p, &end);
+		int word = int(std::strtol(end + 1, &end, 10));
+		schedule.push_back({at, word});
+		p = *end ? end + 1 : end;
+	}
+	int busWord = -1;
+	v3::BusInput busIn;
+	v3::BusMap busMap;
 	Bridge bridge(now);
 	bridge.start();
 	Snapshot snap;
@@ -58,9 +73,23 @@ int main(int argc, char** argv) {
 				bridge.setInput(0, true, volts);
 			}
 			bool moving = have && snap.playhead.moving() && (v3 ? ticks.locked : follower.locked);
-			if (v3)
-				output = engine3.render(*snap.score3, snap.layer->transport(snap.playhead.startTick), moving, ticks.u,
-				                        snap.playhead.transportRevision, options, sr);
+			for (const auto& [at, word] : schedule)
+				if (frameTime - start + i / sr >= at)
+					busWord = word;
+			if (v3) {
+				const Playhead& h = snap.playhead;
+				int64_t first = engine3.firstUnevaluated(h.transportRevision, h.startTick, ticks.u);
+				v3::BusChange changes[v3::BUS_FUNCTIONS + 2];
+				int n = busIn.process(busWord, busMap, *snap.score3, h.transportRevision, h.startTick, h.startEntry, first, changes);
+				for (int k = 0; k < n; k++)
+					bridge.pushBus(changes[k]);
+				busIn.prune(std::max<int64_t>(first, 0), v3::LONGEST_ROW);
+				bridge.setBusFrontier(std::max<int64_t>(first, 0));
+				v3::TransportV3 transport = snap.layer->transport(h.startTick);
+				if ((busIn.connected || bridge.busOutstanding()) && !bridge.busRefused())
+					transport = busIn.overlay(transport);
+				output = engine3.render(*snap.score3, transport, moving, ticks.u, h.transportRevision, options, sr);
+			}
 			else
 				output = outputState.render(snap.score, moving, follower.beat, snap.playhead.transportRevision, options, 1. / sr);
 			bool reset = output.reset > 0.f;
@@ -94,6 +123,7 @@ int main(int argc, char** argv) {
 	std::printf("status %s\n", bridge.status().c_str());
 	std::printf("target0 %s\n", bridge.target(0).c_str());
 	std::printf("reset_samples %ld\n", resetHighSamples);
+	std::printf("sender %s\n", bridge.busSender().c_str());
 	bridge.stop();
 	return 0;
 }

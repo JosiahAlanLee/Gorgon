@@ -306,9 +306,42 @@ int main() {
 		receiver.leftExpander.messageFlipRequested = false;
 		run(m, 1, args);
 		assert(future.frame == -1 && !receiver.leftExpander.messageFlipRequested);
+		// BUS IN: bit 4 high mutes lane 5 from the first tick not yet evaluated; this module
+		// plays its own layer at once, without waiting for Studio.
+		receiver.leftExpander.producerMessage = &packets[0];
+		auto gate5Rises = [&](long samples) {
+			bool rose = false;
+			for (long i = 0; i < samples; i++) {
+				run(m, 1, args);
+				rose = rose || m.outputs[Gorgon::GATE5_OUTPUT].getVoltage() > 1.f;
+			}
+			return rose;
+		};
+		gate5Rises(96000 - args.frame % 96000);                   // to the end of this cycle
+		m.inputs[Gorgon::BUS_INPUT].channels = 8;
+		m.inputs[Gorgon::BUS_INPUT].setVoltage(10.f, 4);
+		assert(!gate5Rises(12000));                                // lane 5's row-0 hit is muted
+		assert(m.busIn.connected && (m.busIn.states >> 5 & 1) && m.shownBusIn.load() == 0x10);
+		m.inputs[Gorgon::BUS_INPUT].channels = 0;                  // unpatched: an all-clear
+		m.inputs[Gorgon::BUS_INPUT].setVoltage(0.f, 4);
+		gate5Rises(96000 - args.frame % 96000);
+		assert(gate5Rises(12000) && !m.busIn.connected);           // plays again
+		// The bit map is saved with the patch; old patches get the default.
+		m.busBits[gorgon::v3::BUS_FILL] = 7;
+		m.busBits[gorgon::v3::BUS_MUTE1 + 2] = -1;
+		json_t* saved = m.dataToJson();
+		Gorgon restored;
+		restored.dataFromJson(saved);
+		json_decref(saved);
+		assert(restored.busBits[gorgon::v3::BUS_FILL].load() == 7 && restored.busBits[gorgon::v3::BUS_MUTE1 + 2].load() == -1);
+		assert(restored.busBits[gorgon::v3::BUS_MUTE1].load() == 0);
+		json_t* before = json_object();   // a patch saved before BUS IN
+		restored.dataFromJson(before);
+		json_decref(before);
+		assert(restored.busBits[gorgon::v3::BUS_FILL].load() == 6 && restored.busBits[gorgon::v3::BUS_MUTE1 + 2].load() == 2);
 		m.rightExpander.module = nullptr;
 		machineModel.plugin = nullptr;
-		std::cout << "version 3: six lanes, GATE 5/6 and the sound link (versions 1 and 2) passed\n";
+		std::cout << "version 3: six lanes, GATE 5/6, the sound link (versions 1 and 2) and BUS IN passed\n";
 	}
 	std::cout << "module_test: all passed\n";
 	return 0;
