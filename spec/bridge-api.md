@@ -98,7 +98,10 @@ The playhead, the patch's controls, and the score if it changed.
 ```
 
 Every field is optional and keeps its current value when absent. `beat` is
-0–64. For a version-3 document a Rack module may instead send `segment`,
+0–64. For a version-3 document, `fill` (true or false) sets Studio's FILL from
+the first tick none of Studio's outputs has evaluated
+([evaluator.md](evaluator.md#fill)); it is not a seek, and with a seek in the
+same request it holds from the new segment's start. A Rack module may instead send `segment`,
 `sender` and `bus`, a window of the bus layer, without `beat`, `enabled` or
 `playing`; such a request is not a seek
 ([bus-io.md](bus-io.md#transport-endpoint)). A request that contains `beat`, or that changes `enabled`, is a seek:

@@ -3,6 +3,23 @@
 Newest first. Each entry names the HydraPy commit and Rack module version it
 describes.
 
+## 2026-10-27 — score format 3: follow-ups from the HydraPy implementation
+
+HydraPy `e5999b2282bd9766b6f7152b4278c3da4e72ed8e` (pin unchanged; the
+implementation is HydraPy #63, #64 and #65) · Rack module `GorgonBridge` 2.3.1,
+unchanged. Three gaps the implementation found, and the status table:
+
+- **The empty pattern's easing** is `smooth` on all three lanes, as the editor's
+  patterns use. score-v3.md said "the default keys and easing" without naming one.
+- **A length change elsewhere in the chain is a transport change** that keeps
+  the playing entry and the beats into it. Changing another chained pattern's
+  `rate`, `bar` or `bars` moves the later entries and `C`. Followers place the
+  playhead at `(a + u) mod C`, so after a wrap the old segment would jump.
+- **`fill` on `POST /api/tracker_transport`** is Studio's FILL key for the
+  editor. It is stamped at the first tick none of Studio's outputs has
+  evaluated, and it is not a seek.
+- transforms.md and bus-io.md are marked ratified: the user merged them.
+
 ## 2026-10-26 — score format 3, part 4: bus I/O (proposal)
 
 HydraPy `e5999b2282bd9766b6f7152b4278c3da4e72ed8e` · Rack module `GorgonBridge` 2.3.1,
