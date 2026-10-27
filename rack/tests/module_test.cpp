@@ -327,6 +327,14 @@ int main() {
 		m.inputs[Gorgon::BUS_INPUT].setVoltage(0.f, 4);
 		gate5Rises(96000 - args.frame % 96000);
 		assert(gate5Rises(12000) && !m.busIn.connected);           // plays again
+		// Pitch zero at C3: V/OCT's next note rises an octave, the sound link stays C4 = 0 V. A held
+		// note keeps the voltage it had, on both.
+		m.pitchZero = 48;
+		run(m, 64, args);
+		assert(std::abs(m.outputs[Gorgon::PITCH_OUTPUT].getVoltage(4) - .75f) < 1e-4f && std::abs(packets[0].lanes[4].pitch - .75f) < 1e-5f);
+		gate5Rises(96000 - args.frame % 96000 + 1000);
+		assert(std::abs(m.outputs[Gorgon::PITCH_OUTPUT].getVoltage(4) - 1.75f) < 1e-4f && std::abs(packets[0].lanes[4].pitch - .75f) < 1e-5f);
+		m.pitchZero = 60;
 		// The event trace holds the candidates evaluated and BUS IN's changes.
 		bool tracedHit = false, tracedMute = false;
 		for (const gorgon::v3::TraceRecord& r : m.traceRing.copy()) {

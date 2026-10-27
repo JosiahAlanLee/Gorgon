@@ -62,7 +62,10 @@ resolved controls and transport metadata therefore cross the boundary together.
 Every packet includes a magic, ABI version, byte size, producer Rack sample frame,
 transport revision, moving flag, reset voltage and its lanes. Each lane has gate
 voltage, normalized velocity, held pitch, resolved machine (-1 = unspecified), an
-eight-bit parameter-presence mask and eight raw values. Masked-off values have
+eight-bit parameter-presence mask and eight raw values. The pitch is in volts at
+1 V/oct with C4 = 0 V, whatever pitch reference the sender's own V/oct outputs
+use, so a pitched receiver recovers the note as `60 + 12 × pitch` (the score's
+note after the key's transposition). Masked-off values have
 no meaning. Version-1 scores publish unspecified machine/parameters, retaining
 their existing note behavior. Never infer a hit from a parameter change alone.
 

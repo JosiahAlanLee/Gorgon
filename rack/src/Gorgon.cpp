@@ -126,7 +126,7 @@ struct Gorgon : Module {
 				packet.lanes[lane].sound = gorgon::soundAt(snapshot.score, pattern, lane, row);
 			packet.lanes[lane].gate = o.gate[lane];
 			packet.lanes[lane].velocity = o.velocity[lane];
-			packet.lanes[lane].pitch = o.pitch[lane];
+			packet.lanes[lane].pitch = o.linkPitch[lane];
 		}
 	}
 
