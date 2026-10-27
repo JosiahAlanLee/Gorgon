@@ -7,7 +7,8 @@ transforms (A-spec-3) and bus I/O (A-spec-4) extend the same format in their own
 pull requests. No implementation accepts version 3 until all four have merged
 and HydraPy implements them; versions 1 and 2 ([score.md](score.md)) remain the
 working contract until then. Written against HydraPy
-`e5999b2282bd9766b6f7152b4278c3da4e72ed8e` and Gorgon `9a2cb23`.
+`e5999b2282bd9766b6f7152b4278c3da4e72ed8e` and Gorgon `9a2cb23`; lane
+`transforms` added by [transforms.md](transforms.md) (A-spec-3).
 
 Its five design proposals (the chain, the looped beat origin, immediate
 re-anchoring, lanes restarting with their pattern, empty-pattern defaults) were
@@ -51,9 +52,10 @@ name       1–40 characters
 rate       0.25 | 0.5 | 1 | 2 | 4 | 8    rows per quarter note = 4 · rate
 bar        1–32                          rows per bar
 bars       1–8                           bars per pattern; rows = bar · bars ≤ 128
-lanes      [{len, cells} ×6]             one per lane
-             len     1–rows               the lane repeats every len rows
-             cells   [cell ×len]          null or {note, vel, locks?, cond?}; cond in evaluator.md
+lanes      [{len, cells, transforms} ×6] one per lane
+             len        1–rows            the lane repeats every len rows
+             cells      [cell ×len]       null or {note, vel, locks?, cond?}; cond in evaluator.md
+             transforms [node …]          at most 8, applied in order; [] for none (transforms.md)
 keys       {z, roll, feedback}            as version 2; r 0–(rows − 1)
 easing     {z, roll, feedback}            as version 2
 scenes     [{r, name, fade}…]             optional, as version 2; r 0–(rows − 1), fade 0–rows
@@ -62,9 +64,9 @@ scenes     [{r, name, fade}…]             optional, as version 2; r 0–(rows 
 - **Codes.** Pattern `i` is shown as bank `"ABCDEFGH"[⌊i / 16⌋]` and number
   `i mod 16 + 1`: index 0 is `A01`, 17 is `B02`, 127 is `H16`.
 - **Empty patterns.** A `null` entry is an empty pattern: rate 1, bar 16,
-  bars 4, every lane `len` 64 with all cells null, the default keys and easing,
-  no scenes, named by its code. It plays as four bars of silence at rate 1, with
-  each automation lane at its default. An editor writes the object on the first
+  bars 4, every lane `len` 64 with all cells null and no transforms, the
+  default keys and easing, no scenes, named by its code. It plays as four bars
+  of silence at rate 1, with each automation lane at its default. An editor writes the object on the first
   edit, and that object must equal these defaults exactly; only the edit itself
   changes it. Keeping empty entries in the chain arithmetic keeps `S[]`
   independent of content.
@@ -114,7 +116,11 @@ bar_in_pattern = ⌊row / bar[p]⌋
 The `min` keeps floating-point rounding at an entry's end from exposing a row
 outside the pattern. Every implementation uses these conversions rather than
 dividing by 16 or multiplying by 4. The bar counter that conditions read, built
-on `bar_in_pattern` and the chain, is in [evaluator.md](evaluator.md).
+on `bar_in_pattern` and the chain, is in [evaluator.md](evaluator.md). The
+evaluator does this arithmetic in integer ticks, 1920 per quarter note, where a
+row is `1920 / R[p]` ticks and every row boundary is exact
+([evaluator.md](evaluator.md#ticks)); signals and automation still read the
+real-valued beat.
 
 ### Lanes
 
@@ -207,8 +213,8 @@ opening or saving never upgrades them. They map onto version 3 as:
 
 - patterns 0–3 → `A01`–`A04`, each rate 1, bar 16, bars 4; patterns 4–127 null
 - `chain` `[0, 1, 2, 3]`; `pattern` and `loop` unchanged
-- audio lane `n` → `lanes[n]` with `len` 64 and the same 64 cells; lanes 5 and
-  6 empty, `len` 64
+- audio lane `n` → `lanes[n]` with `len` 64, the same 64 cells and no
+  transforms; lanes 5 and 6 empty, `len` 64
 - `mutes` gains two `false`; `sounds` gains two `{"machine": null, "params": {}}`
   (version 1 gets six)
 - `lanes` names `Lane 1`–`Lane 6`; `seed` 0; no cell conditions; keys, easing,
@@ -221,16 +227,17 @@ song's. So a looped pattern at beat `b` is at `b − 16 · pattern`.
 
 The editor upgrades a score to version 3 explicitly, on the first edit that
 needs it (a fifth or sixth lane, a pattern beyond `A04`, a rate, bar, bars,
-lane length or chain edit), and undo restores the old format. Upgrading while a
-looped pattern is playing is a transport change, since its beat origin moves.
-A-spec-3 adds its own default to this mapping: no transforms.
+lane length, chain, condition or transform edit), and undo restores the old
+format. Upgrading while a looped pattern is playing is a transport change,
+since its beat origin moves.
 
 ## Not in this part
 
 Cell conditions, the event record, `evaluate()`, seed, bar counters and
 fill-from-beat are [evaluator.md](evaluator.md) (A-spec-2); lane transforms are
-A-spec-3; Rack's BUS IN, the wider BUS OUT hit mask (with bit 7 reserved for
-"entry start") and FILL/mute transport fields are A-spec-4. The Rack display's
-beat is now cycle-relative, which the Rack manual must say in Phase 3. The Rack
-sound link's six lanes are C1. Triplet grids, ties, sub-row events and per-lane
-rates are not planned for version 3.
+[transforms.md](transforms.md) (A-spec-3); Rack's BUS IN, the wider BUS OUT hit
+mask (with bit 7 reserved for "entry start") and FILL/mute transport fields are
+A-spec-4. The Rack display's beat is now cycle-relative, which the Rack manual
+must say in Phase 3. The Rack sound link's six lanes are C1. Triplet grids,
+ties, per-lane rates and cells placed between rows are not planned for version
+3; `ply`'s sub-steps are the only events shorter than a row.
