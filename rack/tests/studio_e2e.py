@@ -146,6 +146,35 @@ def check_v3(session, probe):
     print(f'real Studio, version 3: ticks within {max(settled):.2f} ms, lanes 5 and 6, and FILL passed')
 
 
+def check_bus_in(session, probe):
+    """BUS IN through real Studio: its windows are accepted, the lease is the probe's, and
+    unpatching sends an all-clear (Gorgon spec/bus-io.md)."""
+    session.call('tracker_transport', playing=True, beat=0)
+    proc = subprocess.Popen([probe, '3', '7.5', '0', '60', '0.6:32,1.8:-1'], stdout=subprocess.PIPE, text=True)
+    held = cleared = None
+    try:
+        deadline = time.monotonic() + 10
+        while proc.poll() is None and time.monotonic() < deadline:
+            with session.lock:
+                lease = session.tracker.lease
+                mute = [dict(t) for t in session.tracker.bus['mutes'][5]]
+            if lease and mute[-1]['on'] and held is None:
+                held = (lease[0], mute)
+            if held and not mute[-1]['on']:
+                cleared = mute
+            time.sleep(.02)
+        out = proc.communicate(timeout=10)[0]
+        assert proc.returncode == 0, out
+    finally:
+        if proc.poll() is None:
+            proc.kill(); proc.wait()
+    sender = next(l.split()[1] for l in out.splitlines() if l.startswith('sender '))
+    assert held is not None, 'Studio never held a mute on lane 6 from BUS IN'
+    assert held[0] == sender, (held[0], sender)
+    assert cleared is not None, 'unpatching BUS IN left lane 6 muted in Studio'
+    print(f'real Studio, BUS IN: lane 6 muted from tick {held[1][-1]["at"]} by sender {sender}, then cleared')
+
+
 def main(probe):
     with tempfile.TemporaryDirectory() as root:
         root = Path(root)
@@ -187,6 +216,7 @@ def main(probe):
             print('CV 1 7.5 V -> Warp', warp, '| status:', info['status'])
             check_outputs(session, probe)
             check_v3(session, probe)
+            check_bus_in(session, probe)
         finally:
             withdraw(path, token)
             server.shutdown(); server.server_close(); session.close()

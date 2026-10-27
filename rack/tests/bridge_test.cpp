@@ -84,6 +84,7 @@ struct FakeStudio {
 	std::vector<std::string> requests;   // request line + headers + body
 	std::atomic<int> revision{7};
 	std::atomic<bool> v3{false};         // serve a version-3 document and playhead
+	std::atomic<bool> busHeld{false};    // refuse bus windows: another module holds the layer
 
 	FakeStudio() {
 		listener = ::socket(AF_INET, SOCK_STREAM, 0);
@@ -171,6 +172,10 @@ struct FakeStudio {
 				       "{\"name\":\"Warp\",\"min\":-2,\"max\":2,\"value\":0},"
 				       "{\"name\":\"Hue\",\"min\":0,\"max\":1,\"value\":0.5}]" +
 				       (cached ? std::string() : ",\"document\":" + (v3 ? scoreJsonV3(100 + r) : scoreJson())) + "}";
+			}
+			else if (busHeld && req.find("\"bus\":{") != std::string::npos) {
+				status = "400 Bad Request";
+				body = "{\"error\":\"bus held by another module\"}";
 			}
 			else {
 				body = "{\"applied\":[],\"ignored\":{}}";
@@ -315,6 +320,49 @@ int main() {
 			seenRequests.push_back(r);
 		return any(seenRequests, "\"beat\":0");
 	}), "version-3 reset goes to the cycle's start");
+
+	// BUS IN: the audio thread's changes reach Studio as windows of the bus layer.
+	v3::BusChange segment;
+	segment.kind = v3::BusChange::SEGMENT;
+	segment.revision = 23;
+	segment.tick = 1440;
+	bridge.pushBus(segment);
+	v3::BusChange mute;
+	mute.revision = 23;
+	mute.tick = 1440;
+	mute.function = v3::BUS_MUTE1 + 2;
+	mute.at = 100;
+	mute.on = true;
+	bridge.pushBus(mute);
+	bridge.setBusFrontier(120);
+	std::string id = bridge.busSender();
+	CHECK(id.size() == 16 && id.find_first_not_of("0123456789abcdef") == std::string::npos, "sender id '%s'", id.c_str());
+	seenRequests.clear();
+	auto collect = [&] {
+		for (const std::string& r : studio.take())
+			seenRequests.push_back(r);
+	};
+	CHECK(waitFor([&] { collect(); return any(seenRequests, "\"sender\":\"" + id + "\""); }), "a bus window is sent");
+	CHECK(any(seenRequests, "POST /api/tracker_transport") &&
+	      any(seenRequests, "{\"segment\":{\"transport_revision\":23,\"start\":{\"tick\":1440,\"entry\":null}},\"sender\":\"" + id +
+	                         "\",\"bus\":{\"from\":0,"),
+	      "the window names its segment and sender, and the segment's first starts at 0");
+	CHECK(any(seenRequests, "[{\"at\":0,\"on\":false},{\"at\":100,\"on\":true}]"), "lane 3's mute in the window");
+	CHECK(waitFor([&] { return bridge.busOutstanding() && !bridge.busRefused(); }), "the layer is this module's");
+	// Patched and quiet: a window at least once a second keeps the lease, restating from the frontier.
+	seenRequests.clear();
+	std::this_thread::sleep_for(std::chrono::milliseconds(1300));
+	collect();
+	int windows = 0;
+	for (const std::string& r : seenRequests)
+		windows += r.find("\"bus\":{\"from\":120,") != std::string::npos;
+	CHECK(windows >= 1 && windows <= 2, "%d keep-alive windows in 1.3 s", windows);
+	// Another module holds the layer: refused, then given back when it lapses.
+	studio.busHeld = true;
+	bridge.pushBus(mute);
+	CHECK(waitFor([&] { return bridge.busRefused(); }), "the refusal reaches the audio thread");
+	studio.busHeld = false;
+	CHECK(waitFor([&] { return !bridge.busRefused(); }, 3.), "the layer comes back with the next accepted window");
 	// And back to version 1: the version-3 score is dropped.
 	studio.v3 = false;
 	studio.revision = 10;
@@ -327,7 +375,14 @@ int main() {
 	advertise(ad, studio.port, studio.getToken());
 	CHECK(waitFor([&] { return bridge.status().rfind("Linked", 0) == 0; }), "relinked: '%s'", bridge.status().c_str());
 
+	// Removing the module clears every bit it set: an all-clear window as the bridge stops.
+	studio.take();
 	bridge.stop();
+	std::vector<std::string> last = studio.take();
+	bool cleared = false;
+	for (const std::string& r : last)
+		cleared = cleared || (r.find("\"sender\":\"" + id + "\"") != std::string::npos && r.find("\"on\":true") == std::string::npos);
+	CHECK(cleared, "an all-clear on stop (%zu requests)", last.size());
 	std::remove(ad.c_str());
 	::rmdir(dir);
 	if (failures) {

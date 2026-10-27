@@ -14,6 +14,7 @@
 #include "plugin.hpp"
 #include "Layout.hpp"
 #include "engine/Bridge.hpp"
+#include "engine/ByteBusInput.hpp"
 #include "engine/ByteBusOutput.hpp"
 #include "AudioInput.hpp"
 
@@ -43,6 +44,12 @@ struct Gorgon : Module {
 	gorgon::v3::TickFollower tickFollower;
 	gorgon::v3::EngineV3 engine3;
 	bool wasV3 = false, rendered = false;
+	// BUS IN (bus-io.md): the reader, this module's own layer, and the bit map.
+	gorgon::ByteBusReader busReader;
+	gorgon::v3::BusInput busIn;
+	gorgon::v3::BusMap busMap;                              // the audio thread's copy
+	std::atomic<int> busBits[gorgon::v3::BUS_FUNCTIONS];    // set from the menu
+	std::atomic<int> shownBusIn{-1};
 	gorgon::ByteBusOutput busOutput;
 	std::atomic<int> busSource{int(gorgon::BusSource::Z)};
 	std::atomic<unsigned> shownBusWord{0};
@@ -69,7 +76,9 @@ struct Gorgon : Module {
 		configInput(RESET_INPUT, "Reset trigger");
 		for (int i = 0; i < gorgon::INPUTS; i++)
 			configInput(CV1_INPUT + i, string::f("CV %d to a Gorgon control (0–10 V spans its range)", i + 1));
-		configInput(BUS_INPUT, "BUS IN: lane mutes and FILL from a byte bus (version-3 scores; not read yet)");
+		configInput(BUS_INPUT, "BUS IN: lane mutes on bits 0–5 and FILL on bit 6, high for on (byte bus; version-3 scores)");
+		for (int f = 0; f < gorgon::v3::BUS_FUNCTIONS; f++)
+			busBits[f] = gorgon::v3::BusMap().bit[f];
 		configOutput(CLOCK_OUTPUT, "Clock");
 		configOutput(RESET_OUTPUT, "Reset (5 ms trigger at the start of the score or loop)");
 		configOutput(RUN_OUTPUT, "Run (high while Gorgon plays)");
@@ -141,17 +150,36 @@ struct Gorgon : Module {
 			options.gate = gateLength.load(std::memory_order_relaxed);
 			options.high = outputHigh.load(std::memory_order_relaxed);
 			options.pitchZero = pitchZero.load(std::memory_order_relaxed);
+			for (int f = 0; f < gorgon::v3::BUS_FUNCTIONS; f++)
+				busMap.bit[f] = int8_t(busBits[f].load(std::memory_order_relaxed));
 		}
+		Input& busInput = inputs[BUS_INPUT];
+		int busWord = busReader.process(busInput.isConnected() ? busInput.getChannels() : 0,
+		                                [&](int c) { return busInput.getVoltage(c); });
+		shownBusIn.store(busWord, std::memory_order_relaxed);
 
 		bool moving = haveSnapshot && snapshot.playhead.moving() && (v3 ? tickFollower.locked : follower.locked);
 		gorgon::Outputs o;
 		int pattern = 0, row = 0;
 		if (v3) {
 			const gorgon::v3::ScoreV3& score = *snapshot.score3;
+			const gorgon::Playhead& h = snapshot.playhead;
 			if (!wasV3 && rendered)
 				engine3.continueFrom(outputState);   // the score changed format: one transport state
-			o = engine3.render(score, snapshot.layer->transport(snapshot.playhead.startTick), moving, tickFollower.u,
-			                   snapshot.playhead.transportRevision, options, args.sampleRate);
+			// BUS IN is read before the sample is evaluated, and a change is stamped with the
+			// first tick not yet evaluated, so it applies to this sample at once (V11).
+			int64_t first = engine3.firstUnevaluated(h.transportRevision, h.startTick, tickFollower.u);
+			gorgon::v3::BusChange changes[gorgon::v3::BUS_FUNCTIONS + 2];
+			int n = busIn.process(busWord, busMap, score, h.transportRevision, h.startTick, h.startEntry, first, changes);
+			for (int k = 0; k < n; k++)
+				bridge.pushBus(changes[k]);
+			busIn.prune(std::max<int64_t>(first, 0), gorgon::v3::LONGEST_ROW);
+			bridge.setBusFrontier(std::max<int64_t>(first, 0));
+			gorgon::v3::TransportV3 transport = snapshot.layer->transport(h.startTick);
+			// The module that holds the layer plays its own record; others play Studio's.
+			if ((busIn.connected || bridge.busOutstanding()) && !bridge.busRefused())
+				transport = busIn.overlay(transport);
+			o = engine3.render(score, transport, moving, tickFollower.u, h.transportRevision, options, args.sampleRate);
 			if (tick) {
 				gorgon::v3::Position p = gorgon::v3::position(score, snapshot.playhead.startTick, tickFollower.u);
 				int shown = score.entries[size_t(p.entry)];
@@ -251,6 +279,10 @@ struct Gorgon : Module {
 		json_object_set_new(root, "audio", audioInput.toJson());
 		json_object_set_new(root, "pitchZero", json_integer(pitchZero.load()));
 		json_object_set_new(root, "busSource", json_integer(busSource.load()));
+		json_t* bits = json_array();
+		for (int f = 0; f < gorgon::v3::BUS_FUNCTIONS; f++)
+			json_array_append_new(bits, json_integer(busBits[f].load()));
+		json_object_set_new(root, "busIn", bits);   // FILL, then mutes 1–6: a bit 0–7, or -1
 		return root;
 	}
 
@@ -273,6 +305,12 @@ struct Gorgon : Module {
 		busSource = selected >= 0 && selected <= int(gorgon::BusSource::HitMask) ? int(selected) : int(gorgon::BusSource::Z);
 		busOutput = gorgon::ByteBusOutput();
 		shownBusWord = 0;
+		json_t* bits = json_object_get(root, "busIn");
+		for (int f = 0; f < gorgon::v3::BUS_FUNCTIONS; f++) {
+			json_t* b = json_array_get(bits, size_t(f));
+			json_int_t bit = json_is_integer(b) ? json_integer_value(b) : -2;
+			busBits[f] = bit >= -1 && bit <= 7 ? int(bit) : gorgon::v3::BusMap().bit[f];
+		}
 	}
 };
 
@@ -417,6 +455,27 @@ struct GorgonWidget : ModuleWidget {
 					}
 				}));
 		}
+
+		int busIn = module->shownBusIn.load();
+		std::string busState = busIn < 0 ? "not patched" : string::f("%02X", busIn);
+		if (module->bridge.busRefused())
+			busState += " · another module holds the bus";
+		menu->addChild(createSubmenuItem("BUS IN bits", busState, [=](Menu* sub) {
+			sub->addChild(createMenuLabel("High is on; a version-3 score only"));
+			for (int f = 0; f < gorgon::v3::BUS_FUNCTIONS; f++) {
+				std::string name = f == gorgon::v3::BUS_FILL ? "FILL" : string::f("Mute lane %d", f);
+				int bit = module->busBits[f].load();
+				sub->addChild(createSubmenuItem(name, bit < 0 ? "none" : string::f("bit %d", bit), [=](Menu* bits) {
+					for (int b = -1; b < 8; b++)
+						bits->addChild(createCheckMenuItem(b < 0 ? "None" : string::f("Bit %d (channel %d)", b, b + 1), "",
+							[=] { return module->busBits[f].load() == b; }, [=] { module->busBits[f] = b; }));
+				}));
+			}
+			sub->addChild(createMenuItem("Default (mutes on bits 0–5, FILL on 6)", "", [=] {
+				for (int f = 0; f < gorgon::v3::BUS_FUNCTIONS; f++)
+					module->busBits[f] = gorgon::v3::BusMap().bit[f];
+			}));
+		}));
 
 		menu->addChild(createSubmenuItem("Clock", string::f("%g PPQN", module->ppqn.load()), [=](Menu* sub) {
 			for (float p : {1.f, 2.f, 4.f, 8.f, 24.f})
