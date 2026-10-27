@@ -73,7 +73,7 @@ rough: **S** an evening, **M** a few sessions, **L** a multi-PR feature.
 | F2 | Diffusion model as offline renderer | outside these repos | M | — |
 | G1 | Latency measurement and per-destination offsets | Gorgon rack | M | — |
 | G2 | Event trace in all three evaluators | Gorgon spec → HydraPy → rack | M | A |
-| H1 | A4/Rytm as MIDI destinations | documentation only | S | — |
+| H1 | A4/Rytm as MIDI destinations — deferred | documentation only | S | — |
 
 ### A. Score v3 — `hydrapy-tracker-3`
 
@@ -142,14 +142,18 @@ follows the same rules (it is the third implementation, per `spec/README.md`).
   today's **Loop**, so Counter → Lookup → Converter is a ramp, an envelope or a
   triangle as well as a phase. The reference for a bouncing count is SCANNER's
   edge reflection rather than META's pendulum, which reverses on a trigger. The
-  contract has to settle, and the proposal is: one-shot holds at `MOD − 1`
-  whatever the overshoot, with CARRY once on the edge that reaches the hold;
+  contract has to settle, and the proposal is: one-shot counts up only and
+  holds at `MOD − 1` whatever the overshoot, with CARRY once on the edge that
+  reaches the hold, so `MOD − k` is a large step up rather than "down by k" and
+  a falling envelope is the rising one through Lookup's Curve shape 32;
   pendulum treats the increment, knob or bus, as a magnitude and carries the
   direction as its own state, saved with the patch, set to up by RESET/LOAD,
-  with CARRY on each reflection and the end words held for one edge; Engine
-  rate follows the same rules every sample; MODE changes take effect on the
-  next edge from the current word. In Loop nothing changes, including
-  `MOD − k` meaning "down by k".
+  with CARRY on each reflection; an overshoot clamps to the end word rather
+  than folding back, so every swing reaches 0 and `MOD − 1` and shows each for
+  one edge (`MOD` 8, increment 3: 0 3 6 7 4 1 0 3 …); Engine rate follows the
+  same rules every sample; MODE changes take effect on the next edge from the
+  current word. In Loop nothing changes, including `MOD − k` meaning "down by
+  k".
 - **B3. Machinemodule BUS TRIG.** Today a poly cable into TRIG is sixteen tracks,
   channel = track, and a bus works only by accident: bit *k* rising fires track
   *k*+1, channel 9 fires track 9 on every publication, and a bit held high
@@ -173,9 +177,12 @@ follows the same rules (it is the third implementation, per `spec/README.md`).
   through the sound link or GATES, never BUS OUT; BUS TRIG is for Counter,
   Lookup and Register sources, where "a hit on each clock while the bit is
   high" is the rhythm the chain is for. A v3 word that must reach BUS TRIG goes
-  through an AND mask that clears bits 6–7 (Vastish FUN today, Lookup2 later),
-  and a patched TRIG takes that instance off the sound link, so it gets no
-  per-hit locks.
+  through an AND mask that clears bits 6–7 (Vastish FUN today, Lookup2 later).
+  The mask removes FILL, not the per-clock retrigger: a hit still fires on every
+  CLOCK edge its span covers, so the word gives one trigger per hit only when
+  CLOCK pulses once per row (4 PPQN at rate 1) and the lane has no `ply`;
+  faster clocks repeat each hit and slower ones skip rows. A patched TRIG also
+  takes that instance off the sound link, so it gets no per-hit locks.
 - **B4. Switch, then Pipeline.** Order flipped from the current roadmap.
   Pipeline is the canon-of-the-kit effect; Switch is the A/B pattern-byte
   commutator and reclocker, plus a MIX mode, `out = A + (B − A) · c / 255` with
@@ -193,16 +200,12 @@ follows the same rules (it is the third implementation, per `spec/README.md`).
   where it started). SCANNER's JUMP, which reverses the scan or teleports it
   to its origin, is the inspiration, not the behaviour.
 
-  B5 depends on A-spec-4 defining BUS OUT bit 7, which today is only reserved.
-  The proposal: rename it **play start** (the evaluator's *play* exists in loop
-  mode, where `entry` is null; "entry" does not), and make it high on exactly
-  one publication per play — the first publication at or after the play's
-  first row, requested the way a transport publication is when no CLOCK edge
-  coincides, since entry starts need not land on the PPQN grid — and low on
-  the next. Two one-row entries are two plays and two publications, separated
-  by the existing mandatory low gap. Any consumer that must count plays reads
-  it bus-style (bit with CLK), which is why JUMP is bus-aware. A follow-up to
-  #44, or a line in it.
+  Gorgon offers JUMP no play-start event. A **play start** meaning for BUS OUT
+  bit 7 was proposed in review and dropped (2026-10-27): its publications off
+  the CLOCK grid would be extra clocks for every receiver on the cable. The v3
+  word stays a state word with bit 7 reserved, so B5 needs nothing from
+  A-spec-4; a BUS OUT lane bit patched into JUMP steps once per publication
+  its hit covers, the B3 rule.
 - **B6. Lookup2.** A two-input transfer module, `f[family][shape][A][B]` → byte,
   with JUMP from B5. It subsumes the bit-logic roles (Lipsk, Gera) as the
   shapes `A XOR B` and `A AND B` and adds everything between — product,
@@ -343,7 +346,8 @@ follows the same rules (it is the third implementation, per `spec/README.md`).
 
 ### H. External MIDI destinations
 
-- **H1.** Analog Four and Rytm MKI: each track answers to a note on its own
+- **H1.** Deferred as far-future (2026-10-26); kept here as written.
+  Analog Four and Rytm MKI: each track answers to a note on its own
   channel and the parameter set is exposed over CC/NRPN. Gorgon's lanes →
   Rack → Core **CV-MIDI** (gate/pitch/velocity → notes) and **CV-CC** (a lane's
   automation or a Lookup byte through Converter → CC). No new code; a documented
@@ -363,7 +367,7 @@ each is one PR in DSP_Emulation. **Done 2026-10-26:**
 2. B2 Counter — ByteBusLab 2.3.0 (#32, #33). B2b run modes are a follow-up.
 3. B3 Machinemodule BUS TRIG — MachinemoduleRack 2.1.0.
 4. F1 DrumLab retired from README, dev docs and CI; directory kept.
-5. H1 written up; G1's measurement utility still open.
+5. H1 deferred as far-future; G1's measurement utility still open.
 
 After phase 1 the chain Counter → Lookup → Machinemodule plays, the modular
 and the drum machine run through Vastish, and the bus experiment has had its
@@ -385,10 +389,9 @@ rushed to fit around phase 1.
 Monomodule; E1 OTIS patch select; G1 offsets table.
 
 **Phase 5 — depth.** B2b Counter run modes; B4 Switch and Pipeline; B5 Lookup
-JUMP (after bit 7 is defined), then B6 Lookup2, B7 Counter 2 and B8 library v2
-in whatever order the patches ask for; D2 chain
-mode; E2 Otis Kit and Capture; F2's manifest and renderer workflow; the
-tutorial video kit updated for six lanes.
+JUMP, then B6 Lookup2, B7 Counter 2 and B8 library v2 in whatever order the
+patches ask for; D2 chain mode; E2 Otis Kit and Capture; F2's manifest and
+renderer workflow; the tutorial video kit updated for six lanes.
 
 ## 4. Score v3 proposal (for A-spec-1..3)
 
@@ -618,10 +621,13 @@ The Via extraction was reviewed on #45 (Code, then GPT). Taken: Counter had
 already shipped, so its run modes became B2b with their open decisions listed;
 a 10 V bit on SHAPE CV is a full turn, so the density claim now goes through an
 attenuator and JUMP is a persistent step, not a held offset; JUMP became
-bus-aware so adjacent play starts count; bit 7 needs a definition before B5,
-proposed here as "play start"; Lookup2's tables are bounded and its algebraic
-shapes computed; the Via references were corrected (MAP, not Z, selects
-SCANNER's operation; its JUMP reverses or teleports; META's pendulum reverses
-on a trigger; GATESEQ promises only that density rises); the v3 BUS OUT word
-is a state word, not a trigger stream, with usage rules under B3; the parked
-firmware's library needs a real port to a 32 KiB-SRAM part.
+bus-aware so adjacent high words each step; Lookup2's tables are bounded and
+its algebraic shapes computed; the Via references were corrected (MAP, not Z,
+selects SCANNER's operation; its JUMP reverses or teleports; META's pendulum
+reverses on a trigger; GATESEQ promises only that density rises); the v3 BUS
+OUT word is a state word, not a trigger stream, with usage rules under B3; the
+parked firmware's library needs a real port to a 32 KiB-SRAM part. A follow-up
+pass recorded H1 as deferred, proposed One-shot as up-only and Pendulum as
+clamping at its ends, and noted that the AND mask doesn't stop per-clock
+retriggers. A "play start" definition for bit 7 was proposed and dropped: the
+v3 BUS OUT word stays a state word with bit 7 reserved.
