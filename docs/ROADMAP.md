@@ -153,7 +153,9 @@ follows the same rules (it is the third implementation, per `spec/README.md`).
   one edge (`MOD` 8, increment 3: 0 3 6 7 4 1 0 3 …); Engine rate follows the
   same rules every sample; MODE changes take effect on the next edge from the
   current word. In Loop nothing changes, including `MOD − k` meaning "down by
-  k".
+  k". Shipped as ByteBusLab 2.4.0 (DSP_Emulation #44) as proposed; its edge
+  cases (a 00 increment holds, a word above the top goes to it with CARRY,
+  the direction survives MODE changes) are in `COUNTER.md`, Run modes.
 - **B3. Machinemodule BUS TRIG.** Today a poly cable into TRIG is sixteen tracks,
   channel = track, and a bus works only by accident: bit *k* rising fires track
   *k*+1, channel 9 fires track 9 on every publication, and a bit held high
@@ -187,7 +189,11 @@ follows the same rules (it is the third implementation, per `spec/README.md`).
   Pipeline is the canon-of-the-kit effect; Switch is the A/B pattern-byte
   commutator and reclocker, plus a MIX mode, `out = A + (B − A) · c / 255` with
   `c` a third byte — the Via's crossfade-under-a-contour as a word. Both are
-  small once Counter has set the pattern for latching modules.
+  small once Counter has set the pattern for latching modules. Switch is
+  ByteBusLab 2.6.0 (DSP_Emulation #46, `vcv/bytebus/docs/SWITCH.md`): Select
+  (a bit of C chooses A or B), Bits (each bit of C chooses) and Mix, with B and
+  C falling back to knob words, transparent on A's clock or reclocked on its
+  own. Pipeline is still open.
 - **B5. Lookup JUMP.** A SHAPE step on the existing Lookup, so logic patched
   in changes the transfer function rhythmically. JUMP is a **bus input with a
   bit selector**, not a gate: SHAPE advances by one (wrapping) on each
@@ -205,7 +211,9 @@ follows the same rules (it is the third implementation, per `spec/README.md`).
   the CLOCK grid would be extra clocks for every receiver on the cable. The v3
   word stays a state word with bit 7 reserved, so B5 needs nothing from
   A-spec-4; a BUS OUT lane bit patched into JUMP steps once per publication
-  its hit covers, the B3 rule.
+  its hit covers, the B3 rule. Shipped as ByteBusLab 2.5.0 (DSP_Emulation
+  #45): an unclocked JUMP or a gate steps on the bit's rising edges, and RESET
+  also clears the steps.
 - **B6. Lookup2.** A two-input transfer module, `f[family][shape][A][B]` → byte,
   with JUMP from B5. It subsumes the bit-logic roles (Lipsk, Gera) as the
   shapes `A XOR B` and `A AND B` and adds everything between — product,
@@ -237,7 +245,9 @@ follows the same rules (it is the third implementation, per `spec/README.md`).
   + 1" while held — GATESEQ's PTN knob, whose documentation says only that
   density increases clockwise; the nesting property is our design — and the
   non-random counterpart of `%p`. Library v1 is immutable, so this is a new
-  library identity.
+  library identity. Library v2 is ByteBusLab 2.7.0 (DSP_Emulation #47):
+  Envelope, Sequence and Density as FAMILY 7–9, after Custom, so saved FAMILY
+  values keep their meaning; v1 regenerates byte-identical.
 - **Not needed:** a bus-aware control machine in Machinemodule. Converter DAC →
   a P1–P8 CV input is already byte-as-parameter-lock, latched at the hit, and
   mono CV broadcasts to all tracks. Per-track byte values don't fit on one cable;
@@ -315,7 +325,12 @@ follows the same rules (it is the third implementation, per `spec/README.md`).
   Gorgon never calls it on a tick; a "render" is a thing you do between takes. The ControlNet idea (record
   Machinemodule with pitch/timing labels for a second fine-tune) stays a
   research note until there is a reason to prefer a generated hit over a
-  Machinemodule one.
+  Machinemodule one. The manifest exists (2026-10-27): the breaks model's
+  `newbreak.py` writes one beside every WAV through `render_manifest.py`, on
+  the workstation in `shared/claude/breaks`, and the copy check adds its
+  result. Its transients match breakgen's labelled hits at recall 0.875 and
+  precision 0.876. OTIS loads the WAVs as they are. The caption vocabulary is
+  still the descriptive one the model was trained on.
 - **F3. pattern-timing.md.** Its `rate` concept, conversion formulas and
   transport-discontinuity rules are carried into A-spec-1 unchanged; its fixed
   64 rows and four lanes are not. Mark it superseded in `spec/README.md` once
@@ -396,6 +411,10 @@ the [Gorgon manual](../rack/docs/MANUAL.md#destination-latency).
 JUMP, then B6 Lookup2, B7 Counter 2 and B8 library v2 in whatever order the
 patches ask for; D2 chain mode; E2 Otis Kit and Capture; F2's manifest and
 renderer workflow; the tutorial video kit updated for six lanes.
+Progress, 2026-10-27: B2b, B5, B4's Switch and B8 are ByteBusLab 2.4.0–2.7.0
+(DSP_Emulation #44–#47), and F2's manifest is written beside the model.
+Pipeline, B6, B7, D2 and E2 are next; the tutorial kit waits on the GUI
+decisions.
 
 ## 4. Score v3 proposal (for A-spec-1..3)
 
