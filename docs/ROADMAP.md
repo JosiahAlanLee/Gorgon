@@ -331,6 +331,16 @@ follows the same rules (it is the third implementation, per `spec/README.md`).
   result. Its transients match breakgen's labelled hits at recall 0.875 and
   precision 0.876. OTIS loads the WAVs as they are. The caption vocabulary is
   still the descriptive one the model was trained on.
+
+  The nonsense-word caption scheme belongs to a later, second fine-tune
+  (Josiah, 2026-10-27). The model is trained on a broader sample set, with
+  attributes captioned by phrases of invented words outside the existing
+  training vocabulary: instead of "175 BPM in C minor", the key becomes a
+  phrase such as "loquacious lorax". An abstraction layer maps an ordinary
+  request onto those phrases, so a prompt lands closer to the training
+  captions.
+  It needs a complete retag of the sample set, and new samples rendered with
+  the Gorgon suite first, to mix with the existing data. Not started.
 - **F3. pattern-timing.md.** Its `rate` concept, conversion formulas and
   transport-discontinuity rules are carried into A-spec-1 unchanged; its fixed
   64 rows and four lanes are not. Mark it superseded in `spec/README.md` once
