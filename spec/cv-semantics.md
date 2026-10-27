@@ -59,14 +59,22 @@ nothing: that hit had already ended. The hit still starts as late as the
 change reached the follower, which for the Rack module is up to one bridge poll
 (1/30 s) plus a round trip.
 
+In version 3 the landing's candidate is the one whose span contains the
+landing. `evaluate()` returns it with `at ≤ 0`, and its landing phase is
+`−at / duration`; the rule above then decides, unchanged
+([evaluator.md](evaluator.md#evaluate), vector V6).
+
 ## Cells
 
 For lane `n` at the playhead's cell:
 
 - **present**: the cell is not null and `vel > 0`. `AIR` with `vel > 0` is present.
-  In version 3 a cell is present only on occurrences whose condition fires
-  ([evaluator.md](evaluator.md)), which needs the transport anchor, elapsed beats
-  and FILL as well as the beat.
+  In version 3 a cell is present only on candidates that fire
+  ([evaluator.md](evaluator.md#evaluate)): lane not muted, condition holding, not
+  dropped by a transform. That needs the transport anchor, elapsed ticks and FILL
+  as well as the beat. "Row" in the gate window and the landing gate means the
+  candidate's span, `[at, at + duration)`, so each `ply` sub-step
+  ([transforms.md](transforms.md)) gets its own gate.
 - **on** = present and `moving` and lane `n` not muted.
 
 While a lane is muted or the cell is silent, nothing below updates for that lane.

@@ -3,6 +3,53 @@
 Newest first. Each entry names the HydraPy commit and Rack module version it
 describes.
 
+## 2026-10-26 — score format 3, part 3: lane transforms (proposal), and the #42 amendments
+
+HydraPy `e5999b2282bd9766b6f7152b4278c3da4e72ed8e` · Rack module `GorgonBridge` 2.3.1,
+both unchanged. A-spec-3 of the [roadmap](../docs/ROADMAP.md).
+
+[transforms.md](transforms.md) proposes lane transforms. Each lane gains a required
+`transforms` list, `[]` for none, of at most eight nodes, applied in order:
+
+- **Nodes:** `rot k`, `rev`, `ply n` (a ratchet within the row), `degrade p` and
+  `every a:b (inner)`, nesting to depth 3.
+- **Ply limit:** the product of a lane's `ply` counts is at most 4.
+- **Evaluation:** transforms are judged per occurrence with that row's bar, as
+  conditions are. A condition is judged once per row, and `ply`'s sub-steps share
+  the result.
+- **Degrade:** draws from `chance` with its own salt per node, once per row before
+  `ply` and once per sub-step after it.
+- **Vectors:** V7–V9, including the roadmap's `1:3` plus `%` plus `ply 4`.
+
+[evaluator.md](evaluator.md) is ratified, with the review of #42's amendments:
+
+- **Ticks:** every musical time is an integer count of ticks, 1920 per quarter
+  note. That covers `at`, `u`, `duration`, anchors, FILL's `at`, effective beats
+  and the playhead's `start`, `elapsed` and `pending`. The bridge's `beat` stays
+  a float.
+- **Mutes:** a muted lane's cells are returned as candidates with `fires: false`
+  and `why: "muted"`. Candidates gain `why`, with fixed strings.
+- **The anchor's row:** `evaluate()` returns occurrences that end after the anchor
+  (`at + duration > 0`), so the row containing it comes back with a negative
+  `at`. The follower's landing gate decides whether to play it. This keeps
+  cv-semantics.md's landing-gate cases working under version 3 (V6).
+- **Late FILL transitions** are inserted in order, with nothing replayed, and
+  traced.
+- **`chance`** folds a fifth value, the `ply` sub-step (0 for a cell's own
+  condition). The check values and V2's draws change; nothing implements them
+  yet. The mod-100 bias is documented as intended.
+- **Trace lines** carry `transport_revision` and `start`, and FILL transitions get
+  lines of their own.
+- **The version-3 fixture** is defined: `GORGON_FIXTURE_3` in
+  `rack/tests/fixture3.txt`, with the version-2 fixture kept.
+
+[score-v3.md](score-v3.md) adds `transforms` to the lane, the empty-pattern defaults
+and the version-1/2 mapping. [cv-semantics.md](cv-semantics.md) says that a
+version-3 gate window is the candidate's span and how the landing gate finds its
+candidate, and [bridge-api.md](bridge-api.md) that the version-3 playhead fields
+are ticks. The schema's version-3 lane requires `transforms`. The version-1/2
+rules, and so the fixture, are unchanged.
+
 ## 2026-10-26 — score format 3, part 2: the evaluator (proposal)
 
 HydraPy `e5999b2282bd9766b6f7152b4278c3da4e72ed8e` · Rack module `GorgonBridge` 2.3.1,
