@@ -193,7 +193,11 @@ follows the same rules (it is the third implementation, per `spec/README.md`).
   ByteBusLab 2.6.0 (DSP_Emulation #46, `vcv/bytebus/docs/SWITCH.md`): Select
   (a bit of C chooses A or B), Bits (each bit of C chooses) and Mix, with B and
   C falling back to knob words, transparent on A's clock or reclocked on its
-  own. Pipeline is still open.
+  own. Pipeline is ByteBusLab 2.8.0 (DSP_Emulation #49,
+  `vcv/bytebus/docs/PIPELINE.md`): a 1–64 edge delay over a 128-word history,
+  SPREAD delaying bit *k* by *k* × SPREAD more edges (the scramble role, as the
+  canon of the kit), and LOOP repeating the last DELAY words. Its echo meets
+  Switch exactly on time with Pipeline in A and the pattern in B.
 - **B5. Lookup JUMP.** A SHAPE step on the existing Lookup, so logic patched
   in changes the transfer function rhythmically. JUMP is a **bus input with a
   bit selector**, not a gate: SHAPE advances by one (wrapping) on each
@@ -226,14 +230,22 @@ follows the same rules (it is the third implementation, per `spec/README.md`).
   difference, lighten; OR, AND, XOR, > on the logic outputs) and Z deforms the
   terrain. The tables here are original and ship through the same generator
   and library-identity rules as Lookup's. When it lands, `BYTE_BUS_SPEC.md`'s
-  role table moves Lipsk/Gera from Vastish FUN to Lookup2.
+  role table moves Lipsk/Gera from Vastish FUN to Lookup2. Shipped as
+  ByteBusLab 2.9.0 (DSP_Emulation #50) with every family computed, so no tables
+  and no library identity: Logic (all sixteen two-input functions), Arithmetic
+  (sums, mix, ring, product, min/max, comparisons), a continuous two-input Fold
+  and 64 two-word Walsh maps, each one-to-one in A and in B; the role table
+  moved.
 - **B7. Counter 2.** A RATIO mode: the increment is `256 · N / D` per clock with
   a fractional accumulator, giving a phase word at N/D of CLK — SYNC's
   clock-ratio contour as a byte, and a polymeter source for the modular locked
   to Gorgon's CLOCK. SYNC's scale grids (integers, odds, multiples of three;
   rhythmic harmonics, no-triplet, triplet, dotted) become a Lookup family that
   maps a byte to a ratio. This changes Counter's "increment is a byte" model,
-  so it is a second version, not part of B2.
+  so it is a second version, not part of B2. Shipped as the Counter 2 module,
+  ByteBusLab 2.10.0 (DSP_Emulation #51): N 1–16 and D 1–64 on knobs, an exact
+  integer accumulator, one step per clock edge; the ratio Lookup family waits
+  for a library v3.
 - **B8. Lookup library v2.** Three families the v1 library lacks, all authoring
   work in `generate_lookup.py` rather than DSP: an **envelope** family
   (expo/log pairs, plateaus and cliffs, lumps, variable sustain) so a one-shot
@@ -293,7 +305,11 @@ follows the same rules (it is the third implementation, per `spec/README.md`).
   input. Highest leverage item on the list; "small" applies to the mono step.
 - **D2. Chain mode.** Vastish immediately to the right of Vastish continues the
   chain (the Séance row pattern): the K2600's triple modular processing. Real,
-  but it is more of the same; after D1 and the bus work.
+  but it is more of the same; after D1 and the bus work. Shipped as VastishLab
+  2.8.0 (DSP_Emulation #52, `vcv/vastish/docs/CHAIN.md`), opt-in from the right
+  Vastish's menu: each voice takes the left voice after its blocks and before
+  its amp, on the left's notes and gates, through Rack's expander messages
+  (one sample per hop), and applies its own amp envelope.
 
 ### E. OTIS
 
@@ -306,7 +322,13 @@ follows the same rules (it is the third implementation, per `spec/README.md`).
 - **E2. Otis Kit and Capture** stay as described in DRUM_MACHINE.md §"An Otis
   flavor" — a bounded bank, slot/slice per hit, record-then-play with
   generation handoff. E1 is the first step toward it; the rest waits for the
-  v3 event path so hits carry slot and region as locks.
+  v3 event path so hits carry slot and region as locks. Otis Kit's playback is
+  OtisLab 2.10.0 (DSP_Emulation #53, `vcv/otislab/docs/KIT.md`): eight slots
+  packed into one ES5505 memory and played on OTIS's own voice code, slot *n*
+  as chip voice *n*, bit-identical to OTIS playing each sample alone; GATE
+  channel *n* or SLOT's bits 0–2 choose the slot per hit, and a folder of F2
+  renders loads into the slots. Capture, slot and region as sound-link locks,
+  and per-slot outputs are next.
 
 ### F. Retirements and redirections
 
@@ -412,9 +434,11 @@ JUMP, then B6 Lookup2, B7 Counter 2 and B8 library v2 in whatever order the
 patches ask for; D2 chain mode; E2 Otis Kit and Capture; F2's manifest and
 renderer workflow; the tutorial video kit updated for six lanes.
 Progress, 2026-10-27: B2b, B5, B4's Switch and B8 are ByteBusLab 2.4.0–2.7.0
-(DSP_Emulation #44–#47), and F2's manifest is written beside the model.
-Pipeline, B6, B7, D2 and E2 are next; the tutorial kit waits on the GUI
-decisions.
+(DSP_Emulation #44–#47), and F2's manifest is written beside the model. On the
+defaults Josiah approved the same day, Pipeline, B6 and B7 followed as
+ByteBusLab 2.8.0–2.10.0 (#49–#51), D2 as VastishLab 2.8.0 (#52) and E2's Otis
+Kit playback as OtisLab 2.10.0 (#53). Left: E2's Capture, the ratio Lookup
+family (library v3), and the tutorial kit, which waits on the GUI decisions.
 
 ## 4. Score v3 proposal (for A-spec-1..3)
 
