@@ -367,7 +367,7 @@ each is one PR in DSP_Emulation. **Done 2026-10-26:**
 2. B2 Counter — ByteBusLab 2.3.0 (#32, #33). B2b run modes are a follow-up.
 3. B3 Machinemodule BUS TRIG — MachinemoduleRack 2.1.0.
 4. F1 DrumLab retired from README, dev docs and CI; directory kept.
-5. H1 deferred as far-future; G1's measurement utility still open.
+5. H1 deferred as far-future; G1's measurement utility still open (Phase 4: Ping).
 
 After phase 1 the chain Counter → Lookup → Machinemodule plays, the modular
 and the drum machine run through Vastish, and the bus experiment has had its
@@ -386,7 +386,11 @@ where the tracker becomes the instrument you will take to a show, so it is not
 rushed to fit around phase 1.
 
 **Phase 4 — destinations on the new contract.** C2a refactor, then C2b
-Monomodule; E1 OTIS patch select; G1 offsets table.
+Monomodule; E1 OTIS patch select; G1 offsets table. C2a and C2b are merged
+(DSP_Emulation #39–#41; Gorgon #54, #55). E1 is DSP_Emulation #43, OTIS 2.9.0,
+taking §5.6's default. G1 is Ping, a latency meter in GorgonBridge (nothing in
+the VCV Library sends a pulse and times its return), with the measured table in
+the [Gorgon manual](../rack/docs/MANUAL.md#destination-latency).
 
 **Phase 5 — depth.** B2b Counter run modes; B4 Switch and Pipeline; B5 Lookup
 JUMP, then B6 Lookup2, B7 Counter 2 and B8 library v2 in whatever order the
@@ -548,7 +552,8 @@ Defaults are what the plan assumes if nobody objects.
    bound.
 6. **OTIS patch-select**: two bits of the existing FRAME BUS word, vs a second
    bus input. Default: a second input, so frame scanning and layer selection
-   can come from different sources.
+   can come from different sources. E1 (DSP_Emulation #43) takes the default:
+   a PATCH input.
 7. **Counter before Pipeline** in the bus roadmap (default yes).
 8. **Byte bus name** — still "Harriot" pending a better one. Not blocking.
 

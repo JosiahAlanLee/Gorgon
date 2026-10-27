@@ -78,6 +78,11 @@ jobs:
           step env ASAN_OPTIONS=detect_leaks=0 /tmp/gorgon_module_asan
           step make -C rack/tests module_test RACK_DIR=/tmp/Rack-SDK
           step rack/tests/module_test
+          # Ping in Rack's own engine and cables, under the sanitizers and as built.
+          step g++ -std=c++17 -O1 -g -pthread -fsanitize=address,undefined -fno-omit-frame-pointer -I/tmp/Rack-SDK/include -I/tmp/Rack-SDK/dep/include -Irack/src rack/tests/ping_module_test.cpp -L/tmp/Rack-SDK -Wl,-rpath,/tmp/Rack-SDK -lRack -Wl,--allow-shlib-undefined -o /tmp/ping_module_asan
+          step env ASAN_OPTIONS=detect_leaks=0 /tmp/ping_module_asan
+          step make -C rack/tests ping_module_test RACK_DIR=/tmp/Rack-SDK
+          step rack/tests/ping_module_test
           step make -C rack dist RACK_DIR=/tmp/Rack-SDK
       - name: Validate the score schema against HydraPy's scores
         run: |

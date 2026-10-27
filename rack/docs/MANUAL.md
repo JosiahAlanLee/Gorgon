@@ -227,6 +227,74 @@ clock estimate. This does not compensate physical display or device latency.
 
 **OFFSET** (±100 ms) moves Rack's outputs earlier (clockwise) or later than the picture, to make up for audio and video latency. To set it, patch GATE 1 into a percussive voice, give lane 1 a hit on every beat, and turn OFFSET until each hit lines up with a visible flash in Gorgon.
 
+### Destination latency
+
+OFFSET moves every output together. Destinations don't all sound at the same
+moment, though: a hit plays in OTIS at once, but in Machinemodule about 24 ms
+after its gate. Machinemodule and Monomodule render on a worker thread, 1024
+samples ahead of their outputs, so that a slow block is never heard. These
+latencies were measured with [Ping](#ping-measuring-latency) on the workstation
+(Linux, Rack Free 2.6.6). Each is the median over 64 pings, 23 for Monomodule,
+from the destination's trigger input to its output crossing 10 mV:
+
+| Destination | 44.1 kHz | 48 kHz | Spread |
+|---|---|---|---|
+| Machinemodule 2.2.0, Machinedrum OS 1.63, default kit track 1 (TRX BD) | 1071 samples, 24.29 ms | 1161 samples, 24.19 ms | none at 44.1 kHz; 1143–1176 samples at 48 kHz |
+| Monomodule 2.0.0, Monomachine OS 1.32B, SWAVE SAW | 1077 samples, 24.42 ms | 1167 samples, 24.31 ms | about ±1 ms |
+| OTIS 2.9.0, a sine sample | 45 samples, 1.02 ms | 49 samples, 1.02 ms | 2–3 samples |
+| Vastish 2.7.0, default patch | 8 samples, 0.18 ms | 8 samples, 0.17 ms | 5–22 samples |
+| Fundamental ADSR, attack 0 | 0 | 0 | none |
+
+At 44.1 kHz every Machinemodule result was the same. At 48 kHz they spread over
+34 samples, which is one of its emulator's 32-frame blocks at 44.1 kHz.
+Monomodule's spread is wider. Gorgon's sound link adds nothing to a TRIG cable:
+GATE 1 to Machinemodule's track 1 over the link measured the same 1161 samples
+at 48 kHz.
+
+To line destinations up with each other, take the slowest as the reference and
+delay each faster one by the difference. Delay its audio (a delay at full wet,
+no feedback) or its gate. For example, delay OTIS by 23 ms to sound with
+Machinemodule. Then set OFFSET for the whole set against the picture.
+
+An audio interface's round trip, the ES-3 path and USB MIDI to hardware are
+not in the table: they need a cable out of the computer and back. To measure
+one, patch Ping's PULSE to the Audio module output that leaves Rack, close the
+loop outside, and patch the Audio module input it returns on into RETURN.
+
+## Ping: measuring latency
+
+**Ping** (in the GorgonBridge plugin, 8 HP) measures how long a destination
+takes to sound. It sends a pulse into the destination, or watches the trigger
+that plays it, and times the first sound that comes back.
+
+1. Patch **PULSE** to the destination's trigger or gate input, and the
+   destination's output into **RETURN**. Or patch the gate that already plays
+   the destination (a Gorgon GATE) into **TRIG** as well, and leave PULSE free.
+2. Press **PING**, or turn on **AUTO** to ping every half second.
+3. Read the display: the last result in milliseconds and samples, the median
+   and the number of results, the smallest and largest, and the sample rate.
+
+The count runs from the sample the destination receives the pulse or trigger to
+the sample its output reaches **THRESH** (1 mV to 1 V; 10 mV by default). Rack
+moves each cable's value one sample later; Ping takes those steps off, so a
+destination that answers on the sample its input arrives reads 0. RETURN may be
+polyphonic: the loudest channel counts.
+
+- **NOT QUIET**: RETURN was above THRESH within 5 ms before the start, so a
+  result could be the last sound's tail. Ping slower (**Repeat every** in the
+  menu), shorten the sound, or raise THRESH.
+- **NO RETURN**: nothing crossed THRESH within 2 s.
+- A new start abandons a measurement still waiting.
+
+Ping keeps its last 64 results, with the sample rate they were measured at, and
+saves them with the patch, so a destination's latency is a number stored with
+the patch. A result at a new sample rate clears them. **Copy results** in the
+menu copies a one-line summary; **Clear results** starts again. **Pulse length**
+(1–200 ms, 10 ms by default) suits destinations that need a longer gate.
+
+Ping carries mark VII, *Revision*: returns displaced. The pulse comes back moved
+in time.
+
 ## Event trace
 
 When a hit didn't sound, the trace says why. Gorgon keeps its last 4096 events:
