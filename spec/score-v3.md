@@ -236,8 +236,9 @@ since its beat origin moves.
 Cell conditions, the event record, `evaluate()`, seed, bar counters and
 fill-from-beat are [evaluator.md](evaluator.md) (A-spec-2); lane transforms are
 [transforms.md](transforms.md) (A-spec-3); Rack's BUS IN, the wider BUS OUT hit
-mask (with bit 7 reserved for "entry start") and FILL/mute transport fields are
-A-spec-4. The Rack display's beat is now cycle-relative, which the Rack manual
-must say in Phase 3. The Rack sound link's six lanes are C1. Triplet grids,
-ties, per-lane rates and cells placed between rows are not planned for version
-3; `ply`'s sub-steps are the only events shorter than a row.
+mask (with bit 7 reserved for "entry start") and the bus layer of FILL and
+mutes are [bus-io.md](bus-io.md) (A-spec-4). The Rack display's beat is now
+cycle-relative, which the Rack manual must say in Phase 3. The Rack sound
+link's six lanes are C1. Triplet grids, ties, per-lane rates and cells placed
+between rows are not planned for version 3; `ply`'s sub-steps are the only
+events shorter than a row.

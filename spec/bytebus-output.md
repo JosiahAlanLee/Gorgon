@@ -1,7 +1,9 @@
 # Rack ByteBus output
 
 Contract v1. Written against HydraPy `67d08975a17b203652ecb53bb777e80446626816`
-and DSP_Emulation `4587b48293929448419eff428126d6f8008b7872`.
+and DSP_Emulation `4587b48293929448419eff428126d6f8008b7872`. The hit mask for
+version-3 documents ([below](#version-3)) is part of
+[bus-io.md](bus-io.md) (A-spec-4) and not yet implemented.
 
 This is a Rack-side encoding of the existing automation lanes and hit state.
 It adds no score fields, bridge endpoints, Python signals, or direct hardware
@@ -44,6 +46,25 @@ the mask, even when BUS is sampled after a gate has closed.
 
 Examples: Z = 0 → 00; Z = 0.5 → 80; Z = 1 → FF. Roll = 0° → 80.
 Feedback = 0.9 → FF. Hits in lanes 1 and 4 → 09 (channels 1 and 4 high).
+
+### Version 3
+
+For a `hydrapy-tracker-3` document the hit-mask source publishes the same word
+layout that BUS IN reads ([bus-io.md](bus-io.md#one-word-layout)):
+
+| Bit | Meaning |
+| --- | --- |
+| 0–5 | Lane `n` on bit `n − 1`: a candidate of lane `n` that fires covers the sampled tick, `at ≤ u < at + duration` ([evaluator.md](evaluator.md#evaluate)) |
+| 6 | FILL as conditions see it on the row containing the sampled tick: Studio's or the bus layer's, at that row's start |
+| 7 | 0, reserved for "entry start" |
+
+A candidate that doesn't fire publishes 0 for its whole span, including one
+muted at its `at` by the score or the bus layer; a mute that arrives during the
+span doesn't clear the bit. A `ply` sub-step counts for its own span. Bit 6
+changes only on row starts, the ticks at which FILL is read. As for versions 1 and 2, the mask follows the
+candidate's span, not the gate fraction. Version 1 and 2 documents publish as
+in the table above, so the fixture and the existing tests are unchanged. The
+menu names the source "Hit mask (lanes 1–6, FILL)" for a version-3 document.
 
 ## Acquisition and publication
 

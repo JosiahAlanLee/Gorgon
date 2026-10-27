@@ -70,8 +70,10 @@ For lane `n` at the playhead's cell:
 
 - **present**: the cell is not null and `vel > 0`. `AIR` with `vel > 0` is present.
   In version 3 a cell is present only on candidates that fire
-  ([evaluator.md](evaluator.md#evaluate)): lane not muted, condition holding, not
-  dropped by a transform. That needs the transport anchor, elapsed ticks and FILL
+  ([evaluator.md](evaluator.md#evaluate)): lane not muted by the score or the bus
+  layer ([bus-io.md](bus-io.md)), condition holding, not dropped by a
+  transform. "Muted" below is then judged once, at the candidate's `at`, not on
+  every sample, so a mute that arrives while a hit sounds doesn't cut its gate. That needs the transport anchor, elapsed ticks and FILL
   as well as the beat. "Row" in the gate window and the landing gate means the
   candidate's span, `[at, at + duration)`, so each `ply` sub-step
   ([transforms.md](transforms.md)) gets its own gate.
