@@ -10,6 +10,7 @@
 
 #include "GorgonEngine.hpp"
 #include "ScoreV3.hpp"
+#include "Trace.hpp"
 
 namespace gorgon {
 namespace v3 {
@@ -162,6 +163,8 @@ struct EngineV3 {
 	int retrigger[LANES] = {};
 	float velocity[LANES] = {}, pitch[LANES] = {};
 	int covering[LANES] = {-1, -1, -1, -1, -1, -1};   // the firing hit under u, per lane
+	TraceRing* trace = nullptr;    // where evaluated candidates are traced, if anywhere
+	int64_t frame = 0;             // the engine frame being rendered, for the trace
 
 	// Carry the transport state across from the version-1/2 engine when the score changes
 	// format, as TrackerCV keeps one state for both: no reset, held values kept.
@@ -204,7 +207,10 @@ struct EngineV3 {
 			return;
 		int64_t first = std::max(frontier, floorU - LONGEST_ROW);
 		frontier = top;
+		int entry = score.loop ? -1 : score.entryAt(segmentTick);
 		evaluate(score, transport, first, top, [&](const Candidate& c) {
+			if (trace)
+				trace->write(candidateRecord(c, score.patternAt(c.pattern)->lanes[c.lane], segmentRevision, segmentTick, entry, frame));
 			if (double(c.at + c.duration) <= u)
 				return;
 			if (count == CAPACITY) {

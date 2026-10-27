@@ -10,6 +10,9 @@
 // plays six through EngineV3.hpp, on elapsed ticks rather than beats.
 #include <atomic>
 #include <cstring>
+#include <fstream>
+
+#include <osdialog.h>
 
 #include "plugin.hpp"
 #include "Layout.hpp"
@@ -43,6 +46,7 @@ struct Gorgon : Module {
 	// Version 3: elapsed ticks instead of a cycle beat, and the candidates' engine.
 	gorgon::v3::TickFollower tickFollower;
 	gorgon::v3::EngineV3 engine3;
+	gorgon::v3::TraceRing traceRing{4096};   // evaluator.md#trace: the menu saves it as JSONL
 	bool wasV3 = false, rendered = false;
 	// BUS IN (bus-io.md): the reader, this module's own layer, and the bit map.
 	gorgon::ByteBusReader busReader;
@@ -98,6 +102,7 @@ struct Gorgon : Module {
 		configOutput(BREAKS_R_OUTPUT, "Breaks audio right (audio device input 4)");
 		configOutput(BUS_OUTPUT, "BUS OUT: bits 0–7, channel 9 word clock (0/10 V)");
 		configLight(LINK_LIGHT, "Linked to Studio");
+		engine3.trace = &traceRing;
 		configLight(CLOCK_LIGHT, "Clock");
 		bridge.start();
 	}
@@ -171,14 +176,20 @@ struct Gorgon : Module {
 			int64_t first = engine3.firstUnevaluated(h.transportRevision, h.startTick, tickFollower.u);
 			gorgon::v3::BusChange changes[gorgon::v3::BUS_FUNCTIONS + 2];
 			int n = busIn.process(busWord, busMap, score, h.transportRevision, h.startTick, h.startEntry, first, changes);
-			for (int k = 0; k < n; k++)
+			for (int k = 0; k < n; k++) {
 				bridge.pushBus(changes[k]);
+				const gorgon::v3::BusChange& c = changes[k];
+				if (c.kind == gorgon::v3::BusChange::CHANGE)
+					traceRing.write(gorgon::v3::busRecord(c.function, c.at, c.on, std::max<int64_t>(first, 0), c.revision, c.tick, c.entry,
+					                                      args.frame));
+			}
 			busIn.prune(std::max<int64_t>(first, 0), gorgon::v3::LONGEST_ROW);
 			bridge.setBusFrontier(std::max<int64_t>(first, 0));
 			gorgon::v3::TransportV3 transport = snapshot.layer->transport(h.startTick);
 			// The module that holds the layer plays its own record; others play Studio's.
 			if ((busIn.connected || bridge.busOutstanding()) && !bridge.busRefused())
 				transport = busIn.overlay(transport);
+			engine3.frame = args.frame;
 			o = engine3.render(score, transport, moving, tickFollower.u, h.transportRevision, options, args.sampleRate);
 			if (tick) {
 				gorgon::v3::Position p = gorgon::v3::position(score, snapshot.playhead.startTick, tickFollower.u);
@@ -476,6 +487,21 @@ struct GorgonWidget : ModuleWidget {
 					module->busBits[f] = gorgon::v3::BusMap().bit[f];
 			}));
 		}));
+
+		uint64_t traced = module->traceRing.written();
+		menu->addChild(createMenuItem("Save event trace…", string::f("%llu events", (unsigned long long)std::min<uint64_t>(traced, 4096)), [=] {
+			// The last 4096 candidates and BUS IN changes, as evaluator.md#trace's JSONL.
+			std::vector<gorgon::v3::TraceRecord> records = module->traceRing.copy();
+			osdialog_filters* filters = osdialog_filters_parse("Event trace:jsonl");
+			char* path = osdialog_file(OSDIALOG_SAVE, nullptr, "gorgon-trace.jsonl", filters);
+			osdialog_filters_free(filters);
+			if (!path)
+				return;
+			std::ofstream out(path);
+			for (const gorgon::v3::TraceRecord& r : records)
+				out << gorgon::v3::traceLine(r) << "\n";
+			std::free(path);
+		}, traced == 0));
 
 		menu->addChild(createSubmenuItem("Clock", string::f("%g PPQN", module->ppqn.load()), [=](Menu* sub) {
 			for (float p : {1.f, 2.f, 4.f, 8.f, 24.f})

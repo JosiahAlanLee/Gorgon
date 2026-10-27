@@ -236,6 +236,7 @@ int main() {
 		}
 		auto& five = p.lanes[4].cells[0];
 		five.present = true; five.vel = 127.; five.midi = 69;          // A4 = +0.75 V
+		std::memcpy(five.note, "A-4", 4);
 		auto& six = p.lanes[5].cells[2];
 		six.present = true; six.vel = 63.5; six.midi = -1;            // AIR
 		six.hasLocks = true; six.locks.machine = 48; six.locks.mask = 1; six.locks.values[0] = 7.f;
@@ -326,6 +327,14 @@ int main() {
 		m.inputs[Gorgon::BUS_INPUT].setVoltage(0.f, 4);
 		gate5Rises(96000 - args.frame % 96000);
 		assert(gate5Rises(12000) && !m.busIn.connected);           // plays again
+		// The event trace holds the candidates evaluated and BUS IN's changes.
+		bool tracedHit = false, tracedMute = false;
+		for (const gorgon::v3::TraceRecord& r : m.traceRing.copy()) {
+			std::string line = gorgon::v3::traceLine(r);
+			tracedHit = tracedHit || line.find("\"lane\": 4, \"duration\": 480, \"note\": \"A-4\"") != std::string::npos;
+			tracedMute = tracedMute || line.find("\"bus\": {\"mute\": {\"lane\": 4,") != std::string::npos;
+		}
+		assert(tracedHit && tracedMute);
 		// The bit map is saved with the patch; old patches get the default.
 		m.busBits[gorgon::v3::BUS_FILL] = 7;
 		m.busBits[gorgon::v3::BUS_MUTE1 + 2] = -1;

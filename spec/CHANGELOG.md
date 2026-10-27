@@ -3,6 +3,17 @@
 Newest first. Each entry names the HydraPy commit and Rack module version it
 describes.
 
+## 2026-10-27 — the Rack module's event trace
+
+HydraPy `3c01f32eb0c5a396d4e854e20d0b0d9b14de27d7` (pin unchanged) · Rack module
+`GorgonBridge` 2.4.0.
+
+The Rack module keeps [evaluator.md](evaluator.md#trace)'s bounded ring of the
+candidates it evaluates and of BUS IN's changes. Its menu saves the ring as
+JSONL. It adds one field, `x_frame`, the engine frame the line was written on.
+`evaluator_test` checks every fixture3 candidate's line against HydraPy's own,
+as JSON.
+
 ## 2026-10-27 — the Rack module's BUS IN
 
 HydraPy `3c01f32eb0c5a396d4e854e20d0b0d9b14de27d7` (pin unchanged) · Rack module
