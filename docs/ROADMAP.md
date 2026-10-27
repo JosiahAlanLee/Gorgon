@@ -244,8 +244,11 @@ follows the same rules (it is the third implementation, per `spec/README.md`).
   maps a byte to a ratio. This changes Counter's "increment is a byte" model,
   so it is a second version, not part of B2. Shipped as the Counter 2 module,
   ByteBusLab 2.10.0 (DSP_Emulation #51): N 1–16 and D 1–64 on knobs, an exact
-  integer accumulator, one step per clock edge; the ratio Lookup family waits
-  for a library v3.
+  integer accumulator, one step per clock edge. The ratio Lookup family is
+  library v3, ByteBusLab 2.11.0 (DSP_Emulation #56): Lookup's FAMILY 10 maps a
+  byte to a ratio word, `(n − 1) << 4 | (d − 1)`, over eight grids named after
+  SYNC's (Integers, Odds, Threes, Harmonics, Straight, Triplet, Dotted, All), and
+  Counter 2's new RATIO input takes that word in place of N and D.
 - **B8. Lookup library v2.** Three families the v1 library lacks, all authoring
   work in `generate_lookup.py` rather than DSP: an **envelope** family
   (expo/log pairs, plateaus and cliffs, lumps, variable sustain) so a one-shot
@@ -327,8 +330,13 @@ follows the same rules (it is the third implementation, per `spec/README.md`).
   packed into one ES5505 memory and played on OTIS's own voice code, slot *n*
   as chip voice *n*, bit-identical to OTIS playing each sample alone; GATE
   channel *n* or SLOT's bits 0–2 choose the slot per hit, and a folder of F2
-  renders loads into the slots. Capture, slot and region as sound-link locks,
-  and per-slot outputs are next.
+  renders loads into the slots. Capture is OtisLab 2.11.0 (DSP_Emulation #55,
+  `vcv/otislab/docs/CAPTURE.md`): an 8 HP expander right of Otis Kit that
+  records IN, the kit's own output or both for 1/4 to 32 beats (of CLOCK, or at
+  TEMPO) into a chosen slot. The take replaces the slot only when complete, a
+  hit already sounding keeps the take it started with, and takes save with the
+  patch. Slot and region as sound-link locks, and per-slot outputs, are
+  possible follow-ups.
 
 ### F. Retirements and redirections
 
@@ -437,8 +445,10 @@ Progress, 2026-10-27: B2b, B5, B4's Switch and B8 are ByteBusLab 2.4.0–2.7.0
 (DSP_Emulation #44–#47), and F2's manifest is written beside the model. On the
 defaults Josiah approved the same day, Pipeline, B6 and B7 followed as
 ByteBusLab 2.8.0–2.10.0 (#49–#51), D2 as VastishLab 2.8.0 (#52) and E2's Otis
-Kit playback as OtisLab 2.10.0 (#53). Left: E2's Capture, the ratio Lookup
-family (library v3), and the tutorial kit, which waits on the GUI decisions.
+Kit playback as OtisLab 2.10.0 (#53). Then E2's Capture as OtisLab 2.11.0 (#55)
+and the ratio Lookup family, library v3, as ByteBusLab 2.11.0 (#56). Left: the
+tutorial kit. The six lanes settled the GUI decisions it waited on (Josiah,
+2026-10-27), so it is unblocked.
 
 ## 4. Score v3 proposal (for A-spec-1..3)
 
