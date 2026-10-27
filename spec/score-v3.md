@@ -1,12 +1,13 @@
 # Score format 3: lanes and timing
 
-**Status: contract, part 1 of 4; not yet implemented.** This is A-spec-1 of the
+**Status: contract, part 1 of 4; implemented** in the Rack module
+`GorgonBridge` 2.4.0 and HydraPy 0.1.0 at `3c01f32` (the
+[`hydrapy.pin`](../hydrapy.pin)). This is A-spec-1 of the
 [roadmap](../docs/ROADMAP.md) (§2.A, §4). It defines the shape and timeline of
 format `hydrapy-tracker-3`. Cell conditions and the evaluator (A-spec-2), lane
 transforms (A-spec-3) and bus I/O (A-spec-4) extend the same format in their own
-pull requests. No implementation accepts version 3 until all four have merged
-and HydraPy implements them; versions 1 and 2 ([score.md](score.md)) remain the
-working contract until then. Written against HydraPy
+pages. All four have merged, and both implementations accept version 3 beside
+versions 1 and 2 ([score.md](score.md)). Written against HydraPy
 `e5999b2282bd9766b6f7152b4278c3da4e72ed8e` and Gorgon `9a2cb23`; lane
 `transforms` added by [transforms.md](transforms.md) (A-spec-3).
 
