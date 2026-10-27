@@ -83,6 +83,10 @@ The playhead, the patch's controls, and the score if it changed.
 - `controls[].value` is the control's base value (before any modulation the
   patch adds), clamped to `[min, max]`.
 - Clients must ignore fields they don't recognise.
+- For a version-3 document the playhead also carries `start`, `elapsed`, `entry`,
+  `fill` and `pending` ([evaluator.md](evaluator.md#playhead-fields)), and the
+  transport endpoint's `beat` ranges over the current cycle
+  ([score-v3.md](score-v3.md#transport)).
 
 ### `POST /api/tracker_transport`
 
