@@ -1,12 +1,13 @@
 # Score format 3: lane transforms
 
-**Status: proposed contract, part 3 of 4.** This is A-spec-3 of the
+**Status: contract, part 3 of 4; implemented** in the Rack module
+`GorgonBridge` 2.4.0 and HydraPy 0.1.0 at `3c01f32` (the
+[`hydrapy.pin`](../hydrapy.pin)). This is A-spec-3 of the
 [roadmap](../docs/ROADMAP.md) (§2.A, §4). It defines a lane's `transforms`:
 an ordered list of typed nodes that change which cell a lane plays on a row,
 how many times, and whether it sounds. They run inside `evaluate()`
 ([evaluator.md](evaluator.md)); bus I/O is [bus-io.md](bus-io.md) (A-spec-4).
-No implementation accepts version 3 until all four parts have merged and
-HydraPy implements them. Written against HydraPy
+Written against HydraPy
 `e5999b2282bd9766b6f7152b4278c3da4e72ed8e` and Gorgon `6995cf4`.
 
 The five node types are an original subset with familiar names. No Strudel

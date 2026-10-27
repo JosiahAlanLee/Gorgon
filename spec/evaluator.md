@@ -1,13 +1,14 @@
 # The evaluator: events, conditions and bar counters
 
-**Status: contract, part 2 of 4; not yet implemented.** This is A-spec-2 of the
+**Status: contract, part 2 of 4; implemented** in the Rack module
+`GorgonBridge` 2.4.0 and HydraPy 0.1.0 at `3c01f32` (the
+[`hydrapy.pin`](../hydrapy.pin)). This is A-spec-2 of the
 [roadmap](../docs/ROADMAP.md) (§2.A, §4). It defines what a version-3 score
 ([score-v3.md](score-v3.md)) plays: the event record, `evaluate()` and its
 invariants, cell conditions, the bar counter, the seed and FILL. Lane
 transforms are [transforms.md](transforms.md) (A-spec-3) and bus I/O
 [bus-io.md](bus-io.md) (A-spec-4).
-No implementation accepts version 3 until all four parts have merged and HydraPy
-implements them. Written against HydraPy
+Written against HydraPy
 `e5999b2282bd9766b6f7152b4278c3da4e72ed8e` and Gorgon `a293984`.
 
 Its six proposals were ratified on 2026-10-26 in the review of #42, with

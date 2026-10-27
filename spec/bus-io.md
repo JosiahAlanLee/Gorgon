@@ -1,12 +1,14 @@
 # Score format 3: bus I/O
 
-**Status: proposed contract, part 4 of 4.** This is A-spec-4 of the
+**Status: contract, part 4 of 4; implemented** in the Rack module
+`GorgonBridge` 2.4.0 and HydraPy 0.1.0 at `3c01f32` (the
+[`hydrapy.pin`](../hydrapy.pin)). This is A-spec-4 of the
 [roadmap](../docs/ROADMAP.md) (§2.A, §4). It defines the **bus layer**: FILL and
 six lane mutes that Rack sets live from a new BUS IN, stamped by Rack and merged
 into what every implementation plays. It also defines the transport endpoint
-fields that carry the layer, and BUS OUT's hit mask for version 3. No
-implementation accepts version 3 until all four parts have merged and HydraPy
-implements them. Written against HydraPy
+fields that carry the layer, and BUS OUT's hit mask for version 3. All four
+parts have merged: HydraPy's Studio accepts windows and holds the lease, and the
+Rack module reads BUS IN and sends them. Written against HydraPy
 `e5999b2282bd9766b6f7152b4278c3da4e72ed8e` and Gorgon `6f30050` (A-spec-3,
 [transforms.md](transforms.md)).
 
@@ -14,7 +16,7 @@ The user decided the bus's role on 2026-10-26 (roadmap §5.4). Mutes stay on the
 bus, and BUS IN and BUS OUT share one word layout. A bus input is high for on,
 does nothing while disconnected, and merges with the score by OR. It works in
 both bus modes. The bit map belongs to the Rack module. Stamps, Rack's record,
-windows, the lease and folding are this page's proposals.
+windows, the lease and folding were this page's proposals, ratified when it merged.
 
 ## One word layout
 
