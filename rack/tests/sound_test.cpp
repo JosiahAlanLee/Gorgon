@@ -39,5 +39,12 @@ int main() {
     gorgon_sound::Packet p;assert(!gorgon_sound::valid(p,0));p.frame=8;assert(gorgon_sound::valid(p,10));
     assert(!gorgon_sound::valid(p,7)&&!gorgon_sound::valid(p,11));p.lanes[0].sound=c;
     assert(gorgon_sound::valid(p,9));p.lanes[0].sound.values[7]=std::numeric_limits<float>::quiet_NaN();assert(!gorgon_sound::valid(p,9));
+    // Version 2 has six lanes; a sender reads the receiver's header to pick the version.
+    gorgon_sound::Packet six;gorgon_sound::Header h;std::memcpy(static_cast<void*>(&h),&six,sizeof h);
+    assert(h.magic==gorgon_sound::MAGIC&&h.version==2&&h.bytes==328);six.frame=8;
+    six.lanes[5].velocity=1.5f;assert(!gorgon_sound::valid(six,9));six.lanes[5].velocity=1;assert(gorgon_sound::valid(six,9));
+    gorgon_sound::v1::Packet q;std::memcpy(static_cast<void*>(&h),&q,sizeof h);assert(h.version==1&&h.bytes==232);
+    assert(!gorgon_sound::v1::valid(q,0));q.frame=8;assert(gorgon_sound::v1::valid(q,10));
+    q.version=2;assert(!gorgon_sound::v1::valid(q,10));
     std::cout<<"sound_test: passed\n";
 }

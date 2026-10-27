@@ -27,7 +27,7 @@ One byte is one word, not eight pitched voices.
 
 ## Byte source
 
-A patch-saved **BUS source** option selects one source. Default: **Z**.
+A patch-saved **BUS OUT source** option selects one source. Default: **Z**.
 For an automation lane, normalize its value to `u` using the ranges below,
 clamp `u` to 0–1, then compute `floor(255*u + 0.5)`. A non-finite lane value
 maps to 00. The conversion uses lane units, independent of output voltage.

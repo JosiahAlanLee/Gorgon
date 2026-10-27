@@ -13,20 +13,23 @@ inline BusSource busSourceFromInt(int source) {
 		? BusSource(source) : BusSource::Z;
 }
 
-inline const char* busSourceName(BusSource source) {
+// `v3`: the score is version 3, whose hit mask has six lanes and FILL (bytebus-output.md#version-3).
+inline const char* busSourceName(BusSource source, bool v3 = false) {
 	switch (source) {
 		case BusSource::Roll: return "Roll";
 		case BusSource::Feedback: return "Feedback";
-		case BusSource::HitMask: return "Hit mask (lanes 1–4)";
+		case BusSource::HitMask: return v3 ? "Hit mask (lanes 1–6, FILL)" : "Hit mask (lanes 1–4)";
 		default: return "Z";
 	}
 }
 
 inline uint8_t busWord(const Outputs& output, BusSource source) {
 	if (source == BusSource::HitMask) {
+		// Versions 1 and 2 leave lanes 5 and 6 and FILL clear, so their word is unchanged.
 		uint8_t word = 0;
-		for (int lane = 0; lane < AUDIO_LANES; ++lane)
+		for (int lane = 0; lane < OUTPUT_LANES; ++lane)
 			if (output.present[lane]) word |= uint8_t(1u << lane);
+		if (output.fill) word |= uint8_t(1u << 6);
 		return word;
 	}
 	int lane = int(busSourceFromInt(int(source)));

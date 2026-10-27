@@ -45,7 +45,7 @@ This revision has no triggerless locks, slides, sub-row events or pattern langua
 Pitch remains the existing held 1 V/oct signal; it is not implicitly mapped onto
 a machine-specific raw parameter such as SYN1.
 
-## Rack sound link, version 1
+## Rack sound link
 
 The Gorgon Rack module exposes a receiver-owned, double-buffered expander link
 to an adjacent compatible sound instrument. The public C++ layout is
@@ -60,11 +60,21 @@ The receiver reads only its `consumerMessage`. All gates, pitches, velocities,
 resolved controls and transport metadata therefore cross the boundary together.
 
 Every packet includes a magic, ABI version, byte size, producer Rack sample frame,
-transport revision, moving flag, reset voltage and four lanes. Each lane has gate
+transport revision, moving flag, reset voltage and its lanes. Each lane has gate
 voltage, normalized velocity, held pitch, resolved machine (-1 = unspecified), an
 eight-bit parameter-presence mask and eight raw values. Masked-off values have
 no meaning. Version-1 scores publish unspecified machine/parameters, retaining
 their existing note behavior. Never infer a hit from a parameter change alone.
+
+**Version 2** of the link has six lanes, one per lane of a `hydrapy-tracker-3`
+score; a version-1 or -2 score leaves lanes 5 and 6 at rest (gate, velocity and
+pitch 0, nothing specified). **Version 1** has four. The receiver's buffers
+declare the version it reads, in their header (`Header`: magic, version and byte
+size), and a sender writes a packet of that version or none. The Gorgon module
+serves both; Machinemodule 2.2.0 reads version 2. [`sound-link.hpp`](sound-link.hpp)
+keeps version 1's layout as `gorgon_sound::v1` for that. A sound in a version-3
+score is the lane's kit sound with the playing candidate's locks over it, as
+for version 2, held while the candidate's span lasts.
 
 Validate the provider/receiver identities before reading/writing a packet, then
 its header and finite values. Accept only frames no more than two samples old;

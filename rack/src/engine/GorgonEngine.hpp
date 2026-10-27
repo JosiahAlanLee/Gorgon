@@ -76,25 +76,29 @@ inline gorgon_sound::Sound soundAt(const Score& score, int pattern, int lane, in
     return sound;
 }
 
-// value_at() from studio_tracker.py, for a fractional row.
-inline double laneValue(const Lane& lane, int laneIndex, double row) {
-	if (lane.count == 0)
+// value_at() from studio_tracker.py, for a fractional row, over `count` keys sorted by row.
+inline double laneValue(const Key* keys, int count, Ease ease, int laneIndex, double row) {
+	if (count == 0)
 		return LANE_DEFAULT[laneIndex];
-	if (row <= lane.keys[0].row)
-		return lane.keys[0].value;
-	for (int i = 0; i + 1 < lane.count; i++) {
-		const Key& a = lane.keys[i];
-		const Key& b = lane.keys[i + 1];
+	if (row <= keys[0].row)
+		return keys[0].value;
+	for (int i = 0; i + 1 < count; i++) {
+		const Key& a = keys[i];
+		const Key& b = keys[i + 1];
 		if (row < b.row) {
 			double t = (row - a.row) / double(b.row - a.row);
-			if (lane.ease == EASE_HOLD)
+			if (ease == EASE_HOLD)
 				t = 0.;
-			else if (lane.ease == EASE_SMOOTH)
+			else if (ease == EASE_SMOOTH)
 				t = t * t * (3. - 2. * t);
 			return a.value + (b.value - a.value) * t;
 		}
 	}
-	return lane.keys[lane.count - 1].value;
+	return keys[count - 1].value;
+}
+
+inline double laneValue(const Lane& lane, int laneIndex, double row) {
+	return laneValue(lane.keys, lane.count, lane.ease, laneIndex, row);
 }
 
 // Studio's playhead as published by GET /api/bridge.
@@ -105,6 +109,10 @@ struct Playhead {
 	double anchorBeat = 0., anchorTime = 0., clockTime = 0., wall = 0.;
 	int64_t revision = -1;
 	int64_t transportRevision = -1;
+	// Version 3 (spec/evaluator.md#playhead-fields): the segment's anchor and elapsed ticks.
+	bool v3 = false;
+	int64_t startTick = 0, elapsed = 0;
+	int startEntry = -1;   // -1 when looping
 
 	bool moving() const { return valid && enabled && playing; }
 	// Tracker.beat() at Studio monotonic time `serverTime`.
@@ -192,14 +200,18 @@ struct Options {
 	int pitchZero = 60;       // C4 = 0 V (1 V/oct)
 };
 
+// Version 3 has six audio lanes; versions 1 and 2 use the first four and leave 5 and 6 at 0.
+constexpr int OUTPUT_LANES = 6;
+
 struct Outputs {
 	float clock = 0.f, reset = 0.f, run = 0.f;
-	float gate[AUDIO_LANES] = {};
-	bool present[AUDIO_LANES] = {};    // the current row has a hit (moving, lane not muted)
-	float velocity[AUDIO_LANES] = {};  // 0..1 from that hit; read only where present is set
-	bool pitched[AUDIO_LANES] = {};
-	float pitch[AUDIO_LANES] = {};     // volts, read only where pitched is set
-	float lane[AUTO_LANES] = {};       // in the lane's own units (z 0..1, roll degrees, feedback 0..0.9)
+	float gate[OUTPUT_LANES] = {};
+	bool present[OUTPUT_LANES] = {};    // the current row has a hit (moving, lane not muted)
+	float velocity[OUTPUT_LANES] = {};  // 0..1 from that hit; read only where present is set
+	bool pitched[OUTPUT_LANES] = {};
+	float pitch[OUTPUT_LANES] = {};     // volts, read only where pitched is set
+	float lane[AUTO_LANES] = {};        // in the lane's own units (z 0..1, roll degrees, feedback 0..0.9)
+	bool fill = false;                  // version 3: FILL in force on the current row (BUS OUT bit 6)
 };
 
 // Everything the tracker would send at `beat`. Matches TrackerCV.render.

@@ -92,6 +92,60 @@ def check_outputs(session, probe):
     print('real Studio outputs: pitch, key/reference, AIR, velocity zero, pause, seek and latched resets passed')
 
 
+def check_v3(session, probe):
+    """A version-3 score through the real bridge: the tick follower, lanes 5 and 6, and FILL."""
+    from hydrapy.tracker_v3 import TICKS, empty_pattern, upgrade
+    session.call('tracker_transport', enabled=True, playing=False, beat=0)
+    document = upgrade(copy.deepcopy(session.tracker.document))
+    pattern = empty_pattern(0)
+    pattern.update(rate=1, bar=4, bars=1)          # one beat: four sixteenths
+    for lane in pattern['lanes']:
+        lane.update(len=4, cells=[None] * 4)
+    pattern['lanes'][4]['cells'][0] = dict(note='C-5', vel=127)
+    pattern['lanes'][5]['cells'][2] = dict(note='C-4', vel=127, cond=dict(kind='fill'))
+    document.update(bpm=120, key=2, loop=True, pattern=0, chain=[0], patterns=[pattern] + [None] * 127)
+    session.call('tracker_score', document=document, revision=session.tracker.revision)
+    proc = subprocess.Popen([probe, '3', '7.5'], stdout=subprocess.PIPE, text=True)
+    phase, errors, filled = 0, [], None
+    try:
+        for line in proc.stdout:
+            parts = line.split()
+            if parts[0] != 'out3':
+                continue
+            t, u = float(parts[1]), float(parts[2])
+            linked, moving, jumps = int(parts[3]), int(parts[4]), int(parts[5])
+            vel5, pitch5, vel6 = map(float, parts[6:9])
+            if not linked:
+                continue
+            if phase == 0:
+                session.call('tracker_transport', playing=True, beat=0)
+                phase = 1
+                continue
+            if not moving:
+                continue
+            with session.lock:
+                s = dict(session.bridge_state)
+            truth = s['elapsed'] + (s['clock_time'] + (t - s['wall']) - s['anchor_time']) * s['document']['bpm'] / 60 * TICKS
+            errors.append(abs(truth - u) / TICKS * 60 / s['document']['bpm'] * 1000)
+            if phase == 1 and u > TICKS:
+                # A cycle in: lane 5 played C5 (1 V); lane 6's FILL hit hasn't.
+                assert vel5 == 1 and abs(pitch5 - 1) < 1e-6 and vel6 == 0, (vel5, pitch5, vel6)
+                session.call('tracker_transport', fill=True)
+                filled, phase = u, 2
+            elif phase == 2 and u > filled + 2 * TICKS:
+                assert vel6 == 1, f'FILL on for two cycles, but lane 6 is still silent ({vel6})'
+                phase = 3
+        assert proc.wait(timeout=5) == 0
+        assert phase == 3, phase
+        settled = errors[10:]
+        assert settled and max(settled) < 1, f'version-3 follower error {max(settled):.2f} ms'
+        assert jumps <= 2, f'{jumps} jumps'
+    finally:
+        if proc.poll() is None:
+            proc.kill(); proc.wait()
+    print(f'real Studio, version 3: ticks within {max(settled):.2f} ms, lanes 5 and 6, and FILL passed')
+
+
 def main(probe):
     with tempfile.TemporaryDirectory() as root:
         root = Path(root)
@@ -132,6 +186,7 @@ def main(probe):
             assert info['status'].startswith('Linked'), info
             print('CV 1 7.5 V -> Warp', warp, '| status:', info['status'])
             check_outputs(session, probe)
+            check_v3(session, probe)
         finally:
             withdraw(path, token)
             server.shutdown(); server.server_close(); session.close()

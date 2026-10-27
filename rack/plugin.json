@@ -1,7 +1,7 @@
 {
   "slug": "GorgonBridge",
   "name": "GorgonBridge",
-  "version": "2.3.1",
+  "version": "2.4.0",
   "license": "BSD-3-Clause",
   "brand": "GorgonBridge",
   "author": "Gorgon contributors",
@@ -9,7 +9,7 @@
   "modules": [{
     "slug": "Gorgon",
     "name": "Gorgon",
-    "description": "HydraPy tracker bridge: audio, clock, pitch, gates, automation and clocked ByteBus out; CV back into the visuals and transport.",
+    "description": "HydraPy tracker bridge: audio, clock, six lanes of pitch and gates, automation and clocked ByteBus out; CV back into the visuals and transport.",
     "tags": ["Clock generator", "Sequencer", "Controller", "Visual", "Polyphonic"]
   }]
 }
