@@ -300,6 +300,18 @@ int main() {
 		receiver.leftExpander.producerMessage = &old[0];
 		run(m, 1, args);
 		assert(gorgon_sound::v1::valid(old[0], args.frame - 1) && old[0].frame == args.frame - 1);
+		// Monomodule (the Monomachine) receives the same packet.
+		machinePlugin.slug = "MonomoduleRack";
+		machineModel.slug = "Monomodule";
+		receiver.leftExpander.producerMessage = &packets[0];
+		run(m, 1, args);
+		assert(packets[0].frame == args.frame - 1 && gorgon_sound::valid(packets[0], args.frame - 1));
+		machinePlugin.slug = "SomethingElse";
+		packets[0].frame = -1;
+		run(m, 1, args);
+		assert(packets[0].frame == -1);   // an unknown receiver gets nothing
+		machinePlugin.slug = "MachinemoduleRack";
+		machineModel.slug = "Machinemodule";
 		// A buffer of an unknown version is left alone.
 		gorgon_sound::Packet future;
 		future.version = 3;

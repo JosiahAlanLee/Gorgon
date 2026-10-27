@@ -52,8 +52,9 @@ to an adjacent compatible sound instrument. The public C++ layout is
 [`sound-link.hpp`](sound-link.hpp), licensed BSD-3-Clause. It is independent of
 the sound engine's license and includes no firmware or DSP code.
 
-The initial compatible receiver is plugin `MachinemoduleRack`, model
-`Machinemodule`, version 2.x. The receiver supplies two initialized `Packet`
+The compatible receivers are plugin `MachinemoduleRack`, model `Machinemodule`
+(the Machinedrum), and plugin `MonomoduleRack`, model `Monomodule` (the
+Monomachine), version 2.x of each. The receiver supplies two initialized `Packet`
 buffers on its `leftExpander`. The Gorgon producer writes a whole packet into
 the receiver's `producerMessage` and requests that receiver's message flip.
 The receiver reads only its `consumerMessage`. All gates, pitches, velocities,
