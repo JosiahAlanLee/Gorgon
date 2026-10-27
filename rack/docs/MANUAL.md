@@ -227,6 +227,21 @@ clock estimate. This does not compensate physical display or device latency.
 
 **OFFSET** (±100 ms) moves Rack's outputs earlier (clockwise) or later than the picture, to make up for audio and video latency. To set it, patch GATE 1 into a percussive voice, give lane 1 a hit on every beat, and turn OFFSET until each hit lines up with a visible flash in Gorgon.
 
+## Event trace
+
+When a hit didn't sound, the trace says why. Gorgon keeps its last 4096 events:
+every version-3 candidate it evaluates, and each change BUS IN makes. **Save
+event trace…** in the context menu writes them as JSON lines, in the format
+HydraPy writes with `--tracker-trace` ([evaluator.md](../../spec/evaluator.md#trace)).
+Each candidate line has its id, tick, lane, note, velocity and locks, and
+whether it fires. `why` names what decided: a mute (score or bus), a condition
+with its value, or a `degrade` with its draw. `origin` gives the play, pattern,
+row and transforms. Gorgon adds `x_frame`, the Rack engine frame it evaluated
+the line on.
+
+Compare it with Studio's trace from the same session: the same `id`, with the
+same `transport_revision` and `start`, is the same event in both.
+
 ## Display and lights
 
 The display shows the link state and tempo, then the pattern, row and beat (for a version-3 score, the pattern's code with bar and row), then what each CV input drives. **LINK** is lit while Studio answers. **CLK** follows the clock output. PLAY's light is lit while Gorgon plays.

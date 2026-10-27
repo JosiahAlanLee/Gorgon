@@ -187,6 +187,20 @@ static void compare(const v3::ScoreV3& score, const v3::Candidate& c, json_t* li
 	for (int k = 0; same && k < c.viaCount; k++)
 		same = v3::pointer(lane, c.via[k]) == text(json_array_get(via, size_t(k)));
 	CHECK(same, "%s %s: via", where, id.c_str());
+	// The Rack module's trace line (Trace.hpp) is HydraPy's, plus x_frame.
+	json_t* start = json_object_get(line, "start");
+	json_t* entryJson = json_object_get(start, "entry");
+	std::string traced = v3::traceLine(v3::candidateRecord(c, lane, json_integer_value(json_object_get(line, "transport_revision")),
+	                                                       json_integer_value(json_object_get(start, "tick")),
+	                                                       json_is_null(entryJson) ? -1 : int(json_integer_value(entryJson)), 7));
+	json_error_t e;
+	json_t* mine = json_loads(traced.c_str(), 0, &e);
+	CHECK(mine && json_integer_value(json_object_get(mine, "x_frame")) == 7, "%s %s: trace line doesn't parse: %s", where, id.c_str(),
+	      traced.c_str());
+	json_object_del(mine, "x_frame");
+	CHECK(json_equal(mine, line), "%s %s: trace line\n  rack:   %s\n  hydrapy: %s", where, id.c_str(), traced.c_str(),
+	      json_dumps(line, JSON_COMPACT));
+	json_decref(mine);
 }
 
 static void fixture(const char* path) {
@@ -254,7 +268,7 @@ static void fixture(const char* path) {
 		}
 		samples += signals(score, in, s);
 	}
-	std::printf("fixture3: %ld candidates compared, %ld samples of signals\n", compared, samples);
+	std::printf("fixture3: %ld candidates and their trace lines compared, %ld samples of signals\n", compared, samples);
 }
 
 int main(int argc, char** argv) {

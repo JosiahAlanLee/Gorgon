@@ -693,6 +693,37 @@ static void busRecord() {
 	CHECK(got == 4 && x == 3 && ring.lost == 1, "a full ring drops and counts");
 }
 
+// The trace ring: bounded, oldest first, and a BUS IN change's line.
+static void trace() {
+	v3::TraceRing ring(4);
+	for (int k = 0; k < 6; k++)
+		ring.write(v3::busRecord(k % 2 ? 3 : 0, 100 + k, k % 2, 100 + k, 2, 960, -1, k));
+	std::vector<v3::TraceRecord> kept = ring.copy();
+	CHECK(kept.size() == 4 && kept[0].frame == 2 && kept[3].frame == 5 && ring.written() == 6, "the last four, oldest first");
+	CHECK(v3::traceLine(kept[1]) == "{\"transport_revision\": 2, \"start\": {\"tick\": 960, \"entry\": null}, \"bus\": "
+	                                "{\"mute\": {\"lane\": 2, \"at\": 103, \"on\": true}}, \"received\": 103, \"x_frame\": 3}",
+	      "bus line: %s", v3::traceLine(kept[1]).c_str());
+	CHECK(v3::traceLine(kept[0]).find("\"bus\": {\"fill\": {\"at\": 102, \"on\": false}}") != std::string::npos, "FILL line");
+	// The engine traces what it evaluates, as it evaluates it.
+	v3::ScoreV3 score = loopV3(120., 4, 4);
+	v3::Cell& c = score.store[0].lanes[1].cells[2];
+	c.present = true;
+	c.vel = 90.;
+	std::memcpy(c.note, "AIR", 4);
+	v3::EngineV3 engine;
+	v3::TraceRing traced(16);
+	engine.trace = &traced;
+	engine.frame = 42;
+	v3::Layer layer;
+	Options o;
+	engine.render(score, layer.transport(0), true, 0., 5, o, 48000.);
+	engine.render(score, layer.transport(0), true, 961., 5, o, 48000.);
+	std::vector<v3::TraceRecord> lines = traced.copy();
+	CHECK(lines.size() == 1 && v3::traceLine(lines[0]).find("\"id\": \"0.1.2\", \"at\": 960, \"lane\": 1, \"duration\": 480, "
+	                                                         "\"note\": \"AIR\", \"vel\": 90") != std::string::npos,
+	      "the engine's trace: %s", lines.empty() ? "" : v3::traceLine(lines[0]).c_str());
+}
+
 static void details() {
 	Score score;
 	score.loop = true;
@@ -735,6 +766,7 @@ int main(int argc, char** argv) {
 	busStamps();
 	busFeedback();
 	busRecord();
+	trace();
 	fixture(argc > 1 ? argv[1] : "tests/fixture.txt");
 	if (failures) {
 		std::printf("%d failure(s)\n", failures);

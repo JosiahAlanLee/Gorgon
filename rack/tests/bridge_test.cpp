@@ -211,7 +211,27 @@ static bool any(const std::vector<std::string>& rs, const std::string& needle) {
 	return false;
 }
 
+// The trace ring copied on one thread while another writes: every copied record whole.
+static void traceRing() {
+	v3::TraceRing ring(64);
+	std::atomic<bool> done{false};
+	std::thread writer([&] {
+		for (int k = 0; k < 200000; k++)
+			ring.write(v3::busRecord(k % 7, k, k % 2, k, k, k, -1, k));
+		done = true;
+	});
+	long copies = 0, torn = 0;
+	while (!done) {
+		for (const v3::TraceRecord& r : ring.copy())
+			torn += r.at != r.frame || r.received != r.frame || r.revision != r.frame || r.tick != r.frame;
+		copies++;
+	}
+	writer.join();
+	CHECK(torn == 0 && copies > 0, "%ld torn records in %ld copies", torn, copies);
+}
+
 int main() {
+	traceRing();
 	CHECK(noteMidi("C4") == 60 && noteMidi("C-4") == 60 && noteMidi("D#4") == 63, "note spellings");
 	CHECK(noteMidi("C0") == 12 && noteMidi("G9") == 127, "pitch range");
 	for (const char* note : {"AIR", "B#4", "E#4", "C-", "H4", "G#9", "A-10"})
