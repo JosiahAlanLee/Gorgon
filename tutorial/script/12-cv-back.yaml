@@ -14,10 +14,9 @@ shots:
       studio: {patch: patches/gorgon_corridor.py, transport: 'off'}
       rack: {patch: rack-cv-start, view: {modules: [LFO, Gorgon]}}
     narration: >
-      The four CV inputs set the patch's named controls. Zero to ten volts spans the control's whole range.
-      Patch a slow LFO into CV 1. {patch} By default each input takes the next control no tracker lane is driving.
-      {menu} A control bound to a lane follows the score while automation is on, and ignores CV until it's off.
-      To choose, right-click: CV 1 drives. {watch} The picture now moves with the LFO.
+      The four CV inputs set the patch's named controls. Zero to ten volts spans the control's whole range. Patch a slow LFO into CV 1. {patch}
+      By default each input takes the next control no tracker lane is driving. {menu} A control bound to a lane follows the score while automation
+      is on, and ignores CV until it's off. To choose, right-click: CV 1 drives. {watch} The picture now moves with the LFO.
     actions:
       - at: patch
         rack.cable: {from: 'LFO.out#0', to: Gorgon.in.CV 1}
@@ -32,3 +31,32 @@ shots:
       - "0–10 V spans the control's range (MANUAL Inputs)"
       - "menu path 'CV 1 drives' → control name; check exact item text from the layout dump"
       - "automation off ('off' transport setup = enabled false) so the bound control accepts CV"
+  - id: byte-tools
+    title: Bus words back into the picture
+    kind: still
+    asset: diagrams/byte-tools.svg
+    narration: >
+      Counter makes a counting word. Lookup maps it into a curve, and Converter turns the word into CV for Gorgon. Counter two runs at a ratio
+      of its clock; Lookup’s Ratio family can supply that ratio. Switch selects or combines two words. Pipeline delays them by clock edges. Lookup’s
+      JUMP steps SHAPE, while Lookup two combines two input words. Library version two adds Envelope, Sequence and Density. Version three adds
+      Ratio.
+    source:
+      - DSP_Emulation/vcv/bytebus/README.md
+      - DSP_Emulation/vcv/bytebus/docs/LOOKUP.md
+      - DSP_Emulation/vcv/bytebus/docs/COUNTER2.md
+    verify:
+      - Confirm diagram and narration against DSP_Emulation/vcv/bytebus/README.md; stage rehearsal still required.
+      - Confirm diagram and narration against DSP_Emulation/vcv/bytebus/docs/LOOKUP.md; stage rehearsal still required.
+      - Confirm diagram and narration against DSP_Emulation/vcv/bytebus/docs/COUNTER2.md; stage rehearsal still required.
+  - id: nlc-bus
+    title: NLC-derived bus modules
+    kind: still
+    asset: diagrams/nlc-bus.svg
+    narration: >
+      ByteBusLab also has five modules derived from Nonlinearcircuits ideas. Fan routes by address, and Lattice sequences on two axes. Parallel
+      Sum weights a shift register into timbre and CV. Wheel captures a loop from a noise register. Roulette turns a phase-locked counter into
+      bus words. These outputs can pass through Converter into Gorgon’s control inputs.
+    source:
+      - DSP_Emulation/vcv/bytebus/README.md
+    verify:
+      - Confirm diagram and narration against DSP_Emulation/vcv/bytebus/README.md; stage rehearsal still required.

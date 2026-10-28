@@ -4,7 +4,7 @@ title: Notes and blocks
 defaults:
   needs: [controller]
   setup:
-    studio: {patch: patches/gorgon_corridor.py, score: scores/demo.json, transport: stop}
+    studio: {patch: patches/gorgon_corridor.py, score: scores/editor-v3.json, transport: stop}
     actions:
       - studio.click: '#audioPageTab'      # notes live on the Audio page
 shots:
@@ -12,11 +12,10 @@ shots:
     title: One note
     source: [hydrapy/docs/gorgon-editor-walkthrough.md#2-enter-a-pitched-phrase]
     narration: >
-      Select an empty cell in FM hits, {cell} and the note editor opens under the grid.
-      Type E4 and Tab. {note} It displays as E dash 4; both spellings mean the same note.
-      Velocity runs from zero to one hundred and twenty-seven. {vel}
-      Audition turns the browser's demo sound on and plays the event. FM and Sub are pitched demo voices;
-      they are a sketchpad, not the instruments in Rack.
+      Select an empty cell in FM hits, {cell} and the note editor opens under the grid. The six audio lanes share Note, Velocity and Condition
+      controls. Type E4 and Tab. {note} It displays as E dash 4; both spellings mean the same note. Velocity runs from zero to one hundred and
+      twenty-seven. {vel} Audition turns the browser's demo sound on and plays the event. FM and Sub are pitched demo voices; they are a sketchpad,
+      not the instruments in Rack.
     actions:
       - at: cell
         studio.click: {selector: '#trackerRows [data-row="1"][data-col="1"]'}
@@ -33,9 +32,8 @@ shots:
   - id: piano
     title: Piano keys
     narration: >
-      For a phrase, turn on Piano keys. {piano} Set the octave to 4 and Advance to four rows. {advance}
-      Now Z, X, C, V enter C, D, E and F, {keys} moving four rows after each.
-      S is C sharp, and Q starts the next octave. The full map is under Help.
+      For a phrase, turn on Piano keys. {piano} Set the octave to 4 and Advance to four rows. {advance} Now Z, X, C, V enter C, D, E and F, {keys}
+      moving four rows after each. S is C sharp, and Q starts the next octave. The full map is under Help.
     actions:
       - studio.click: {selector: '#trackerRows [data-row="16"][data-col="1"]'}
       - at: piano
@@ -55,11 +53,13 @@ shots:
     verify:
       - "Piano keys focus the grid; Z X C V = C4 D4 E4 F4 at octave 4 (walkthrough §2.5)"
       - "with Piano keys on, B enters G, not blackout (§2 note) — not demonstrated"
+    source:
+      - hydrapy/docs/gorgon-tracker.md
   - id: toggle-undo
     title: Enter, undo and redo
     narration: >
-      With Piano keys off, Enter on an empty cell adds a hit, {enter} and Enter again removes it.
-      Undo and Redo walk back through the last hundred edits in this controller. {undo}
+      With Piano keys off, Enter on an empty cell adds a hit, {enter} and Enter again removes it. Undo and Redo walk back through the last hundred
+      edits in this controller. {undo}
     actions:
       - studio.click: {selector: '#trackerRows [data-row="41"][data-col="0"]'}
       - at: enter
@@ -74,14 +74,15 @@ shots:
       - {window: studio, rect: [0.1, 0.25, 0.6, 0.6]}
     verify:
       - "history holds last 100 edits (walkthrough §3.6)"
+    source:
+      - hydrapy/docs/gorgon-tracker.md
   - id: blocks
     title: Blocks
     source: [hydrapy/docs/gorgon-editor-walkthrough.md#3-build-a-phrase-with-block-operations]
     narration: >
-      Shift-click to select a block. {block} The rectangle and its size show above the grid.
-      Copy it, {copy} click the row where the copy should start, and Paste. {paste} Empty cells in the copied block overwrite too.
-      With the pasted notes selected, plus twelve moves them up an octave. {octave}
-      AIR events don't transpose, and if any note would go out of range, none of them move.
+      Shift-click to select a block. {block} The rectangle and its size show above the grid. Copy it, {copy} click the row where the copy should
+      start, and Paste. {paste} Empty cells in the copied block overwrite too. With the pasted notes selected, plus twelve moves them up an octave.
+      {octave} AIR events don't transpose, and if any note would go out of range, none of them move.
     actions:
       - studio.click: {selector: '#trackerRows [data-row="16"][data-col="1"]'}
       - at: block
@@ -102,3 +103,52 @@ shots:
       - "Paste overwrites with empty cells too (§3.2)"
       - "+12 button accessible name is '+12' (check; otherwise use Alt+Shift+Up)"
       - "AIR not transposed; range failure changes nothing (§3.4)"
+  - id: conditions
+    title: Conditions, transforms and FILL
+    kind: live
+    narration: >
+      Condition decides whether a note plays. {note} Write a note before giving it a condition. {condition} F requires FILL; First selects the
+      first bar. A colon B selects bar A of every B, and percent P gives a seeded probability. An exclamation mark negates a condition. {length}
+      Length sets the lane’s repeating length. {transform} Transforms change its event stream: rot shifts, rev reverses, ply repeats and degrade
+      removes candidates. {fill} FILL plays cells marked F. The score keeps the original cells.
+    source:
+      - Gorgon/spec/evaluator.md
+      - Gorgon/spec/transforms.md
+      - hydrapy/hydrapy/tracker/index.html
+      - hydrapy/hydrapy/tracker/app.js
+    verify:
+      - 'Condition is disabled until a note exists; FILL is enabled for v3. Fill commits on Tab in gtut/studio.py; #condInput, #laneLen and #laneTransforms
+        use onchange in app.js at 789faed.'
+      - Rehearse lane 5 selection, note insertion, condition, length, transform commit, and FILL toggle; 1ST is the UI spelling for the
+        spoken First condition.
+    needs:
+      - controller
+    setup:
+      studio:
+        patch: patches/gorgon_corridor.py
+        score: scores/editor-v3.json
+        transport: stop
+    frames:
+      - window: studio
+    actions:
+      - studio.click: '#audioPageTab'
+      - studio.click: '#trackerRows [data-row="0"][data-col="4"]'
+        at: note
+      - studio.fill:
+          target: '#noteInput'
+          text: C4
+      - studio.click: '#insertNoteBtn'
+      - studio.fill:
+          target: '#condInput'
+          text: F
+        at: condition
+      - studio.fill:
+          target: '#laneLen'
+          text: '16'
+        at: length
+      - studio.fill:
+          target: '#laneTransforms'
+          text: rot 1, ply 2
+        at: transform
+      - studio.click: '#fillBtn'
+        at: fill

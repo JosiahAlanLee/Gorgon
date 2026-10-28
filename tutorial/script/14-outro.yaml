@@ -8,19 +8,25 @@ shots:
     title: Hardware
     source: [Gorgon/README.md#status, hydrapy/docs/es40.md, hydrapy/docs/live-io.md]
     narration: >
-      Everything here ran inside one computer. Gorgon can also send clock, gates, pitch and automation
-      straight to a modular, through a DC-coupled interface such as an Expert Sleepers ES-3, or an ES-40
-      with gate and CV expanders. Those paths are in the documentation, and they are not yet validated
-      on real hardware end to end, so they are not demonstrated here.
+      Everything here ran inside one computer. Gorgon can also send clock, gates, pitch and automation straight to a modular, through a DC-coupled
+      interface such as an Expert Sleepers ES-3, or an ES-40 with gate and CV expanders. Those paths are in the documentation, and they are not
+      yet validated on real hardware end to end, so they are not demonstrated here.
+       The desktop’s own PipeWire session, signed-in Rack Pro, and the Windows and macOS plugins inside Rack are also
+      outside the repository’s validated paths. The destination latency table measures software responses, not physical display or device latency.
     verify:
-      - "Gorgon README 'What is not validated' list is unchanged; update this narration if it has changed"
+      - "README Status at a758045 lists physical interfaces, desktop PipeWire, signed-in Rack Pro, ES-40 digital end-to-end, display/device latency
+        and Windows/macOS inside Rack as unvalidated."
+      - Manual Destination latency table is software-only; launcher private PipeWire validation does not validate workstation device/CV
+        routes.
   - id: where
     kind: card
     video: gorgon_card
     text: github.com/JosiahAlanLee
     sub: Gorgon · hydrapy · DSP_Emulation
     narration: >
-      The repositories, manuals and the walkthrough this video follows are on GitHub.
-      HydraPy is AGPL; Gorgon and the Rack modules are free and open source.
+      The repositories, manuals and the walkthrough this video follows are on GitHub. HydraPy is AGPL; Gorgon and the Rack modules are free and
+      open source.
     verify:
       - "licences: HydraPy AGPL-3.0-or-later; Gorgon BSD-3-Clause; DSP_Emulation plugin licences per plugin LICENSE files (check before saying)"
+    source:
+      - Gorgon/README.md

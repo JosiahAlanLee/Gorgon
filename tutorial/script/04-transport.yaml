@@ -4,7 +4,7 @@ title: Playing and editing are separate
 defaults:
   needs: [controller]
   setup:
-    studio: {patch: patches/gorgon_corridor.py, score: scores/demo.json, transport: stop}
+    studio: {patch: patches/gorgon_corridor.py, score: scores/editor-v3.json, transport: stop}
     actions:
       - studio.click: '#audioPageTab'      # the audio lanes' cells are on the Audio page
 shots:
@@ -12,15 +12,15 @@ shots:
     title: The workspace
     source: [hydrapy/docs/gorgon-tracker.md#control-surface-and-displays, hydrapy/docs/gorgon-editor-walkthrough.md#before-recording]
     narration: >
-      Four patterns, each sixty-four sixteenth-note rows, run left to right along the top. {cards}
-      Below is the selected pattern, on two pages. Audio holds the four sound lanes. {grid}
-      Visual holds Dolly Z, Roll, Feedback and the scene column, {visual} with the automation curve beneath them.
-      Tab in the grid switches pages, at the same pattern and row. {back}
-      Row numbers are hexadecimal, so 0F comes before 10, and 3F is the last row. {rows}
-      On the right, the Hydra monitor shows Program, and its buttons can inspect any of the four outputs.
+      Eight banks, A to H, hold sixteen patterns each. {cards} The chain below gives their playing order; a pattern can appear more than once.
+      Audio shows six note lanes. {grid} Visual holds Dolly Z, Roll, Feedback and Scene, with an automation curve below. {visual} Tab switches
+      pages at the same pattern and row. {back} Rate, Bar and Bars set the pattern timing. Row numbers remain hexadecimal. {rows} Length sets
+      the selected audio lane’s repeating length. The Hydra monitor inspects Program or any of the four outputs.
     actions:
       - at: cards
-        studio.point: {selector: '#patterns .pattern-card[data-pattern="1"]'}
+        studio.point: {selector: '#banks'}
+      - after: 0.6
+        studio.point: '#chain'
       - at: grid
         studio.point: {selector: '#trackHeaders'}
       - at: visual
@@ -35,16 +35,14 @@ shots:
       - {at: grid, window: studio, rect: [0.1, 0.25, 0.65, 0.5]}
       - {at: rows, window: studio}
     verify:
-      - "four patterns x 64 rows; row labels hex (walkthrough 'Before recording')"
-      - "Audio page: Breaks, FM hits, Sub, Texture; Visual page: Dolly Z, Roll, Feedback, Scene, with the curve; Tab in the grid switches at the same pattern and row (HydraPy #52; tracker guide)"
-      - "Hydra monitor: Program plus o0-o3 buttons to inspect any output (HydraPy #57)"
-      - "cards show note activity green, automation keys amber"
+      - "128 patterns in banks A–H; chain entries can repeat; six audio lanes; Rate, Bar, Bars, Length labels: tracker/index.html and app.js at
+        789faed; spec/score-v3.md."
+      - "Audio/Visual page selectors and data-pattern/data-seek-row attributes exist in app.js."
   - id: play
     title: Play and pause
     source: [hydrapy/docs/gorgon-editor-walkthrough.md#1-explain-playback-and-editing-separately]
     narration: >
-      Space plays. {play} The green row is the playhead, and the position counter runs.
-      Space again pauses. {pause}
+      Space plays. {play} The green row is the playhead, and the position counter runs. Space again pauses. {pause}
     actions:
       - at: play
         studio.press: Space
@@ -55,18 +53,19 @@ shots:
       - {at: pause, until: '+1.5', kind: keycap, text: Space}
     frames:
       - {window: studio, rect: [0, 0, 0.62, 0.6]}
+    verify:
+      - Rehearse the depicted behavior against the current build; source listed above.
   - id: select-vs-seek
     title: Selecting does not seek
     narration: >
-      While it's paused, click a cell. {cell} The amber edit cursor moves; the playhead stays where it was.
-      Select another pattern card, {card} and you are editing that pattern, still without moving playback.
-      To move playback, say so: Seek to row. {seek}
-      A seek keeps the renderer's time and its feedback history; it is a musical move, not a rewind.
+      While it's paused, click a cell. {cell} The amber edit cursor moves; the playhead stays where it was. Select another pattern card, {card}
+      and you are editing that pattern, still without moving playback. To move playback, say so: Seek to row. {seek} A seek keeps the renderer's
+      time and its feedback history; it is a musical move, not a rewind.
     actions:
       - at: cell
         studio.click: {selector: '#trackerRows [data-row="10"][data-col="1"]'}
       - at: card
-        studio.click: {role: button, name: 'Select pattern 3: ASCENT'}
+        studio.click: '#patterns [data-pattern="2"]'
       - after: 0.6
         studio.click: {selector: '#trackerRows [data-row="8"][data-col="2"]'}
       - at: seek
@@ -76,17 +75,17 @@ shots:
     verify:
       - "selecting a card does not seek (test_studio_tracker_browser asserts beat < 1 after selecting ASCENT)"
       - "Seek to row preserves renderer clock time and feedback (walkthrough §1.4)"
+    source:
+      - hydrapy/docs/gorgon-tracker.md
   - id: launch-loop-follow
     title: Launch, loop and follow
     narration: >
-      The small play button on a card launches that pattern and starts automation. {launch}
-      Stop pauses and goes back to the start of the selected pattern. {stop}
-      Loop repeats the selected pattern; {loop} while it loops, selecting another card only changes what you edit.
-      Follow makes the editor follow playback. {follow} Clicking a cell yourself turns Follow off,
-      so playback never moves a selection out from under you.
+      The small play button on a card launches that pattern and starts automation. {launch} Stop pauses and goes back to the start of the selected
+      pattern. {stop} Loop repeats the selected pattern; {loop} while it loops, selecting another card only changes what you edit. Follow makes
+      the editor follow playback. {follow} Clicking a cell yourself turns Follow off, so playback never moves a selection out from under you.
     actions:
       - at: launch
-        studio.click: {role: button, name: 'Play from pattern 2'}
+        studio.click: {role: button, name: 'Play pattern A02'}
       - at: stop
         studio.click: '#stopBtn'
       - at: loop
@@ -102,6 +101,9 @@ shots:
     frames:
       - {window: studio, rect: [0, 0, 0.62, 0.75]}
     verify:
-      - "card ▶ aria-label 'Play from pattern N' launches and enables automation"
+      - "Pattern launch aria-label is Play pattern A02; launchPattern enables automation and starts at the pattern’s entry; an unchained pattern
+        launches looped."
       - "Stop returns to selected pattern start or the active loop start"
       - "manual selection turns Follow off (walkthrough §1.6)"
+    source:
+      - hydrapy/docs/gorgon-tracker.md

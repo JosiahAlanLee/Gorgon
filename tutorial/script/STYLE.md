@@ -10,7 +10,7 @@ The docs this video follows are plain and exact. The narration should be too.
   things the viewer does; address the viewer as "you" only when giving an
   instruction.
 - State limits where they matter, once, without apology: the browser synth is a
-  demo; Dolly Z is 2D scale; there is no song chain yet; hardware isn't shown.
+  demo; Dolly Z is 2D scale; the chain plays pattern codes in order; hardware isn't shown.
 - Numbers as the docs give them, with their conditions ("about twenty
   milliseconds at 48 kHz with 256-frame periods"), or as the stage measured
   them, said as such.

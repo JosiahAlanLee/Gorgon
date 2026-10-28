@@ -14,469 +14,13 @@
   false,
   false,
   false,
+  false,
+  false,
   false
  ],
  "patterns": [
   {
    "name": "DRIFT",
-   "audio": [
-    [
-     {
-      "note": "C-4",
-      "vel": 116
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 116
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 116
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 116
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null
-    ],
-    [
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 102
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 102
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 102
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 102
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 102
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 102
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 102
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 102
-     },
-     null,
-     null,
-     null
-    ],
-    [
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null
-    ],
-    [
-     null,
-     null,
-     null,
-     {
-      "note": "D-4",
-      "vel": 80
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "A-4",
-      "vel": 70
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "D-4",
-      "vel": 74
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "A-4",
-      "vel": 64
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "D-4",
-      "vel": 80
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "A-4",
-      "vel": 70
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "D-4",
-      "vel": 74
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "A-4",
-      "vel": 64
-     },
-     null,
-     null,
-     null,
-     null
-    ]
-   ],
    "easing": {
     "z": "smooth",
     "roll": "smooth",
@@ -549,516 +93,627 @@
       "v": 0.25
      }
     ]
-   }
+   },
+   "rate": 1,
+   "bar": 16,
+   "bars": 4,
+   "lanes": [
+    {
+     "len": 64,
+     "cells": [
+      {
+       "note": "C-4",
+       "vel": 116
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 116
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 116
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 116
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null
+     ],
+     "transforms": []
+    },
+    {
+     "len": 64,
+     "cells": [
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 102
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 102
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 102
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 102
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 102
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 102
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 102
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 102
+      },
+      null,
+      null,
+      null
+     ],
+     "transforms": []
+    },
+    {
+     "len": 64,
+     "cells": [
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null
+     ],
+     "transforms": []
+    },
+    {
+     "len": 64,
+     "cells": [
+      null,
+      null,
+      null,
+      {
+       "note": "D-4",
+       "vel": 80
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "A-4",
+       "vel": 70
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "D-4",
+       "vel": 74
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "A-4",
+       "vel": 64
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "D-4",
+       "vel": 80
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "A-4",
+       "vel": 70
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "D-4",
+       "vel": 74
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "A-4",
+       "vel": 64
+      },
+      null,
+      null,
+      null,
+      null
+     ],
+     "transforms": []
+    },
+    {
+     "len": 64,
+     "cells": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+     ],
+     "transforms": []
+    },
+    {
+     "len": 64,
+     "cells": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+     ],
+     "transforms": []
+    }
+   ]
   },
   {
    "name": "FRACTURE",
-   "audio": [
-    [
-     {
-      "note": "C-4",
-      "vel": 116
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 82
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 116
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 82
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 116
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 82
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 116
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 82
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null
-    ],
-    [
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 102
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 102
-     },
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 34
-     },
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 102
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 102
-     },
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 34
-     },
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 102
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 102
-     },
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 34
-     },
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 102
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 102
-     },
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 34
-     }
-    ],
-    [
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 60
-     },
-     null,
-     {
-      "note": "G-4",
-      "vel": 42
-     },
-     null
-    ],
-    [
-     null,
-     null,
-     null,
-     {
-      "note": "D-4",
-      "vel": 84
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "F-4",
-      "vel": 64
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "A-4",
-      "vel": 74
-     },
-     null,
-     null,
-     {
-      "note": "C-5",
-      "vel": 60
-     },
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "D-4",
-      "vel": 78
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "F-4",
-      "vel": 58
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "A-4",
-      "vel": 68
-     },
-     null,
-     null,
-     {
-      "note": "C-5",
-      "vel": 54
-     },
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "D-4",
-      "vel": 84
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "F-4",
-      "vel": 64
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "A-4",
-      "vel": 74
-     },
-     null,
-     null,
-     {
-      "note": "C-5",
-      "vel": 60
-     },
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "D-4",
-      "vel": 78
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "F-4",
-      "vel": 58
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "A-4",
-      "vel": 68
-     },
-     null,
-     null,
-     {
-      "note": "C-5",
-      "vel": 54
-     },
-     null
-    ]
-   ],
    "easing": {
     "z": "smooth",
     "roll": "smooth",
@@ -1131,612 +786,675 @@
       "v": 0.25
      }
     ]
-   }
+   },
+   "rate": 1,
+   "bar": 16,
+   "bars": 4,
+   "lanes": [
+    {
+     "len": 64,
+     "cells": [
+      {
+       "note": "C-4",
+       "vel": 116
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 82
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 116
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 82
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 116
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 82
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 116
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 82
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null
+     ],
+     "transforms": []
+    },
+    {
+     "len": 64,
+     "cells": [
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 102
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 102
+      },
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 34
+      },
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 102
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 102
+      },
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 34
+      },
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 102
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 102
+      },
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 34
+      },
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 102
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 102
+      },
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 34
+      }
+     ],
+     "transforms": []
+    },
+    {
+     "len": 64,
+     "cells": [
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 60
+      },
+      null,
+      {
+       "note": "G-4",
+       "vel": 42
+      },
+      null
+     ],
+     "transforms": []
+    },
+    {
+     "len": 64,
+     "cells": [
+      null,
+      null,
+      null,
+      {
+       "note": "D-4",
+       "vel": 84
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "F-4",
+       "vel": 64
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "A-4",
+       "vel": 74
+      },
+      null,
+      null,
+      {
+       "note": "C-5",
+       "vel": 60
+      },
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "D-4",
+       "vel": 78
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "F-4",
+       "vel": 58
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "A-4",
+       "vel": 68
+      },
+      null,
+      null,
+      {
+       "note": "C-5",
+       "vel": 54
+      },
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "D-4",
+       "vel": 84
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "F-4",
+       "vel": 64
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "A-4",
+       "vel": 74
+      },
+      null,
+      null,
+      {
+       "note": "C-5",
+       "vel": 60
+      },
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "D-4",
+       "vel": 78
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "F-4",
+       "vel": 58
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "A-4",
+       "vel": 68
+      },
+      null,
+      null,
+      {
+       "note": "C-5",
+       "vel": 54
+      },
+      null
+     ],
+     "transforms": []
+    },
+    {
+     "len": 64,
+     "cells": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+     ],
+     "transforms": []
+    },
+    {
+     "len": 64,
+     "cells": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+     ],
+     "transforms": []
+    }
+   ]
   },
   {
    "name": "ASCENT",
-   "audio": [
-    [
-     {
-      "note": "C-4",
-      "vel": 116
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 82
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 116
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 82
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 116
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 82
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 116
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 82
-     },
-     null,
-     {
-      "note": "C-4",
-      "vel": 100
-     },
-     null,
-     null,
-     null
-    ],
-    [
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 102
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 102
-     },
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 34
-     },
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 102
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 102
-     },
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 34
-     },
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 102
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 102
-     },
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 34
-     },
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 102
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 102
-     },
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 34
-     }
-    ],
-    [
-     {
-      "note": "C-4",
-      "vel": 64
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "G-4",
-      "vel": 38
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "C-4",
-      "vel": 64
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "G-4",
-      "vel": 38
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "C-4",
-      "vel": 64
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "G-4",
-      "vel": 38
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "C-4",
-      "vel": 64
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "G-4",
-      "vel": 38
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "C-4",
-      "vel": 64
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "G-4",
-      "vel": 38
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "C-4",
-      "vel": 64
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "G-4",
-      "vel": 38
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "C-4",
-      "vel": 64
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "G-4",
-      "vel": 38
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "C-4",
-      "vel": 64
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "G-4",
-      "vel": 38
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "C-4",
-      "vel": 64
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "G-4",
-      "vel": 38
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "C-4",
-      "vel": 64
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "G-4",
-      "vel": 38
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "C-4",
-      "vel": 64
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "G-4",
-      "vel": 38
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "C-4",
-      "vel": 64
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "G-4",
-      "vel": 38
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "C-4",
-      "vel": 64
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "G-4",
-      "vel": 38
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "C-4",
-      "vel": 64
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "G-4",
-      "vel": 38
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "C-4",
-      "vel": 64
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "G-4",
-      "vel": 38
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "C-4",
-      "vel": 64
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     },
-     {
-      "note": "G-4",
-      "vel": 38
-     },
-     {
-      "note": "C-4",
-      "vel": 30
-     }
-    ],
-    [
-     null,
-     null,
-     null,
-     {
-      "note": "F-4",
-      "vel": 80
-     },
-     null,
-     null,
-     {
-      "note": "A-4",
-      "vel": 66
-     },
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-5",
-      "vel": 76
-     },
-     null,
-     {
-      "note": "D-5",
-      "vel": 58
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "F-4",
-      "vel": 74
-     },
-     null,
-     null,
-     {
-      "note": "A-4",
-      "vel": 60
-     },
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-5",
-      "vel": 70
-     },
-     null,
-     {
-      "note": "D-5",
-      "vel": 52
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "F-4",
-      "vel": 80
-     },
-     null,
-     null,
-     {
-      "note": "A-4",
-      "vel": 66
-     },
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-5",
-      "vel": 76
-     },
-     null,
-     {
-      "note": "D-5",
-      "vel": 58
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "F-4",
-      "vel": 74
-     },
-     null,
-     null,
-     {
-      "note": "A-4",
-      "vel": 60
-     },
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-5",
-      "vel": 70
-     },
-     null,
-     {
-      "note": "D-5",
-      "vel": 52
-     },
-     null,
-     null
-    ]
-   ],
    "easing": {
     "z": "smooth",
     "roll": "smooth",
@@ -1809,372 +1527,771 @@
       "v": 0.25
      }
     ]
-   }
+   },
+   "rate": 1,
+   "bar": 16,
+   "bars": 4,
+   "lanes": [
+    {
+     "len": 64,
+     "cells": [
+      {
+       "note": "C-4",
+       "vel": 116
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 82
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 116
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 82
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 116
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 82
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 116
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 82
+      },
+      null,
+      {
+       "note": "C-4",
+       "vel": 100
+      },
+      null,
+      null,
+      null
+     ],
+     "transforms": []
+    },
+    {
+     "len": 64,
+     "cells": [
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 102
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 102
+      },
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 34
+      },
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 102
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 102
+      },
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 34
+      },
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 102
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 102
+      },
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 34
+      },
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 102
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 102
+      },
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 34
+      }
+     ],
+     "transforms": []
+    },
+    {
+     "len": 64,
+     "cells": [
+      {
+       "note": "C-4",
+       "vel": 64
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "G-4",
+       "vel": 38
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "C-4",
+       "vel": 64
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "G-4",
+       "vel": 38
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "C-4",
+       "vel": 64
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "G-4",
+       "vel": 38
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "C-4",
+       "vel": 64
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "G-4",
+       "vel": 38
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "C-4",
+       "vel": 64
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "G-4",
+       "vel": 38
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "C-4",
+       "vel": 64
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "G-4",
+       "vel": 38
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "C-4",
+       "vel": 64
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "G-4",
+       "vel": 38
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "C-4",
+       "vel": 64
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "G-4",
+       "vel": 38
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "C-4",
+       "vel": 64
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "G-4",
+       "vel": 38
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "C-4",
+       "vel": 64
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "G-4",
+       "vel": 38
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "C-4",
+       "vel": 64
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "G-4",
+       "vel": 38
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "C-4",
+       "vel": 64
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "G-4",
+       "vel": 38
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "C-4",
+       "vel": 64
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "G-4",
+       "vel": 38
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "C-4",
+       "vel": 64
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "G-4",
+       "vel": 38
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "C-4",
+       "vel": 64
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "G-4",
+       "vel": 38
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "C-4",
+       "vel": 64
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      },
+      {
+       "note": "G-4",
+       "vel": 38
+      },
+      {
+       "note": "C-4",
+       "vel": 30
+      }
+     ],
+     "transforms": []
+    },
+    {
+     "len": 64,
+     "cells": [
+      null,
+      null,
+      null,
+      {
+       "note": "F-4",
+       "vel": 80
+      },
+      null,
+      null,
+      {
+       "note": "A-4",
+       "vel": 66
+      },
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-5",
+       "vel": 76
+      },
+      null,
+      {
+       "note": "D-5",
+       "vel": 58
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "F-4",
+       "vel": 74
+      },
+      null,
+      null,
+      {
+       "note": "A-4",
+       "vel": 60
+      },
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-5",
+       "vel": 70
+      },
+      null,
+      {
+       "note": "D-5",
+       "vel": 52
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "F-4",
+       "vel": 80
+      },
+      null,
+      null,
+      {
+       "note": "A-4",
+       "vel": 66
+      },
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-5",
+       "vel": 76
+      },
+      null,
+      {
+       "note": "D-5",
+       "vel": 58
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "F-4",
+       "vel": 74
+      },
+      null,
+      null,
+      {
+       "note": "A-4",
+       "vel": 60
+      },
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-5",
+       "vel": 70
+      },
+      null,
+      {
+       "note": "D-5",
+       "vel": 52
+      },
+      null,
+      null
+     ],
+     "transforms": []
+    },
+    {
+     "len": 64,
+     "cells": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+     ],
+     "transforms": []
+    },
+    {
+     "len": 64,
+     "cells": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+     ],
+     "transforms": []
+    }
+   ]
   },
   {
    "name": "SUSPEND",
-   "audio": [
-    [
-     {
-      "note": "C-4",
-      "vel": 112
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 84
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 112
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 84
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 112
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 84
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 112
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 84
-     },
-     null,
-     null,
-     null,
-     null,
-     null
-    ],
-    [
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 104
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 104
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 104
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 104
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null
-    ],
-    [
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 50
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 50
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 50
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 50
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 50
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 50
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 50
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 50
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 50
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 50
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 50
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 50
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 50
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 50
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 50
-     },
-     null,
-     null,
-     null,
-     {
-      "note": "C-4",
-      "vel": 50
-     },
-     null
-    ],
-    [
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "D-4",
-      "vel": 70
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "D-4",
-      "vel": 64
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "D-4",
-      "vel": 70
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     {
-      "note": "D-4",
-      "vel": 64
-     },
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null,
-     null
-    ]
-   ],
    "easing": {
     "z": "smooth",
     "roll": "smooth",
@@ -2247,13 +2364,711 @@
       "v": 0.25
      }
     ]
-   }
-  }
+   },
+   "rate": 1,
+   "bar": 16,
+   "bars": 4,
+   "lanes": [
+    {
+     "len": 64,
+     "cells": [
+      {
+       "note": "C-4",
+       "vel": 112
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 84
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 112
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 84
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 112
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 84
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 112
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 84
+      },
+      null,
+      null,
+      null,
+      null,
+      null
+     ],
+     "transforms": []
+    },
+    {
+     "len": 64,
+     "cells": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 104
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 104
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 104
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 104
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+     ],
+     "transforms": []
+    },
+    {
+     "len": 64,
+     "cells": [
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 50
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 50
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 50
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 50
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 50
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 50
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 50
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 50
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 50
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 50
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 50
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 50
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 50
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 50
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 50
+      },
+      null,
+      null,
+      null,
+      {
+       "note": "C-4",
+       "vel": 50
+      },
+      null
+     ],
+     "transforms": []
+    },
+    {
+     "len": 64,
+     "cells": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "D-4",
+       "vel": 70
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "D-4",
+       "vel": 64
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "D-4",
+       "vel": 70
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "note": "D-4",
+       "vel": 64
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+     ],
+     "transforms": []
+    },
+    {
+     "len": 64,
+     "cells": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+     ],
+     "transforms": []
+    },
+    {
+     "len": 64,
+     "cells": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+     ],
+     "transforms": []
+    }
+   ]
+  },
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null
  ],
- "format": "hydrapy-tracker-1",
+ "format": "hydrapy-tracker-3",
  "bindings": {
   "z": "Dolly Z",
   "roll": "Roll",
   "feedback": "Feedback"
- }
+ },
+ "chain": [
+  0,
+  1,
+  2,
+  3
+ ],
+ "seed": 0,
+ "lanes": [
+  {
+   "name": "Kick"
+  },
+  {
+   "name": "Snare"
+  },
+  {
+   "name": "Hat"
+  },
+  {
+   "name": "FM"
+  },
+  {
+   "name": "Lane 5"
+  },
+  {
+   "name": "Lane 6"
+  }
+ ],
+ "sounds": [
+  {
+   "machine": null,
+   "params": {}
+  },
+  {
+   "machine": null,
+   "params": {}
+  },
+  {
+   "machine": null,
+   "params": {}
+  },
+  {
+   "machine": null,
+   "params": {}
+  },
+  {
+   "machine": null,
+   "params": {}
+  },
+  {
+   "machine": null,
+   "params": {}
+  }
+ ]
 }

@@ -13,10 +13,9 @@ shots:
       studio: {patch: patches/gorgon_corridor.py, transport: stop}
       rack: {patch: rack-gorgon, view: {modules: [Gorgon], zoom: 2.0}}
     narration: >
-      Add Gorgon to a patch with Studio running on the same computer. {linked}
-      The display says Linked and shows the tempo, usually within a second.
-      Studio writes its port and session token to a file only you can read, and the module finds it there;
-      there is no address to type. {lights} LINK is lit while Studio answers; CLK follows the clock.
+      Add Gorgon to a patch with Studio running on the same computer. {linked} The display says Linked and shows the tempo, usually within a second.
+      Studio writes its port and session token to a file only you can read, and the module finds it there; there is no address to type. {lights}
+      LINK is lit while Studio answers; CLK follows the clock.
     actions:
       - at: linked
         rack.highlight: {ref: Gorgon, label: Linked · 138 BPM, seconds: 4}
@@ -38,12 +37,11 @@ shots:
       rack: {patch: rack-gorgon, view: {modules: [Gorgon], zoom: 2.0}}
     source: [Gorgon/rack/docs/MANUAL.md#outputs-from-gorgon]
     narration: >
-      Clock is sixteenths by default. {clock} Reset fires on start, on a seek and at the loop boundary. {reset}
-      Run is high while Gorgon plays. {pitch} Pitch, velocity and gates carry the four audio lanes as polyphonic cables,
-      in lane order: Breaks, FM hits, Sub, Texture. Gates one to four are the same gates on separate jacks. {lanes}
-      Z, Roll and Feedback are the visual lanes as control voltage. {audio} The next four jacks carry audio from Studio;
-      chapter thirteen covers them. {bus} The last, BUS, sends one byte on every clock, over one cable,
-      to the byte-bus inputs in DSP Emulation. By default the byte follows Dolly Z.
+      Clock is sixteenths by default. {clock} Reset fires on start, on a seek and at the loop boundary. {reset} Run is high while Gorgon plays.
+      {pitch} Pitch, velocity and gates carry one channel per audio lane: six in version three, four in older scores. This legacy example has
+      four, in lane order: Breaks, FM hits, Sub, Texture. Gates one to six are the same gates on separate jacks. {lanes} Z, Roll and Feedback
+      are the visual lanes as control voltage. {audio} The next four jacks carry audio from Studio; chapter thirteen covers them. {bus} BUS OUT,
+      sends one byte on every clock, over one cable, to the byte-bus inputs in DSP Emulation. By default the byte follows Dolly Z.
     actions:
       - at: clock
         rack.highlight: {ref: Gorgon.out.Clock, label: CLOCK, seconds: 2.5}
@@ -70,8 +68,10 @@ shots:
     verify:
       - "port order and meanings from MANUAL Outputs table and configOutput names"
       - "lane order Breaks, FM hits, Sub, Texture (walkthrough §7.3)"
-      - "BUS (GorgonBridge 2.2.0, Gorgon #12) is the last output: bits 0-7 on channels 1-8, the word clock on 9, one word per CLOCK rising edge (MANUAL ByteBus, configOutput, catalog)"
+      - "BUS (GorgonBridge 2.2.0, Gorgon #12) is the last output: bits 0-7 on channels 1-8, the word clock on 9, one word per CLOCK rising edge
+        (MANUAL ByteBus, configOutput, catalog)"
       - "BUS patches to ByteBusLab Register and Lookup, Vastish BUS IN and OTIS FRAME BUS (MANUAL ByteBus); the default source is Z (BusSource::Z)"
+      - V3 has six polyphonic channels and GATE 1–6; legacy scores retain four; MANUAL outputs table.
   - id: scope
     title: Clock and a gate on a scope
     frames:
@@ -79,9 +79,9 @@ shots:
     setup:
       rack: {patch: rack-scope-start, view: {modules: [Gorgon, Scope]}}
     narration: >
-      Patch {clock} Clock into a scope, and gate two, the FM hits lane, {gate} into the second channel,
-      then play in Studio. {play} The clock is Gorgon's tempo on Rack's own sample clock,
-      so pulses land on exact samples; the module nudges its tempo by at most half a percent to stay with Studio.
+      Patch {clock} Clock into a scope, and gate two, the FM hits lane, {gate} into the second channel, then play in Studio. {play} The clock
+      is Gorgon's tempo on Rack's own sample clock, so pulses land on exact samples; the module nudges its tempo by at most half a percent to
+      stay with Studio.
     actions:
       - at: clock
         rack.cable: {from: Gorgon.out.Clock, to: 'Scope.in#0', seconds: 0.7}
@@ -95,13 +95,15 @@ shots:
     verify:
       - "Fundamental Scope input indices 0/1 are its two channels"
       - "follower trims tempo by at most 0.5% (MANUAL Timing)"
+    source:
+      - Gorgon/README.md
   - id: transport
     title: PLAY and RESET act on Studio
     setup:
       rack: {patch: rack-gorgon, view: {modules: [Gorgon], zoom: 2.0}}
     narration: >
-      PLAY on the module starts or pauses Gorgon; {play} RESET goes back to the start of the score, or of the looped pattern. {reset}
-      Both act on Studio, so the picture and every other output move too. There is one transport, and it is Studio's.
+      PLAY on the module starts or pauses Gorgon; {play} RESET goes back to the start of the score, or of the looped pattern. {reset} Both act
+      on Studio, so the picture and every other output move too. There is one transport, and it is Studio's.
     actions:
       - at: play
         rack.click: Gorgon.param.Play
@@ -114,3 +116,19 @@ shots:
       - {at: reset, window: studio, rect: [0, 0, 0.5, 0.3]}
     verify:
       - "PLAY/RESET act on Studio (MANUAL Transport)"
+    source:
+      - Gorgon/README.md
+  - id: bus-v3
+    title: BUS OUT and BUS IN
+    kind: still
+    asset: diagrams/bus-v3.svg
+    narration: >
+      For a version three score, BUS OUT’s Hit mask carries six playing lanes and FILL. Bit seven stays zero. BUS IN uses those same six bits
+      for mutes, with bit six adding FILL. Editor mutes still apply. A feedback path through bus logic acts on the next row. Earlier score versions
+      ignore BUS IN.
+    source:
+      - Gorgon/rack/docs/MANUAL.md#bus-in
+      - Gorgon/spec/bus-io.md
+    verify:
+      - Confirm diagram and narration against Gorgon/rack/docs/MANUAL.md#bus-in; stage rehearsal still required.
+      - Confirm diagram and narration against Gorgon/spec/bus-io.md; stage rehearsal still required.

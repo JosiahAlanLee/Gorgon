@@ -4,16 +4,16 @@ title: Outputs and saving
 defaults:
   needs: [controller]
   setup:
-    studio: {patch: patches/gorgon_corridor.py, score: scores/demo.json, transport: stop}
+    studio: {patch: patches/gorgon_corridor.py, score: scores/editor-v3.json, transport: stop}
 shots:
   - id: program
     title: Program and Auxiliary
     needs: [controller, program]
     source: [hydrapy/docs/gorgon-editor-walkthrough.md#6-use-separate-output-displays]
     narration: >
-      {play} Program opens the main output in its own window, for a second monitor; press F there for fullscreen.
-      Auxiliary is a second, independent window. Output routing chooses which of the four outputs each one shows. {route}
-      Blackout darkens the monitors. {blackout} Rendering, recordings and exports carry on.
+      {play} Program opens the main output in its own window, for a second monitor; press F there for fullscreen. Auxiliary is a second, independent
+      window. Output routing chooses which of the four outputs each one shows. {route} Blackout darkens the monitors. {blackout} Rendering, recordings
+      and exports carry on.
     actions:
       - at: play
         studio.press: Space
@@ -37,9 +37,8 @@ shots:
     title: Inspect any output
     source: [hydrapy/docs/gorgon-tracker.md#control-surface-and-displays]
     narration: >
-      The Hydra monitor can inspect any of the four outputs without changing what Program sends. {o1}
-      Click one, or step through them with the square brackets. {step}
-      Program returns to the live feed; the dot marks the output Program is on. {program}
+      The Hydra monitor can inspect any of the four outputs without changing what Program sends. {o1} Click one, or step through them with the
+      square brackets. {step} Program returns to the live feed; the dot marks the output Program is on. {program}
     actions:
       - studio.press: Space
       - at: o1
@@ -55,7 +54,8 @@ shots:
     frames:
       - {window: studio, rect: [0.8, 0.17, 0.2, 0.3], zoom: 1.0}
     verify:
-      - "o0-o3 buttons and [ / ] inspect outputs locally; Program follows the live feed; the dot marks Program's output; routing, recording and the score are untouched (HydraPy #57, tracker guide)"
+      - "o0-o3 buttons and [ / ] inspect outputs locally; Program follows the live feed; the dot marks Program's output; routing, recording and
+        the score are untouched (HydraPy #57, tracker guide)"
       - "gorgon_corridor draws distinct pictures on o0 (composite), o1 (source), o2 (edges), o3 (feedback)"
   - id: fullscreen
     title: Program from Studio itself
@@ -64,10 +64,9 @@ shots:
     needs: [controller, studio_display]
     source: [hydrapy/docs/gorgon-tracker.md#control-surface-and-displays, hydrapy/docs/studio.md]
     narration: >
-      On Linux, the Display menu puts Program in Studio's own window instead. {menu} Pick the monitor; here a window
-      stands in for the second screen. Then Show Program fullscreen, or press Shift F. {show}
-      It draws the frame Studio rendered, with no browser in between, and edits go to it at once. {play}
-      The monitor here becomes a small preview. Shift F again closes it. {close}
+      On Linux, the Display menu puts Program in Studio's own window instead. {menu} Program fullscreen on chooses the monitor; here a window
+      stands in for the second screen. Then Show Program fullscreen, or press Shift F. {show} It draws the frame Studio rendered, with no browser
+      in between, and edits go to it at once. {play} The monitor here becomes a small preview. Shift F again closes it. {close}
     actions:
       - at: menu
         studio.click: {selector: '#displayMenu summary'}
@@ -88,17 +87,20 @@ shots:
       - {at: show, window: program}
       - {at: close, window: studio}
     verify:
-      - "Display menu (Linux, X display): monitor list plus 'A window on this desktop'; Show Program fullscreen / Shift+F; Close (HydraPy #53, tracker guide)"
-      - "the native window draws the texture Studio rendered (no readback, JPEG or browser); edits are sent at once while it shows (edit delay 0) (HydraPy #53)"
+      - "Display menu (Linux, X display): monitor list plus 'A window on this desktop'; Show Program fullscreen / Shift+F; Close (HydraPy #53,
+        tracker guide)"
+      - "the native window draws the texture Studio rendered (no readback, JPEG or browser); edits are sent at once while it shows (edit delay
+        0) (HydraPy #53)"
       - "while it shows, the editor's monitor is a 480x270 confidence preview (HydraPy #53/#55); its caption says 'in a window · preview'"
       - "on the stage this renders through Xvfb's software GL: the narration makes no GPU or latency claim"
+      - 'Current exact labels and selectors: #displayMenu summary (Display), #nativeMonitor (Program fullscreen on), #nativeToggleBtn (Show Program
+        fullscreen); index.html unchanged between pin and 789faed.'
   - id: save
     title: Save and restore
     source: [hydrapy/docs/gorgon-editor-walkthrough.md#8-save-restore-and-recover]
     narration: >
-      Save session writes the score to the workspace and downloads the same JSON. {save}
-      File, Restore saved score reloads it; {file} Import score takes a saved file.
-      Restarting Studio starts from the initial study until you restore, so save before you quit.
+      Save session writes the score to the workspace and downloads the same JSON. {save} File, Restore saved score reloads it; {file} Import score
+      takes a saved file. Starting Studio directly uses the initial study until you restore. The launcher restores the saved workspace score automatically. Save before you quit.
     actions:
       - at: save
         studio.click: '#saveBtn'

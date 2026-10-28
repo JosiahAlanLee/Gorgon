@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Write scores/kit-md.json: kit.json as a hydrapy-tracker-2 score for Machinemodule (chapter 10).
+"""Write scores/kit-md.json: kit.json as a hydrapy-tracker-3 score for Machinemodule (chapter 10).
 
 Hits, velocities, picture automation and tempo are kit.json's. Track sounds (OS 1.63 machine IDs):
   1 kick  TRXBD (16)      locks: ghost kicks (step 10) shorter and lower; SUSPEND's downbeats long
@@ -28,16 +28,20 @@ def main():
     here = Path(__file__).resolve().parent
     src, out = here / 'kit.json', here / 'kit-md.json'
     doc = copy.deepcopy(json.load(open(src)))
-    doc['format'] = 'hydrapy-tracker-2'
+    doc['format'] = 'hydrapy-tracker-3'
     doc['sounds'] = [
         {'machine': 16, 'params': {}},
         {'machine': 17, 'params': {}},
         {'machine': 22, 'params': {'p2': 30}},
         {'machine': 34, 'params': {'p2': 60}},
+        {'machine': None, 'params': {}},
+        {'machine': None, 'params': {}},
     ]
     base = semis('D-4')
     for index, pattern in enumerate(doc['patterns']):
-        kick, snare, hat, fm = pattern['audio']
+        if pattern is None:
+            continue
+        kick, snare, hat, fm = [lane['cells'] for lane in pattern['lanes'][:4]]
         for row in range(64):
             step = row % 16
             if kick[row]:
@@ -61,8 +65,8 @@ def main():
                     locks['machine'] = 66
                 fm[row]['locks'] = locks
     out.write_text(json.dumps(doc, indent=1) + '\n')
-    locks = sum(1 for p in doc['patterns'] for lane in p['audio'] for c in lane if c and c.get('locks'))
-    hits = sum(1 for p in doc['patterns'] for lane in p['audio'] for c in lane if c)
+    locks = sum(1 for p in doc['patterns'] if p for lane in p['lanes'] for c in lane['cells'] if c and c.get('locks'))
+    hits = sum(1 for p in doc['patterns'] if p for lane in p['lanes'] for c in lane['cells'] if c)
     print(f'{out}: {hits} hits, {locks} locked')
 
 

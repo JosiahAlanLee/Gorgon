@@ -4,7 +4,7 @@ title: Automating the picture
 defaults:
   needs: [controller]
   setup:
-    studio: {patch: patches/gorgon_corridor.py, score: scores/demo.json, transport: stop}
+    studio: {patch: patches/gorgon_corridor.py, score: scores/editor-v3.json, transport: stop}
     actions:
       - studio.click: '#visualPageTab'     # automation lives on the Visual page
 shots:
@@ -12,9 +12,8 @@ shots:
     title: A value at a row
     source: [hydrapy/docs/gorgon-editor-walkthrough.md#4-shape-visual-automation, hydrapy/docs/gorgon-tracker.md]
     narration: >
-      On the Visual page, the lanes hold keys: a value at a row. Select a Dolly Z cell; {cell}
-      the editor under the grid shows its value. Type a new one, {value} and write the key. Playback doesn't move.
-      Seek to that row and play, {play} and the picture takes the value.
+      On the Visual page, the lanes hold keys: a value at a row. Select a Dolly Z cell; {cell} the editor under the grid shows its value. Type
+      a new one, {value} and write the key. Playback doesn't move. Seek to that row and play, {play} and the picture takes the value.
     actions:
       - at: cell
         studio.click: {selector: '#trackerRows [aria-label^="Dolly Z, row 08"]'}
@@ -35,10 +34,9 @@ shots:
   - id: curve
     title: Hold, Linear, Smooth
     narration: >
-      The curve below the grid is the same lane. Click it to set a key: across picks the row, and height picks the value. {curve}
-      The edit cursor moves there; playback doesn't.
-      Hold keeps each value until the next key; {hold} Linear draws straight lines between keys; {linear}
-      Smooth eases in and out. {smooth} The choice applies to the whole lane in this pattern.
+      The curve below the grid is the same lane. Click it to set a key: across picks the row, and height picks the value. {curve} The edit cursor
+      moves there; playback doesn't. Hold keeps each value until the next key; {hold} Linear draws straight lines between keys; {linear} Smooth
+      eases in and out. {smooth} The choice applies to the whole lane in this pattern.
     actions:
       - studio.click: {selector: '#trackerRows [aria-label^="Dolly Z, row 18"]'}
       - at: curve
@@ -54,13 +52,14 @@ shots:
     verify:
       - "a curve click sets a key at the clicked row (x) and value (y), moves the edit cursor there, and does not seek (app.js:658-662)"
       - "ease buttons named Hold / Linear / Smooth inside #easeButtons"
+    source:
+      - hydrapy/docs/gorgon-tracker.md
   - id: bindings
     title: Bindings
     narration: >
-      Patch bindings decide which control each lane drives. {bind}
-      The patch declares its controls by name, and this one maps Dolly Z to two-dimensional scale,
-      Roll to rotation, and Feedback to the image memory. It is not a 3D camera.
-      Lane values keep their own units: zero to one, degrees, and zero to point nine.
+      Patch bindings decide which control each lane drives. {bind} The patch declares its controls by name, and this one maps Dolly Z to two-dimensional
+      scale, Roll to rotation, and Feedback to the image memory. It is not a 3D camera. Lane values keep their own units: zero to one, degrees,
+      and zero to point nine.
     actions:
       - at: bind
         studio.point: '#bind_z'
@@ -73,13 +72,15 @@ shots:
     verify:
       - "Dolly Z is 2D scale, not depth reprojection (gorgon_corridor docstring, tracker guide)"
       - "lane units 0–1, degrees, 0–0.9; no normalisation to the control's range"
+    source:
+      - hydrapy/docs/gorgon-tracker.md
   - id: patterns
     title: Name and copy patterns
     source: [hydrapy/docs/gorgon-editor-walkthrough.md#5-name-and-copy-patterns]
     narration: >
-      Pattern tools renames, copies and clears. Name this one First Phrase, {name}
-      and the name appears on its card. Then copy it to pattern two, {copy} which replaces everything there, name and curves included.
-      The order of patterns and their length are fixed for now; there is no song chain yet.
+      Pattern tools renames, copies and clears. Name this one First Phrase, {name} and the name appears on its card. Copy to selects the destination.
+      {copy} Copy pattern to destination replaces it, including its name and curves. Banks hold the patterns; the chain decides their order. Edit
+      opens Song order; Apply chain accepts codes such as A01 A02 A02 B01.
     actions:
       - studio.click: {selector: '#patternMenu summary'}
       - at: name
@@ -87,9 +88,13 @@ shots:
       - at: copy
         studio.select: {target: '#duplicateTarget', value: '1'}
       - studio.click: '#duplicatePatternBtn'
+      - studio.click: '#chainMenu summary'
+      - studio.fill:
+          target: '#chainInput'
+          text: A01 A02 A02 A03 A04
+      - studio.click: '#chainApplyBtn'
     frames:
       - {window: studio, rect: [0, 0, 0.75, 0.5]}
     verify:
-      - "#patternMenu is a <details>; #duplicateTarget option values (0-based index?) — check"
-      - "copy replaces destination incl. name and interpolation (§5.2)"
-      - "no variable song chain (§5.4)"
+      - "Copy destination values are zero-based indices; Pattern tools and chain controls in tracker/index.html and app.js at 789faed."
+      - "Chain repeats are supported; spec/score-v3.md."
