@@ -15,8 +15,12 @@
 namespace gorgon {
 namespace v3 {
 
-// The longest row, at rate ¼. A candidate that starts this long before a tick has ended by it.
-constexpr int64_t LONGEST_ROW = 4 * TICKS;
+// evaluator.md: W = TICKS / R, R = 4 * rate; minimum rate 1/4 gives R = 1,
+// hence W <= TICKS (1920). transforms.md: ply only divides W by 1..4;
+// rot/rev select cells, every/degrade/conditions/mutes never stretch spans.
+// Version 3 has no swing or nudge. Thus every candidate ends within TICKS
+// of its start, also bounding how far back a covering candidate can read FILL.
+constexpr int64_t LONGEST_ROW = TICKS;
 
 // The playhead's FILL and bus layer (evaluator.md#playhead-fields, bus-io.md). The bridge
 // thread builds one and never changes it after, so the audio thread reads it without a lock.

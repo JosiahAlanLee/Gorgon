@@ -97,7 +97,11 @@ evaluated, [evaluator.md](evaluator.md#ticks)'s rule for live changes, and
 never below 0; a stamp of 0 sets the state at the anchor. The change applies to
 Rack's own outputs from that tick at once. So a change read on the sample where
 a candidate starts applies to it; one read a sample later does not (V11). While
-stopped, Rack stands at the playhead's paused tick and stamps changes there.
+stopped, Rack still stamps at the first tick it has not evaluated (never below
+0). Its engine frontier can be ahead of Studio's paused tick by the ticks Rack
+played before the pause arrived, typically up to one bridge poll. Changes made
+while paused in the same segment share that frontier stamp until evaluation
+resumes.
 Changing the bit map in the menu is read as a change of every bit it moves.
 
 **Connection.** A disconnected BUS IN has no effect, and Rack sends nothing

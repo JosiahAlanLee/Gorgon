@@ -130,7 +130,7 @@ template <class List, class ReadTick> void coalesce(List& list, int& count, int 
 
 // The audio thread's side: the word, the stamps and the layer this module plays at once.
 struct BusInput {
-	static constexpr int FILL_CAPACITY = 192;   // a 7680-tick row's worth of 60-tick rows, and room
+	static constexpr int FILL_CAPACITY = 192;   // room for a 1920-tick lookback at 60 ticks/row (32), plus margin
 
 	bool connected = false, begun = false;
 	uint8_t states = 0;
