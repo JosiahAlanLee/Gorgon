@@ -2,6 +2,8 @@
   "format": "gorgon-preview-1",
   "tag": "preview-1",
   "rack_sdk": "2.6.4",
-  "dsp_commit": "4587b48293929448419eff428126d6f8008b7872",
-  "blocked_by": []
+  "dsp_commit": "a9f2d2f481fbf57b69739a1e13df38228afc3244",
+  "blocked_by": [
+    "Run the updated preview bundle workflow without publication; clear this entry only after all four platform assemblies and contract checks pass."
+  ]
 }
