@@ -230,8 +230,45 @@ static void traceRing() {
 	CHECK(torn == 0 && copies > 0, "%ld torn records in %ld copies", torn, copies);
 }
 
+// BUS IN's channel with the audio thread and the worker on their own threads (#21): an
+// audio-rate bus overflows a small ring while the worker drains only now and then, yet
+// once the cable is pulled the worker's record is disconnected and all clear.
+static void busChannelThreads() {
+	v3::ScoreV3 score;   // no cycle: read ticks are the stamps
+	v3::BusChannel<64> channel;
+	std::atomic<bool> done{false};
+	std::thread audio([&] {
+		v3::BusInput bus;
+		v3::BusMap map;
+		v3::BusChange out[10];
+		for (long s = 0; s < 200000; s++) {
+			int word = s < 199990 ? int(s * 2654435761u >> 24) & 0x7f : -1;
+			int n = bus.process(word, map, score, s < 100000 ? 5 : 6, 0, -1, s, out);
+			channel.send(out, n, bus.state());
+		}
+		done = true;
+	});
+	v3::BusRecord record;
+	while (!done) {
+		channel.drain(record, &score);
+		std::this_thread::sleep_for(std::chrono::microseconds(200));
+	}
+	audio.join();
+	channel.drain(record, &score);
+	bool clear = true;
+	for (const auto& l : record.lists)
+		clear = clear && !l.back().on;
+	CHECK(channel.lost() > 0 && channel.resyncs() > 0, "the ring overflowed (%llu lost, %llu resyncs)",
+	      (unsigned long long)channel.lost(), (unsigned long long)channel.resyncs());
+	CHECK(record.revision == 6 && !record.connected && clear, "the record ends disconnected and clear (revision %lld)",
+	      (long long)record.revision);
+	record.acknowledge(record.sequence);
+	CHECK(!record.active, "the lease is released");
+}
+
 int main() {
 	traceRing();
+	busChannelThreads();
 	CHECK(noteMidi("C4") == 60 && noteMidi("C-4") == 60 && noteMidi("D#4") == 63, "note spellings");
 	CHECK(noteMidi("C0") == 12 && noteMidi("G9") == 127, "pitch range");
 	for (const char* note : {"AIR", "B#4", "E#4", "C-", "H4", "G#9", "A-10"})

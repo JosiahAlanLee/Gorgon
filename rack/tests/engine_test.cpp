@@ -693,6 +693,79 @@ static void busRecord() {
 	CHECK(got == 4 && x == 3 && ring.lost == 1, "a full ring drops and counts");
 }
 
+// An audio-rate BUS IN while the worker is blocked (#21): the ring overflows, yet the
+// record ends in the audio thread's state, and a DISCONNECT after the overflow still
+// releases the lease.
+static void busOverflow() {
+	v3::ScoreV3 score = loopV3(120., 16, 4);
+	auto run = [&](v3::BusChannel<64>& channel, v3::BusInput& bus, long from, long to, int64_t revision, auto word) {
+		v3::BusChange out[10];
+		v3::BusMap map;
+		for (long s = from; s < to; s++) {
+			int n = bus.process(word(s), map, score, revision, 0, -1, int64_t(double(s) / 12.5), out);
+			channel.send(out, n, bus.state());
+		}
+	};
+	auto toggling = [](long s) { return s % 2 ? 0x41 : 0x00; };   // FILL and lane 1's mute flip every sample
+	auto finalStates = [](const v3::BusRecord& r) {
+		int st = 0;
+		for (int f = 0; f < v3::BUS_FUNCTIONS; f++)
+			st |= r.lists[f].back().on << f;
+		return st;
+	};
+	{
+		// Overflow, then the cable is pulled while the worker is still blocked.
+		v3::BusChannel<64> channel;
+		v3::BusInput bus;
+		v3::BusRecord record;
+		run(channel, bus, 0, 1, 3, [](long) { return 0; });
+		channel.drain(record, &score);
+		CHECK(record.active && record.connected, "connected");
+		run(channel, bus, 1, 2000, 3, toggling);
+		run(channel, bus, 2000, 2010, 3, [](long) { return -1; });
+		CHECK(channel.lost() > 0, "the ring overflowed");
+		channel.drain(record, &score);
+		CHECK(!record.connected, "a DISCONNECT after an overflow disconnects the record");
+		CHECK(finalStates(record) == 0, "the all-clear clears every function (states %02x)", finalStates(record));
+		CHECK(record.pending() && channel.resyncs() == 1, "the all-clear is outstanding after one resync");
+		record.acknowledge(record.sequence);
+		CHECK(!record.active, "the lease is released once the all-clear is through");
+	}
+	{
+		// Overflow while connected: after the drain the record holds the audio thread's state.
+		v3::BusChannel<64> channel;
+		v3::BusInput bus;
+		v3::BusRecord record;
+		run(channel, bus, 0, 1999, 3, toggling);   // ends on sample 1998: all off
+		run(channel, bus, 1999, 2000, 3, [](long) { return 0x05; });
+		channel.drain(record, &score);
+		CHECK(channel.lost() > 0 && record.connected, "overflowed, still connected");
+		CHECK(finalStates(record) == (bus.states & 0x7f) && bus.states == 0x0a, "the record ends in the audio thread's state (%02x, %02x)",
+		      finalStates(record), bus.states);
+		// Later changes still arrive in order on top of the resync.
+		run(channel, bus, 2000, 2001, 3, [](long) { return 0x04; });
+		channel.drain(record, &score);
+		CHECK(finalStates(record) == 0x08 && channel.resyncs() == 1, "a change after the resync (%02x)", finalStates(record));
+	}
+	{
+		// A new segment during the overflow, its SEGMENT among the lost.
+		v3::BusChannel<64> channel;
+		v3::BusInput bus;
+		v3::BusRecord record;
+		run(channel, bus, 0, 1000, 3, toggling);
+		v3::BusChange stray;   // control messages fill the reserve too
+		stray.kind = v3::BusChange::DISCONNECT;
+		stray.revision = 3;
+		for (long s = 1000; s < 1100; s++)
+			channel.push(stray);
+		CHECK(channel.ring.head - channel.ring.tail == 64, "every slot full");
+		run(channel, bus, 1100, 1101, 4, [](long) { return 0x02; });
+		channel.drain(record, &score);
+		CHECK(record.revision == 4 && record.connected && finalStates(record) == 0x04, "the new segment (revision %lld, states %02x)",
+		      (long long)record.revision, finalStates(record));
+	}
+}
+
 // The trace ring: bounded, oldest first, and a BUS IN change's line.
 static void trace() {
 	v3::TraceRing ring(4);
@@ -766,6 +839,7 @@ int main(int argc, char** argv) {
 	busStamps();
 	busFeedback();
 	busRecord();
+	busOverflow();
 	trace();
 	fixture(argc > 1 ? argv[1] : "tests/fixture.txt");
 	if (failures) {

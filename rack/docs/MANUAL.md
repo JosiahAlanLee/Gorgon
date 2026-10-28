@@ -10,7 +10,7 @@ Gorgon connects VCV Rack to the Gorgon tracker in [HydraPy](https://github.com/J
 2. Add Gorgon to a Rack patch. The display shows **Linked** and the tempo once it finds Studio, usually within a second. If Studio restarts, Gorgon finds it again.
 
 Gorgon is 14 HP wide; it was 12 HP before 2.4.0. In a patch saved with an older
-Gorgon, check the module to its right: the Machinemodule sound link needs it
+Gorgon, check the module to its right: the sound link to Machinemodule or Monomodule needs it
 flush against Gorgon's right edge.
 
 The score/CV bridge discovers Studio automatically. To point it at a different file, set `HYDRAPY_STUDIO_FILE` before starting Rack. Studio only listens on 127.0.0.1, so Rack and Studio must run on the same machine. Audio capture has a separate setup below.
@@ -19,7 +19,7 @@ The score/CV bridge discovers Studio automatically. To point it at a different f
 
 | Jack | Signal |
 |---|---|
-| CLOCK | 10 V pulses, 50% duty. Sixteenths by default; *Clock* in the context menu sets 1, 2, 4, 8 or 24 per quarter note |
+| CLOCK | 10 V pulses, 50% duty. Sixteenths by default; *Clock* in the context menu sets 1, 2, 4, 8, 16, 24 or 32 per quarter note. 32 clocks a rate-8 row grid once per row, and 16 a rate-4 grid |
 | RESET | 5 ms trigger on start, resume or seek, and at the score/pattern loop boundary. Transport pulses are latched even when an update arrives late |
 | RUN | 10 V while Gorgon plays |
 | VEL | Polyphonic, one channel per audio lane (6 for a version-3 score, 4 for versions 1 and 2): the lane's last hit velocity, 0–10 V, held until the next hit |
@@ -63,9 +63,11 @@ does: the same candidates from the same evaluator, so conditions, `ply`,
 - Each `ply` sub-step has its own gate, a gate-length fraction of its own span.
 - A note whose condition fails, or that a transform drops, opens no gate and
   leaves the lane's held velocity and pitch alone, as a mute does.
-- FILL (Studio's FILL key, or a module's bus layer) and the lane mutes are
-  judged once per hit, when it starts: a mute that arrives while a note sounds
-  doesn't cut it.
+- FILL (Studio's FILL key, or a module's bus layer) is judged once per hit, at
+  the start of its row. A lane mute is judged when each gate opens: once for a
+  plain hit, and at every sub-step of a `ply` hit, so a mute that arrives
+  mid-ratchet silences the sub-steps after it. A mute that arrives while a gate
+  is open doesn't cut it.
 - CLOCK and RESET count from the start of the chain, or of the looped pattern.
   RESET sends the playhead there.
 - The display shows the playing pattern's code and its bar and row, as the
@@ -102,6 +104,11 @@ arrives. The map is saved with the patch.
   module holds the bus at a time. If another module's BUS IN already holds it,
   the menu says so, and this one follows that bus until the other lets go (3
   seconds after it last sends).
+- A bus that changes every few samples while Studio is slow to answer can
+  outrun what Gorgon queues for Studio. Gorgon then sends Studio the bus as it
+  stands, so what Studio follows is right again within a poll, though changes
+  in between may never reach it. *BUS IN bits* shows how many were dropped.
+  Gorgon's own playback never drops a change.
 - Unpatching BUS IN, removing the module or closing the patch clears every
   mute and FILL it set.
 - A version-1 or -2 score ignores BUS IN.
@@ -317,13 +324,22 @@ The display shows the link state and tempo, then the pattern, row and beat (for 
 If Studio stops answering, the module keeps the last tempo and position and carries on until Studio is back.
 
 
-## Machinemodule sound link (Gorgon 2.3.0; six lanes from 2.4.0)
+## Sound link: Machinemodule and Monomodule (Gorgon 2.3.0; six lanes and Monomodule from 2.4.0)
 
 Place **Machinemodule** (`MachinemoduleRack` plugin) immediately to the right of
 Gorgon, load your Machinedrum OS in its context menu, and leave its TRIG input
 unpatched. Gorgon sends each lane's resolved machine/SYN1–8 controls together
 with its gate, velocity, pitch and transport in one expander packet. The
 receiver's blue light indicates a live link. No extra parameter cables are needed.
+
+From Gorgon 2.4.0, **Monomodule** (`MonomoduleRack` plugin 2.x, the Monomachine)
+is a receiver too, linked the same way: immediately to the right of Gorgon, its
+Monomachine OS loaded from its menu, TRIG unpatched. It takes the same six-lane
+packet, lane *n* playing track *n*. Each hit is a note at its cell's pitch
+(after the score's key; the link carries pitch as C4 = 0 V whatever *Pitch
+zero* is set to), held while Gorgon's gate is high. A machine lock picks the
+track's machine for that note, and P1–P8 locks set its SYN page. The
+Monomachine has no velocity: a hit's velocity only decides whether it plays.
 
 Machinemodule 2.2.0 and later take six lanes (sound link version 2): a
 version-3 score plays tracks 1–6, and an older score tracks 1–4. Gorgon still
@@ -345,8 +361,10 @@ these controls and latch at each hit. Patching its TRIG input overrides the link
 The first adapter buffers 1024 host samples plus rate-conversion delay and rounds
 triggers forward to the native 32-sample boundary. Its menu reports delay,
 missed blocks and unavailable machine IDs. Align other voices or adjust Gorgon's
-timing offset for your monitoring path; no physical workstation latency has
-been measured here. Set Machinemodule's native tempo manually to match Gorgon.
+timing offset for your monitoring path; [Destination latency](#destination-latency)
+gives both receivers' measured delay on the workstation, about 24 ms, and the
+link adds nothing to it. Interfaces and hardware beyond Rack aren't measured.
+Set the receiver's native tempo manually to match Gorgon.
 
 The Rack module contains only the public BSD sound-link ABI; firmware and the
 AGPL emulation core live in the separate receiver plugin. See

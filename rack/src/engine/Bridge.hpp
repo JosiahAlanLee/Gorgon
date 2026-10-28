@@ -46,7 +46,7 @@ public:
 	// `now` is the local monotonic clock in seconds (Rack's system::getTime in
 	// the module). `period` is the poll interval.
 	explicit Bridge(Now now, std::string advertisement = advertisementPath(), double period = 1. / 30.)
-	    : now(std::move(now)), advertisement(std::move(advertisement)), period(period), busRing(new BusRing) {
+	    : now(std::move(now)), advertisement(std::move(advertisement)), period(period), bus(new BusIn) {
 		for (int i = 0; i < INPUTS; i++) {
 			volts[i] = 0.f;
 			connected[i] = false;
@@ -95,8 +95,12 @@ public:
 	// and the audio thread never makes a system call here.
 	void requestPlayToggle() { playToggle = true; }
 	void requestRestart() { restart = true; }
-	// BUS IN: a change for the worker to send, and the first tick not yet evaluated.
-	void pushBus(const v3::BusChange& change) { busRing->push(change); }
+	// BUS IN: one sample's changes for the worker to send, with BUS IN's state after them,
+	// and the first tick not yet evaluated.
+	void pushBus(const v3::BusChange* changes, int n, const v3::BusState& state) { bus->send(changes, n, state); }
+	void pushBus(const v3::BusChange& change) { bus->push(change); }   // a change alone, for tests
+	// Changes the ring had no room for (the worker resends the state after them).
+	uint64_t busLost() const { return bus->lost(); }
 	void setBusFrontier(int64_t tick) { busFrontier.store(tick, std::memory_order_relaxed); }
 	// Whether this module plays its own bus layer: a window is outstanding or held, and
 	// Studio hasn't given the layer to another module.
@@ -151,8 +155,8 @@ private:
 	std::atomic<bool> connected[INPUTS];
 
 	// BUS IN: changes from the audio thread, Rack's record and the lease, on the worker.
-	typedef v3::SpscRing<v3::BusChange, 8192> BusRing;
-	std::unique_ptr<BusRing> busRing;
+	typedef v3::BusChannel<8192> BusIn;
+	std::unique_ptr<BusIn> bus;
 	std::atomic<int64_t> busFrontier{0};
 	std::atomic<bool> busActive{false}, refused{false};
 	v3::BusRecord record;
@@ -342,11 +346,9 @@ private:
 	// One window per poll while there are changes to send, and at least one a second while
 	// BUS IN is patched, which keeps the lease (bus-io.md#bus-in).
 	void sendBus(const Snapshot& s) {
-		v3::BusChange change;
 		if (s.v3())
 			busScore = s.score3;
-		while (busRing->pop(change))
-			record.apply(change, busScore.get());
+		bus->drain(record, busScore.get());
 		busActive = record.active;
 		if (port == 0 || !record.active || !s.v3())
 			return;
@@ -368,9 +370,7 @@ private:
 
 	// Removing the module or closing the patch clears every bit, sent as an all-clear.
 	void clearBus() {
-		v3::BusChange change;
-		while (busRing->pop(change))
-			record.apply(change, busScore.get());
+		bus->drain(record, busScore.get());
 		if (!record.active || port == 0)
 			return;
 		int64_t at = std::max<int64_t>(0, busFrontier.load(std::memory_order_relaxed));

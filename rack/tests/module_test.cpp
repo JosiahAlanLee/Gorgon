@@ -178,6 +178,18 @@ int main() {
 			n.dataFromJson(bad); json_decref(bad);
 			assert(n.busSource.load() == int(gorgon::BusSource::Z));
 		}
+		// The Clock menu offers 32 PPQN (score-v3.md#signals), and 32 survives save and load.
+		assert(std::find(std::begin(Gorgon::PPQN_CHOICES), std::end(Gorgon::PPQN_CHOICES), 32.f) != std::end(Gorgon::PPQN_CHOICES));
+		assert(std::find(std::begin(Gorgon::PPQN_CHOICES), std::end(Gorgon::PPQN_CHOICES), 16.f) != std::end(Gorgon::PPQN_CHOICES));
+		{
+			Gorgon fast;
+			fast.ppqn = 32.f;
+			json_t* saved = fast.dataToJson();
+			Gorgon loaded;
+			loaded.dataFromJson(saved);
+			json_decref(saved);
+			assert(loaded.ppqn.load() == 32.f);
+		}
 		json_t* old = json_object(); // old patches have no BUS option
 		n.busSource = int(gorgon::BusSource::Roll);
 		n.dataFromJson(old); json_decref(old);

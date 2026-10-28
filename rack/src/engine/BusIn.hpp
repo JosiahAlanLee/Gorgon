@@ -51,15 +51,18 @@ struct BusChange {
 };
 
 // A single-producer, single-consumer ring of fixed capacity: push() on the audio thread,
-// pop() on the worker. Neither allocates or blocks.
+// pop() on the worker. Neither allocates or blocks. head and tail count every item ever
+// pushed and popped, so an item's index is the value of tail before its pop().
 template <class T, size_t N> struct SpscRing {
 	T items[N];
 	std::atomic<size_t> head{0}, tail{0};
 	std::atomic<uint64_t> lost{0};
 
-	bool push(const T& item) {
+	// Refuses (and counts) the item when fewer than `reserve` + 1 slots are free, so items
+	// pushed with a smaller reserve still find room.
+	bool push(const T& item, size_t reserve = 0) {
 		size_t h = head.load(std::memory_order_relaxed);
-		if (h - tail.load(std::memory_order_acquire) == N) {
+		if (h - tail.load(std::memory_order_acquire) + reserve >= N) {
 			lost.fetch_add(1, std::memory_order_relaxed);
 			return false;
 		}
@@ -75,6 +78,17 @@ template <class T, size_t N> struct SpscRing {
 		tail.store(t + 1, std::memory_order_release);
 		return true;
 	}
+};
+
+// The audio thread's BUS IN state after the messages of one sample: what the worker
+// resynchronizes its record from when the ring has dropped messages.
+struct BusState {
+	int64_t revision = -1, tick = 0;   // the segment
+	int entry = -1;
+	int64_t at = 0;                    // the sample's stamp
+	uint8_t states = 0;                // every function's state, 0 while disconnected
+	bool connected = false;
+	uint64_t pushed = 0, lost = 0;     // the ring's head and lost count after this sample
 };
 
 // The first tick at or after elapsed tick `at` at which evaluate() reads `function`: the
@@ -121,6 +135,8 @@ struct BusInput {
 	bool connected = false, begun = false;
 	uint8_t states = 0;
 	int64_t revision = -1, tick = 0;
+	int entry = -1;
+	int64_t at = 0;   // the last sample's stamp
 	Transition fill[FILL_CAPACITY];
 	int fillCount = 1;
 	Transition mutes[LANES][1];
@@ -134,7 +150,7 @@ struct BusInput {
 	// One sample, before the engine evaluates it. `word` is BUS IN's word, or -1 while
 	// disconnected; `frontier` the engine's first unevaluated tick of this segment. Writes
 	// the messages for the worker to `out` (at most 9) and returns how many.
-	int process(int word, const BusMap& map, const ScoreV3& score, int64_t segmentRevision, int64_t anchor, int entry,
+	int process(int word, const BusMap& map, const ScoreV3& score, int64_t segmentRevision, int64_t anchor, int startEntry,
 	            int64_t frontier, BusChange* out) {
 		int n = 0;
 		uint8_t next = map.states(word);
@@ -144,6 +160,7 @@ struct BusInput {
 			begun = true;
 			revision = segmentRevision;
 			tick = anchor;
+			entry = startEntry;
 			fill[0] = {0, bool(states & 1)};
 			fillCount = 1;
 			for (int l = 0; l < LANES; l++)
@@ -169,7 +186,7 @@ struct BusInput {
 			c.entry = entry;
 			c.states = states;
 		}
-		int64_t at = std::max<int64_t>(frontier, 0);
+		at = std::max<int64_t>(frontier, 0);
 		for (int f = 0; f < BUS_FUNCTIONS; f++) {
 			bool on = next >> f & 1;
 			if (on == bool(states >> f & 1))
@@ -200,6 +217,18 @@ struct BusInput {
 			c.tick = tick;
 		}
 		return n;
+	}
+
+	// The state after the last process(), less the ring's counts, which BusChannel fills in.
+	BusState state() const {
+		BusState s;
+		s.revision = revision;
+		s.tick = tick;
+		s.entry = entry;
+		s.at = at;
+		s.states = states;
+		s.connected = connected;
+		return s;
 	}
 
 	// `transport` with this module's bus layer in place of the snapshot's.
@@ -302,6 +331,168 @@ struct BusRecord {
 		acknowledged = std::max(acknowledged, upTo);
 		if (!connected && unacknowledged.empty())
 			active = false;   // the all-clear is through: nothing more to send
+	}
+};
+
+// Bring the record to the audio thread's state `s` after the ring dropped messages: the
+// lost SEGMENT, DISCONNECT and changes are restated from what the audio thread holds now.
+// What a lost change did between its stamp and `s.at` can't be recovered; from `s.at` on,
+// the record is right.
+inline void resync(BusRecord& record, const BusState& s, const ScoreV3* score) {
+	auto change = [&](int f, int64_t at, bool on) {
+		BusChange c;
+		c.revision = record.revision;
+		c.tick = record.tick;
+		c.entry = record.entry;
+		c.at = at;
+		c.function = uint8_t(f);
+		c.on = on;
+		record.apply(c, score);
+	};
+	auto segment = [&](uint8_t states) {
+		BusChange c;
+		c.kind = BusChange::SEGMENT;
+		c.revision = s.revision;
+		c.tick = s.tick;
+		c.entry = s.entry;
+		c.states = states;
+		record.apply(c, score);
+	};
+	bool same = !record.lists[0].empty() && record.revision == s.revision && record.tick == s.tick;
+	if (!s.connected) {
+		if (!record.active)
+			return;   // nothing held, nothing to clear
+		if (record.connected && !same)
+			segment(0);   // the lost SEGMENT, which the all-clear then goes in
+		same = record.revision == s.revision && record.tick == s.tick;
+		int64_t at = 0;
+		if (same)
+			at = s.at;
+		else   // the record's own segment, already disconnected: clear at its latest stamp
+			for (const std::vector<Transition>& l : record.lists)
+				at = std::max(at, l.back().at);
+		for (int f = 0; f < BUS_FUNCTIONS; f++)
+			if (record.lists[f].back().on)
+				change(f, at, false);
+		if (record.connected) {
+			BusChange d;
+			d.kind = BusChange::DISCONNECT;
+			d.revision = record.revision;
+			d.tick = record.tick;
+			record.apply(d, score);
+		}
+		return;
+	}
+	if (!same)
+		segment(s.states);   // a lost new segment: the state is taken as held from its anchor
+	else if (!record.connected)
+		segment(0);          // a lost reconnection: from all off, as connecting reads
+	for (int f = 0; f < BUS_FUNCTIONS; f++) {
+		bool on = s.states >> f & 1;
+		if (record.lists[f].back().on != on)
+			change(f, s.at, on);
+	}
+}
+
+// The audio thread's messages to the worker: the ring, and the state after the last
+// sample that sent any, published through a seqlock. A full ring drops changes but
+// keeps RESERVE slots for SEGMENT and DISCONNECT; and whatever it drops, the worker
+// notices the count and resynchronizes from the published state, so a lost message can
+// leave the record wrong only until the worker's next drain. send() neither allocates nor
+// blocks.
+template <size_t N> struct BusChannel {
+	static constexpr size_t RESERVE = 16;   // a sample sends at most 2 SEGMENTs and a DISCONNECT
+	static_assert(N > 2 * RESERVE, "room for changes");
+	SpscRing<BusChange, N> ring;
+
+	// -- audio thread
+	void push(const BusChange& c) { ring.push(c, c.kind == BusChange::CHANGE ? RESERVE : 0); }
+	void send(const BusChange* changes, int n, BusState state) {
+		if (n <= 0)
+			return;
+		for (int k = 0; k < n; k++)
+			push(changes[k]);
+		state.pushed = ring.head.load(std::memory_order_relaxed);
+		state.lost = ring.lost.load(std::memory_order_relaxed);
+		uint64_t s = seq.load(std::memory_order_relaxed);
+		seq.store(s + 1, std::memory_order_relaxed);
+		std::atomic_thread_fence(std::memory_order_release);
+		revision.store(state.revision, std::memory_order_relaxed);
+		tick.store(state.tick, std::memory_order_relaxed);
+		entry.store(state.entry, std::memory_order_relaxed);
+		at.store(state.at, std::memory_order_relaxed);
+		states.store(state.states, std::memory_order_relaxed);
+		connected.store(state.connected, std::memory_order_relaxed);
+		pushed.store(state.pushed, std::memory_order_relaxed);
+		lostAt.store(state.lost, std::memory_order_relaxed);
+		seq.store(s + 2, std::memory_order_release);
+	}
+
+	// -- any thread: messages dropped so far, and resynchronizations done
+	uint64_t lost() const { return ring.lost.load(std::memory_order_relaxed); }
+	uint64_t resyncs() const { return resynced.load(std::memory_order_relaxed); }
+
+	// -- worker: everything in the ring into `record`, then a resync if anything was lost.
+	void drain(BusRecord& record, const ScoreV3* score) {
+		take(record, score);
+		uint64_t now = lost();
+		if (now != lostSeen) {
+			lostSeen = now;
+			pending = true;
+		}
+		if (!pending)
+			return;
+		BusState s;
+		// The published state must come after the loss and after every message drained; the
+		// audio thread publishes in the same sample, so a miss is retried on the next drain.
+		for (int attempt = 0; attempt < 4; attempt++) {
+			if (!read(s))
+				continue;
+			if (s.lost < lostSeen || s.pushed < ring.tail.load(std::memory_order_relaxed))
+				return;
+			resync(record, s, score);
+			skipBelow = s.pushed;   // the messages the state already includes
+			pending = false;
+			resynced.fetch_add(1, std::memory_order_relaxed);
+			take(record, score);
+			return;
+		}
+	}
+
+private:
+	std::atomic<uint64_t> seq{0};
+	std::atomic<int64_t> revision{-1}, tick{0}, at{0};
+	std::atomic<int> entry{-1};
+	std::atomic<uint8_t> states{0};
+	std::atomic<bool> connected{false};
+	std::atomic<uint64_t> pushed{0}, lostAt{0};
+	std::atomic<uint64_t> resynced{0};
+	// The worker's own.
+	uint64_t lostSeen = 0, skipBelow = 0;
+	bool pending = false;
+
+	void take(BusRecord& record, const ScoreV3* score) {
+		BusChange c;
+		for (;;) {
+			size_t index = ring.tail.load(std::memory_order_relaxed);
+			if (!ring.pop(c))
+				return;
+			if (index >= skipBelow)
+				record.apply(c, score);
+		}
+	}
+	bool read(BusState& s) const {
+		uint64_t before = seq.load(std::memory_order_acquire);
+		s.revision = revision.load(std::memory_order_relaxed);
+		s.tick = tick.load(std::memory_order_relaxed);
+		s.entry = entry.load(std::memory_order_relaxed);
+		s.at = at.load(std::memory_order_relaxed);
+		s.states = states.load(std::memory_order_relaxed);
+		s.connected = connected.load(std::memory_order_relaxed);
+		s.pushed = pushed.load(std::memory_order_relaxed);
+		s.lost = lostAt.load(std::memory_order_relaxed);
+		std::atomic_thread_fence(std::memory_order_acquire);
+		return !(before & 1) && seq.load(std::memory_order_relaxed) == before;
 	}
 };
 

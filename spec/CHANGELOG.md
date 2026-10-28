@@ -3,6 +3,18 @@
 Newest first. Each entry names the HydraPy commit and Rack module version it
 describes.
 
+## 2026-10-27 — the Rack module offers 32 PPQN; BUS IN survives a slow Studio
+
+HydraPy `3c01f32eb0c5a396d4e854e20d0b0d9b14de27d7` (pin unchanged) · Rack module
+`GorgonBridge` 2.4.0 (unreleased).
+
+The Clock menu adds 16 and 32 PPQN, the 32 that [score-v3.md](score-v3.md#signals-automation-and-scenes)
+requires, so a rate-8 row grid is clocked once per row. An audio-rate BUS IN can no
+longer lose a disconnect, or leave Rack's record wrong, when the bridge worker is
+blocked: after any dropped change the worker resends the bus as it stands, so the
+lease ends when the cable is pulled ([bus-io.md](bus-io.md#bus-in)). The module menu
+counts dropped changes.
+
 ## 2026-10-27 — Monomodule is a sound-link receiver
 
 HydraPy `3c01f32eb0c5a396d4e854e20d0b0d9b14de27d7` (pin unchanged) · Rack module
