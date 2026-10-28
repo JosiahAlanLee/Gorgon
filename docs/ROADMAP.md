@@ -11,13 +11,11 @@ Snapshot inspected 2026-10-28: Gorgon main `a758045`, HydraPy main
 Versions: GorgonBridge 2.4.2, gorgon-live 0.1.1, MachinemoduleRack 2.2.2,
 MonomoduleRack 2.0.4, OtisLab 2.11.6, VastishLab 2.8.2, ByteBusLab 2.16.5,
 CZishLab 2.1.3, SeanceLab 2.1.1, SpoonBenderLab 2.2.1 and DrumLab 2.0.0
-(retired). Preview preparation is on `codex/preview-release-prep`: it advances
-HydraPy to `789faed` with unchanged fixtures and selects DSP `5041b66`, the
-newest green main commit after `a9f2d2f`’s Monomodule platform run failed
-(its ARM job was cancelled). The proposed preview retains
-MonomoduleRack 2.0.3 while main carries 2.0.4.
-Publication still awaits the expanded four-platform bundle validation and
-Josiah’s decision; see [preview procedure](PREVIEW_RELEASE.md).
+(retired).
+
+Preview-1 preparation is open for review: it moves the HydraPy pin to
+`789faed`, pins DSP_Emulation `a9f2d2f`, and ships nine plugins without DrumLab.
+See the [preview procedure](PREVIEW_RELEASE.md).
 
 ## 1. Decisions this plan is built on
 
@@ -500,7 +498,7 @@ HydraPy #70–#76 and DSP_Emulation #68–#90 (timing, state/lifecycle and docs)
 
 **Left:**
 
-- The tutorial script refresh, under way on `codex/tutorial-refresh`.
+- The tutorial script refresh is open for review; filming follows.
 - Preview-1: four-platform bundle validation and publication.
 - Hardware: the CZ session, physical interfaces (including ES-40 transport),
   and measured end-to-end audio/display latency. The software destination table
