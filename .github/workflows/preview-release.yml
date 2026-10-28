@@ -153,6 +153,8 @@ jobs:
           $dll = Get-ChildItem $runtime -Recurse -Filter libRack.dll | Select-Object -First 1
           if (-not $dll) { throw 'Rack runtime missing' }
           $dll.Directory.FullName | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          # msys2's default path-type drops GITHUB_PATH; the build step adds this itself.
+          "RACK_RUNTIME_DIR=$($dll.Directory.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
       - name: Build Windows plugins
         if: runner.os == 'Windows'
         shell: msys2 {0}
@@ -168,6 +170,8 @@ jobs:
           done
           # make re-expands CMAKE_ARGS unquoted, which strips D:\a\... backslashes.
           gorgon_dir=$(cygpath -m "$GITHUB_WORKSPACE")
+          # plugin_load and rack_module load plugin.dll, which needs libRack.dll.
+          export PATH="$(cygpath -u "$RACK_RUNTIME_DIR"):$PATH"
           for name in machinemodule monomodule; do
             folder=".integration/DSP_Emulation/vcv/$name"
             make -C "$folder" dist RACK_DIR=/tmp/Rack-SDK CMAKE_ARGS="-DGORGON_DIR=$gorgon_dir"
