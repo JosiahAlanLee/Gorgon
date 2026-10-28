@@ -13,14 +13,14 @@ shots:
       actions:
         - shell: rm -rf hydrapy hydrapy-env
     narration: >
-      HydraPy needs Python 3.9 or newer. Clone it {clone} from GitHub; a shallow clone is enough.
-      The repository is one Python package, with Studio and the Gorgon tracker inside it.
-      Make a virtual environment and activate it, so HydraPy's packages stay separate from the system's. {venv}
-      Then install it in editable mode, with the extras the tracker uses: {pip}
-      gpu for the OpenGL renderer, video for MP4 export, and jack for audio ports Rack can record.
+      HydraPy needs Python 3.9 or newer. Clone it {clone} from GitHub; a shallow clone is enough. The repository is one Python package, with Studio
+      and the Gorgon tracker inside it. Make a virtual environment and activate it, so HydraPy's packages stay separate from the system's. {venv}
+      Then install it in editable mode, with the extras the tracker uses: {pip} gpu for the OpenGL renderer, video for MP4 export, and jack for
+      audio ports Rack can record.
     actions:
       - at: clone
-        term.run: {cmd: "git clone --depth 1 https://github.com/JosiahAlanLee/hydrapy.git && cd hydrapy", wait_for: '\$ $|Resolving deltas.*done', timeout: 300, cps: 32}
+        term.run: {cmd: "git clone --depth 1 https://github.com/JosiahAlanLee/hydrapy.git && cd hydrapy", wait_for: '\$ $|Resolving deltas.*done',
+          timeout: 300, cps: 32}
       - at: venv
         term.run: {cmd: "python3 -m venv ../hydrapy-env && . ../hydrapy-env/bin/activate", wait_for: '\(hydrapy-env\)|\$ $', cps: 32}
       - at: pip
@@ -37,8 +37,8 @@ shots:
       actions:
         - term.quiet: "cd hydrapy && . ../hydrapy-env/bin/activate"
     narration: >
-      hydrapy encoders tries each video encoder with a real frame and marks the ones that work OK;
-      here only those are shown. {enc} On an NVIDIA card, NVENC is the one to look for.
+      hydrapy encoders tries each video encoder with a real frame and marks the ones that work OK; here only those are shown. {enc} On an NVIDIA
+      card, NVENC is the one to look for.
     actions:
       - at: enc
         term.run: {cmd: "hydrapy encoders | grep OK", wait_for: 'nvenc|software'}
@@ -46,6 +46,8 @@ shots:
     verify:
       - "`hydrapy encoders` exists (cli.py subcommand), tries every encoder and marks OK or --; names nvenc when available"
       - "FFmpeg paths it prints show ~, not the home folder (the terminal's hydrapy wrapper; QC OCR)"
+    source:
+      - Gorgon/README.md
   - id: plugins
     title: The Rack plugins
     source: [Gorgon/README.md#start, DSP_Emulation/docs/GETTING_STARTED.md#install, DSP_Emulation/docs/DEVELOPMENT.md]
@@ -53,39 +55,43 @@ shots:
       actions:
         - shell: rm -rf Gorgon DSP_Emulation
     narration: >
-      The Rack plugins come from two repositories. The Gorgon module is in Gorgon, under rack. {gorgon}
-      OTIS, Vastish, Spoon Bender, Séance, ByteBusLab and DrumLab are in DSP Emulation, under vcv. {dsp}
-      Each builds against the Rack SDK with make dist, which writes a vcvplugin file.
-      Build them from source: DSP Emulation's current release predates Séance. {build}
+      The Rack plugins come from two repositories. The Gorgon module is in Gorgon, under rack. {gorgon} OTIS, Vastish, Spoon Bender, Séance, ByteBusLab,
+      DrumLab, Machinemodule, Monomodule and CZishLab are in DSP Emulation, under vcv. {dsp} Each builds against the Rack SDK with make dist,
+      which writes a vcvplugin file. Build them from source: the preview bundle does not contain this whole set. The two emulated instruments
+      also fetch their pinned cores with make deps. {build}
     actions:
       - at: gorgon
         term.run: {cmd: "git clone --depth 1 https://github.com/JosiahAlanLee/Gorgon.git", wait_for: '\$ $|done\.', timeout: 300}
       - at: dsp
         term.run: {cmd: "git clone --depth 1 https://github.com/JosiahAlanLee/DSP_Emulation.git", wait_for: '\$ $|done\.', timeout: 300}
       - at: build
-        term.type: {cmd: "for d in Gorgon/rack DSP_Emulation/vcv/{otislab,vastish,spoonbender,seance,bytebus,drumlab}; do make -s -C $d RACK_DIR=$RACK_SDK -j8 dist; done"}
+        term.type: {cmd: "for d in machinemodule monomodule; do make -C DSP_Emulation/vcv/$d deps; done && for d in Gorgon/rack DSP_Emulation/vcv/{otislab,vastish,spoonbender,seance,bytebus,drumlab,machinemodule,monomodule,czish};
+            do make -s -C $d RACK_DIR=$RACK_SDK -j8 dist || break; done"}
       - mark: build-start                 # typed at normal speed; only the build is fast-forwarded
-        term.wait: {wait_for: 'DrumLab-[0-9.]+-lin-x64\.vcvplugin', timeout: 1800}
+        term.wait: {wait_for: 'CZishLab-[0-9.]+-lin-x64\.vcvplugin', timeout: 1800}
       - wait: 0.5
         mark: build-done
     speed:
       - {from: build-start, to: build-done, factor: 16}
     verify:
-      - "make dist target names and dist/*.vcvplugin output for all seven plugins (ByteBusLab for chapter 11's Bridge example, DrumLab for the kit in chapters 0 and 10)"
-      - "DSP_Emulation's only release, preview-1, predates Séance (gh release list); update this line if a newer release exists"
+      - "Each listed plugin directory has a dist target; Machinemodule and Monomodule have deps targets; build all nine DSP plugins plus GorgonBridge
+        before recording."
+      - "Build exits successfully and produces CZishLab last; rehearse dependency fetch duration and speed ramp."
   - id: copy
     title: Into Rack's plugins folder
     narration: >
-      Copy the seven files into the plugins folder inside Rack's user folder. {copy}
-      Rack's Help menu has Open user folder if you are not sure where it is.
-      Quit Rack first; it unpacks new plugins when it starts.
+      Copy the plugin files into the plugins folder inside Rack's user folder. {copy} Rack's Help menu has Open user folder if you are not sure
+      where it is. Quit Rack first; it unpacks new plugins when it starts.
     actions:
       - at: copy
-        term.run: {cmd: "cp Gorgon/rack/dist/*.vcvplugin DSP_Emulation/vcv/*/dist/*.vcvplugin \"$RACK_USER/plugins-lin-x64/\" && ls \"$RACK_USER/plugins-lin-x64/\" | grep -i -E 'gorgon|lab'", wait_for: 'VastishLab'}
+        term.run: {cmd: "cp Gorgon/rack/dist/*.vcvplugin DSP_Emulation/vcv/*/dist/*.vcvplugin \"$RACK_USER/plugins-lin-x64/\" && ls \"$RACK_USER/plugins-lin-x64/\"\
+            \ | grep -i -E 'gorgon|lab'", wait_for: 'VastishLab'}
     hold: 2
     verify:
       - "DSP_Emulation GETTING_STARTED: Help → Open user folder; quit Rack before copying"
       - "the terminal shows $RACK_USER, not a home path (QC checks)"
+    source:
+      - Gorgon/README.md
   - id: browser
     title: Find them in Rack
     needs: [rack]
@@ -94,8 +100,8 @@ shots:
     setup:
       rack: {patch: blank}
     narration: >
-      Start Rack and right-click empty space to open the module browser. {search}
-      Search for Gorgon, then for the others. Each plugin appears under its own brand. {add}
+      Start Rack and right-click empty space to open the module browser. {search} Search for Gorgon, then for the others. Each plugin appears
+      under its own brand. {add}
     actions:
       - at: search
         rack.add: {query: Gorgon, fallback: rack-gorgon}
@@ -103,3 +109,19 @@ shots:
         rack.view: {modules: [Gorgon], zoom: 1.6, seconds: 1.0}
     verify:
       - "Rack Free 2.x module browser opens on right-click on empty rack; Enter adds the top result"
+    source:
+      - Gorgon/README.md
+  - id: launcher
+    title: One-command Linux sessions
+    kind: still
+    asset: diagrams/launcher.svg
+    narration: >
+      Build the plugins from source; the Gorgon preview bundle is not published. In the same Python environment, install Gorgon with pip install
+      dash e dot. HydraPy also needs the live and jack extras. Initialize a profile pointing at the HydraPy workspace. For an existing rig, include
+      visual patch, Rack and Rack patch paths. Doctor checks the setup. Gorgon start opens the tracker, native picture and Rack, paused. Gorgon
+      stop requests a clean close; finish Rack’s save dialog. The launcher uses the desktop PipeWire session, so this card shows the commands
+      without starting a second rig.
+    source:
+      - Gorgon/docs/LAUNCHER.md
+    verify:
+      - Confirm diagram and narration against Gorgon/docs/LAUNCHER.md; stage rehearsal still required.

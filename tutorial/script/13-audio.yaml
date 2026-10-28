@@ -13,10 +13,10 @@ shots:
       studio: {patch: patches/gorgon_corridor.py, transport: stop, jack: false}
       rack: {patch: rack-audio, view: {modules: [Gorgon, VCMixer]}}
     narration: >
-      Studio can publish two sources, each on a pair of JACK or PipeWire ports: an optical soundtrack read from the picture,
-      and a synthesized drum kit playing the first tracker lane, called Breaks. Enable them in Output routing. {enable}
-      In Rack, Gorgon captures them when its audio device is Studio's client. {capture}
-      They come out of OPT and BRK; Gorgon only captures, so send them on to a mixer and an Audio module. {play}
+      Studio can publish two sources, each on a pair of JACK or PipeWire ports: an optical soundtrack read from the picture, and a synthesized
+      drum kit playing the first tracker lane, called Breaks. Enable them in Output routing. {enable} In Rack, Gorgon captures them when its audio
+      device is Studio's client. {capture} They come out of OPT and BRK; Gorgon only captures, so send them on to a mixer and an Audio module.
+      {play}
     actions:
       - at: enable
         studio.click: '#jackEnableBtn'
@@ -32,7 +32,8 @@ shots:
       - {at: capture, window: rack}
     mix: {programme: -9}
     verify:
-      - "optical reads first two Soundtracks; breaks is synthesized, not samples, and the same mono kit on both ports (MANUAL JACK/PipeWire audio; hydrapy docs/gorgon-audio.md)"
+      - "optical reads first two Soundtracks; breaks is synthesized, not samples, and the same mono kit on both ports (MANUAL JACK/PipeWire audio;
+        hydrapy docs/gorgon-audio.md)"
       - "Gorgon's capture device harvested as JACK 'HydraPy' channels 1-4 (patches/harvested/gorgon-capture.json)"
       - "ports appear as HydraPy:optical_L etc."
   - id: offset
@@ -42,11 +43,10 @@ shots:
     setup:
       rack: {patch: rack-offset, view: {modules: [Gorgon, Scope]}}
     narration: >
-      Studio keeps a small buffer ahead of the playhead, so Breaks arrives later than the gates for the same row.
-      Patch gate one and Breaks left into a scope to see it. {scope}
-      At forty-eight kilohertz with 256-frame periods, it measured about twenty milliseconds.
-      OFFSET moves Rack's score and CV earlier or later; turn it counterclockwise to delay them to match. {turn}
-      Measure your own setup this way; the number depends on the machine.
+      Studio keeps a small buffer ahead of the playhead, so Breaks arrives later than the gates for the same row. Patch gate one and Breaks left
+      into a scope to see it. {scope} At forty-eight kilohertz with 256-frame periods, it measured about twenty milliseconds. OFFSET moves Rack's
+      score and CV earlier or later; turn it counterclockwise to delay them to match. {turn} Measure your own setup this way; the number depends
+      on the machine.
     actions:
       - at: scope
         studio.press: Space
@@ -58,3 +58,32 @@ shots:
     verify:
       - "16–22 ms Breaks-after-gate at 48k/256 default lead; OFFSET ≈ −20 ms (MANUAL)"
       - "the scope on screen shows the measured offset on THIS stage; say what it shows, not the manual's number, if they differ"
+    source:
+      - Gorgon/README.md
+  - id: vastish-audio
+    title: 'Vastish: external audio and chains'
+    kind: still
+    asset: diagrams/vastish-audio.svg
+    narration: >
+      Choose AUDIO in Vastish’s PITCH selector to process AUDIO IN through its DSP blocks. With GATE empty, audio passes continuously; patch GATE
+      to use the amp envelope. For a longer voice, place another Vastish immediately to the right and choose Chain from the Vastish on the left.
+      It takes each voice before the first amp and runs its own blocks and amp on the same notes. This is separate from sharing a finished sample
+      through OTIS.
+    source:
+      - DSP_Emulation/vcv/vastish/docs/MANUAL.md#live-processing
+      - DSP_Emulation/vcv/vastish/docs/MANUAL.md#chain-mode
+    verify:
+      - Confirm diagram and narration against DSP_Emulation/vcv/vastish/docs/MANUAL.md#live-processing; stage rehearsal still required.
+      - Confirm diagram and narration against DSP_Emulation/vcv/vastish/docs/MANUAL.md#chain-mode; stage rehearsal still required.
+  - id: czish-dac
+    title: CZishLab and DAC Stage
+    kind: still
+    asset: diagrams/czish-dac.svg
+    narration: >
+      CZishLab adds a phase-distortion voice and DAC Stage for external audio. DAC Stage applies a selected converter model to the input. Both
+      modules can publish the encoded word’s high byte and accept an XOR mask before decoding. These converter models are provisional; they are
+      not a validated measurement of a physical keyboard.
+    source:
+      - DSP_Emulation/vcv/czish/README.md
+    verify:
+      - Confirm diagram and narration against DSP_Emulation/vcv/czish/README.md; stage rehearsal still required.

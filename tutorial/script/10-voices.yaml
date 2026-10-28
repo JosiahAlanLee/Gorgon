@@ -14,10 +14,9 @@ shots:
     setup:
       rack: {patch: rack-voice-start, view: {modules: [Gorgon, Split, Split#2, Vastish]}}
     narration: >
-      Vastish is an eight-voice synthesizer in the style of Kurzweil VAST. To play it from one lane,
-      Gorgon's pitch and gates go through two Splits. {split} {patch} Take channel two of each, the FM hits lane,
-      into Vastish's pitch and gate. Then play. {play} Vastish's first program is Ladder Bass;
-      {program} click the program name to try the others.
+      Vastish is an eight-voice synthesizer in the style of Kurzweil VAST. To play it from one lane, Gorgon's pitch and gates go through two Splits.
+      {split} {patch} Take channel two of each, the FM hits lane, into Vastish's pitch and gate. Then play. {play} Vastish's first program is
+      Ladder Bass; {program} click the program name to try the others.
     actions:
       - at: split
         rack.highlight: {ref: Split, label: 'Pitch, split', seconds: 2}
@@ -43,9 +42,8 @@ shots:
     setup:
       rack: {patch: rack-voice-poly, view: {modules: [Gorgon, Vastish]}}
     narration: >
-      Or patch the polyphonic cables straight in. {play} Vastish takes up to eight channels,
-      so all four lanes play it at once. AIR events open a gate but keep the previous pitch;
-      a zero-velocity event opens no gate at all.
+      Or patch the polyphonic cables straight in. {play} Vastish takes up to eight channels, so all four lanes play it at once. AIR events open
+      a gate but keep the previous pitch; a zero-velocity event opens no gate at all.
     actions:
       - at: play
         studio.press: Space
@@ -54,6 +52,8 @@ shots:
     mix: {programme: -10}
     verify:
       - "AIR keeps held pitch; velocity 0 opens no gate (MANUAL Outputs)"
+    source:
+      - Gorgon/README.md
   - id: kit
     title: A drum kit from the four lanes
     frames:
@@ -63,11 +63,9 @@ shots:
       studio: {patch: patches/gorgon_corridor.py, score: scores/kit.json, transport: stop}
       rack: {patch: rack-kit, view: {modules: [Gorgon, Percussion]}}
     narration: >
-      DrumLab's Percussion plays Gorgon's four lanes as a kit: kick, snare, hat and FM. {patch}
-      Gorgon's gates, pitch and velocity go to its trigger, pitch and velocity inputs, one polyphonic cable each,
-      and a C4 plays each model at its own base pitch. {play}
-      Every hit captures the knobs as it starts, so turning Decay changes the next hit, {decay}
-      while the one already sounding keeps its envelope.
+      DrumLab's Percussion plays the first four lanes as a kit: kick, snare, hat and FM. {patch} Gorgon's gates, pitch and velocity go to its
+      trigger, pitch and velocity inputs, one polyphonic cable each, and a C4 plays each model at its own base pitch. {play} Every hit captures
+      the knobs as it starts, so turning Decay changes the next hit, {decay} while the one already sounding keeps its envelope.
     actions:
       - at: patch
         rack.highlight: {ref: Percussion.in.Triggers, label: 'TRIG · GATES, 4 ch', seconds: 2.5}
@@ -87,26 +85,27 @@ shots:
       - "with key D, C4 plays each model's base pitch (MANUAL Connect Gorgon 4; Gorgon pitch (midi + key - 2 - 60)/12 V)"
       - "controls are captured at each trigger: turning DECAY changes the next hit, not the sounding one (MANUAL; DSP_Emulation #24)"
       - "DrumLab plays in Rack Free's GUI on the stage's JACK server on this take (#24 had not checked live Rack/audio use)"
+      - kit.json is now v3 with six lanes; only lanes 1–4 contain hits, so the original drum kit remains four voices.
   - id: machine
     title: Machinemodule on Gorgon's sound link
     frames:
       - {window: rack}
-    source: [DSP_Emulation/vcv/machinemodule/README.md#play-it, rack/docs/MANUAL.md#machinemodule-sound-link-gorgon-230, spec/sound-locks.md]
+    source: [DSP_Emulation/vcv/machinemodule/README.md#play-it,
+          Gorgon/rack/docs/MANUAL.md#sound-link-machinemodule-and-monomodule-gorgon-230-six-lanes-and-monomodule-from-240,
+          spec/sound-locks.md]
     setup:
       studio: {patch: patches/gorgon_corridor.py, score: scores/kit-md.json, transport: stop}
       rack: {patch: rack-machine, view: {modules: [Gorgon, Machinemodule]}}
     narration: >
-      Machinemodule is a separate plugin. It runs the Machinedrum's own voice code from an OS file you supply.
-      {menu} Its menu loads the file, lists the machines inside and reports the delay and any dropped audio;
-      the green light means the engine is ready.
-      {link} Put it directly to the right of Gorgon and leave TRIG empty: it takes Gorgon's sound link,
-      and the blue light comes on. {play} Each hit now arrives with its machine and eight sound controls,
-      so the score picks the sound, one hit at a time.
+      Machinemodule is a separate plugin. It runs the Machinedrum's own voice code from an OS file you supply. {menu} Its menu loads the file,
+      lists the machines inside and reports the delay and any dropped audio; the green light means the engine is ready. {link} Put it directly
+      to the right of Gorgon and leave TRIG empty: it takes Gorgon's sound link, and the blue light comes on. {play} Each hit now arrives with
+      its machine and eight sound controls, so the score picks the sound, one hit at a time. Version three scores can play six tracks over this link.
     actions:
       - at: menu
         rack.menu: {ref: Machinemodule, path: [Select machine from loaded OS, '16 · TRXBD'], pause: 1.2}
       - at: link
-        rack.highlight: {ref: Machinemodule, label: 'LINK · Gorgon 2.3.0', seconds: 2.5}
+        rack.highlight: {ref: Machinemodule, label: 'LINK · GorgonBridge 2.4.2', seconds: 2.5}
       - at: play
         studio.api: {action: tracker_transport, enabled: true, playing: true, beat: 0}
       - after: 7
@@ -115,12 +114,16 @@ shots:
     mix: {programme: -10}
     verify:
       - "Machinemodule runs the original voice DSP and parameter routines from a user-supplied OS; no firmware is distributed (README)"
-      - "context menu: Load Machinedrum OS (.syx)…, Select machine from loaded OS (16 · TRXBD … from the OS), Latency: 1097 host samples, Missed audio blocks / dropped input blocks / overflows / coalesced / unavailable (Machinemodule.cpp appendContextMenu; stage)"
+      - "context menu: Load Machinedrum OS (.syx)…, Select machine from loaded OS (16 · TRXBD … from the OS), Latency: 1097 host samples, Missed
+        audio blocks / dropped input blocks / overflows / coalesced / unavailable (Machinemodule.cpp appendContextMenu; stage)"
       - "16 · TRXBD is already the MACHINE selector's value (default 16), so choosing it on camera changes nothing"
       - "READY light green once the worker has loaded the OS; LINK light blue while Gorgon's packets are valid (Machinemodule.cpp process)"
-      - "the link needs Machinemodule immediately right of Gorgon 2.x with TRIG unpatched (MANUAL; soundPacket checks GorgonBridge 2.x)"
+      - "the link needs Machinemodule immediately right of Gorgon 2.4.0 or later with TRIG unpatched (MANUAL; soundPacket checks GorgonBridge
+        2.4.x)"
       - "a hit carries machine and P1–P8 with gate, velocity and pitch in one packet (spec/sound-link.hpp)"
       - "plays on the stage: kit-md.json's locks are audible (render box: 489/489 lock-changing hits matched offline renders)"
+      - 'LINK highlight version copied from rack/plugin.json at a758045: 2.4.2; rack.highlight labels are literal and do not interpolate source
+        variables.'
   - id: locks
     title: Track sounds and per-hit locks
     needs: [controller, rack]
@@ -132,11 +135,10 @@ shots:
       studio: {patch: patches/gorgon_corridor.py, score: scores/kit-md.json, transport: stop}
       rack: {patch: rack-machine}
     narration: >
-      In the Audio page, select a hit and open External Rack instrument. {defaults}
-      Track defaults give a lane its machine and controls: the third lane plays machine twenty-two, a closed hat,
-      with P2 at thirty. {lock} Selected hit locks change one hit. This one plays machine twenty-three, the open hat,
-      and a dot in the grid marks it. Blank fields inherit. {play}
-      A lock lasts for its own hit; the next hit starts again from the track's sound.
+      In the Audio page, select a hit and open External Rack instrument. {defaults} Track defaults give a lane its machine and controls: the third
+      lane plays machine twenty-two, a closed hat, with P2 at thirty. {lock} Selected hit locks change one hit. This one plays machine twenty-three,
+      the open hat, and a dot in the grid marks it. Blank fields inherit. {play} A lock lasts for its own hit; the next hit starts again from
+      the track's sound.
     actions:
       - studio.click: '#audioPageTab'
       - studio.click: 'button[role=gridcell][data-col="2"][data-row="0"]'
@@ -145,10 +147,13 @@ shots:
         studio.point: '#track-machine'
       - at: lock
         studio.click: 'button[role=gridcell][data-col="2"][data-row="2"]'
-      - studio.click: '#soundEditor summary'   # selecting a hit closes the panel (HydraPy 0bac540: the menus' click-outside handler)
       - studio.point: '#lock-machine'
       - at: play
-        studio.api: {action: tracker_transport, enabled: true, playing: true, beat: 0}
+        studio.api:
+          action: tracker_transport
+          enabled: true
+          playing: true
+          beat: 0
       - after: 6
         studio.press: Space
     hold: 1
@@ -156,9 +161,9 @@ shots:
     verify:
       - "External Rack instrument holds Track defaults and Selected hit locks: Machine 0–191, P1–P8 0–127, blank inherits (index.html #soundEditor)"
       - "a locked cell shows a dot (app.js lock-mark)"
-      - "selecting another hit closes External Rack instrument: app.js closes every open details element on an outside click, menus and this panel alike (HydraPy 0bac540); the take reopens it, as a user must"
       - "each hit resolves fresh from the track's sound plus its own locks; nothing carries to the next hit (spec/sound-locks.md; render box)"
       - "kit-md.json: hat lane machine 22 (TRXCH) P2 30; row 2 locks machine 23 (TRXOH) P2 40 (make_kit_md.py; OS 1.63 machine list)"
+      - "Selecting another hit leaves #soundEditor open (Gorgon #62); only one summary click."
   - id: latency
     title: Machinemodule's buffer
     frames:
@@ -168,9 +173,9 @@ shots:
       studio: {patch: patches/gorgon_corridor.py, score: scores/kit-md.json, transport: stop}
       rack: {patch: rack-machine, view: {modules: [Gorgon, Machinemodule]}}
     narration: >
-      The emulator renders ahead on its own thread, through a buffer of 1024 samples. Measured on this machine,
-      Machinemodule sounds about twenty-four milliseconds after Gorgon's gate. {offset}
-      To line it up, turn Gorgon's OFFSET, which moves all of Rack's outputs earlier, or delay your other voices to match.
+      The emulator renders ahead on its own thread, through a buffer of 1024 samples. Measured on this machine, Machinemodule sounds about twenty-four
+      milliseconds after Gorgon's gate. {offset} To line it up, turn Gorgon's OFFSET, which moves all of Rack's outputs earlier, or delay your
+      other voices to match.
     actions:
       - at: offset
         rack.knob: {ref: Gorgon.param.Timing offset, value: 24, seconds: 2}
@@ -181,7 +186,8 @@ shots:
     verify:
       - "queue latency 1024 host samples plus converter delay; menu reports 1097 at 48 kHz (README; Worker converterDelay)"
       - "kick onset 24.2 ms after Gorgon's GATE 1 at 48 kHz, 64–256-frame periods (render box runs, 2026-10-26)"
-      - "OFFSET ±100 ms; positive sends Rack's outputs earlier (Gorgon.cpp OFFSET_PARAM); +23.9 ms put Machinemodule's kick 0.5 ms after Studio's beat (render box)"
+      - "OFFSET ±100 ms; positive sends Rack's outputs earlier (Gorgon.cpp OFFSET_PARAM); +23.9 ms put Machinemodule's kick 0.5 ms after Studio's
+        beat (render box)"
   - id: chain
     title: Spoon Bender, OTIS, Vastish
     frames:
@@ -190,11 +196,10 @@ shots:
     setup:
       rack: {patch: rack-chain, view: {modules: [SpoonBender, OtisSampler, Vastish]}}
     narration: >
-      Side by side, in this order, Spoon Bender, OTIS and Vastish share samples. {order}
-      In OTIS's menu, {otis} turn on Follow Spoon Bender captures; then OTIS imports each capture.
-      In Vastish's menu, {vast} turn on Follow OTIS on the left; Vastish then plays OTIS's sample as its oscillator.
-      Play into Spoon Bender, {play} and press Capture after a phrase you want to keep. {capture}
-      Audio still travels on cables; only the finished samples move between the modules.
+      Side by side, in this order, Spoon Bender, OTIS and Vastish share samples. {order} In OTIS's menu, {otis} turn on Follow Spoon Bender captures;
+      then OTIS imports each capture. In Vastish's menu, {vast} turn on Follow OTIS on the left; Vastish then plays OTIS's sample as its oscillator.
+      Play into Spoon Bender, {play} and press Capture after a phrase you want to keep. {capture} Audio still travels on cables; only the finished
+      samples move between the modules.
     actions:
       - at: order
         rack.highlight: {ref: SpoonBender, label: Spoon Bender → OTIS → Vastish, seconds: 3}
@@ -212,3 +217,48 @@ shots:
     verify:
       - "menu item texts 'Follow Spoon Bender captures' and 'Follow OTIS on the left' (GETTING_STARTED)"
       - "links carry completed samples only; audio still on cables"
+  - id: monomodule
+    title: 'Monomodule: six tracks'
+    kind: still
+    asset: diagrams/monomodule.svg
+    narration: >
+      Monomodule plays six Monomachine tracks from Gorgon’s sound link. Put it immediately to Gorgon’s right and leave TRIG empty. Each hit carries
+      pitch, machine and SYN controls. It requires your own Monomachine OS. INP A and INP B feed FX machines; FX inputs chooses each track’s source.
+      Only the SYN page is playable here; the other pages keep their defaults.
+    source:
+      - DSP_Emulation/vcv/monomodule/README.md
+      - Gorgon/rack/docs/MANUAL.md
+    verify:
+      - Confirm diagram and narration against DSP_Emulation/vcv/monomodule/README.md; stage rehearsal still required.
+      - Confirm diagram and narration against Gorgon/rack/docs/MANUAL.md; stage rehearsal still required.
+  - id: otis-kit-capture
+    title: 'OTIS: patch select, Kit and Capture'
+    kind: still
+    asset: diagrams/otis-kit-capture.svg
+    narration: >
+      OTIS PATCH chooses one of four playback settings for each hit: the panel, or three stored patches. Otis Kit plays eight sample slots, chosen
+      by gate channel or a SLOT byte bus. Otis Capture sits to the kit’s right and records a set number of beats into a slot, from its input or
+      from the kit itself.
+    source:
+      - DSP_Emulation/vcv/otislab/docs/MANUAL.md#patch-select
+      - DSP_Emulation/vcv/otislab/docs/KIT.md
+      - DSP_Emulation/vcv/otislab/docs/CAPTURE.md
+    verify:
+      - Confirm diagram and narration against DSP_Emulation/vcv/otislab/docs/MANUAL.md#patch-select; stage rehearsal still required.
+      - Confirm diagram and narration against DSP_Emulation/vcv/otislab/docs/KIT.md; stage rehearsal still required.
+      - Confirm diagram and narration against DSP_Emulation/vcv/otislab/docs/CAPTURE.md; stage rehearsal still required.
+  - id: ping
+    title: 'Ping: measure a destination'
+    kind: still
+    asset: diagrams/ping.svg
+    narration: >
+      Ping measures a destination’s response. Patch PULSE to its trigger and its audio to RETURN, then press PING. Or watch an existing gate through
+      TRIG. The manual’s workstation medians at forty-eight kilohertz are about twenty-four milliseconds for Machinemodule and Monomodule. Those
+      figures include their chosen sounds and the ten millivolt threshold. Delay faster voices to match the slowest, then use OFFSET against the
+      picture. Physical interfaces are outside these measurements.
+    source:
+      - Gorgon/rack/docs/MANUAL.md#ping-measuring-latency
+      - Gorgon/rack/docs/MANUAL.md#destination-latency
+    verify:
+      - Confirm diagram and narration against Gorgon/rack/docs/MANUAL.md#ping-measuring-latency; stage rehearsal still required.
+      - Confirm diagram and narration against Gorgon/rack/docs/MANUAL.md#destination-latency; stage rehearsal still required.

@@ -11,7 +11,7 @@ paths:
   machinedrum_os: null               # your Machinedrum OS 1.63 .syx for Machinemodule (chapter 10); never committed
   chromium: null                     # null = Playwright's own Chromium
 
-hydrapy_ref: pin                     # pin (Gorgon's hydrapy.pin) | main | <sha>
+hydrapy_ref: 789faedf52919141f6c69cf9cd153b3bf2a0d693                     # pin (Gorgon's hydrapy.pin) | main | <sha>
 
 stage:
   # xvfb: software GL for Rack and Chromium; simple and isolated.
@@ -67,6 +67,8 @@ rack:
     - dsp_emulation:vcv/seance
     - dsp_emulation:vcv/bytebus                     # Séance Bridge's feedback example needs ByteBusLab (chapter 11)
     - dsp_emulation:vcv/drumlab                     # Percussion: Gorgon's lanes as a drum kit (chapter 10)
+    - dsp_emulation:vcv/monomodule
+    - dsp_emulation:vcv/czish
     - dsp_emulation:vcv/machinemodule               # Machinemodule on Gorgon's sound link (chapter 10); builds with CMake
     - gorgon:tutorial/probe
 

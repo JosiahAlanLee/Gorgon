@@ -57,7 +57,17 @@ def main():
     doc = copy.deepcopy(demo.get('document', demo))
     for i, pattern in enumerate(doc['patterns']):
         pattern['audio'] = lanes(i)
-    doc['mutes'] = [False] * 4
+    doc['format'] = 'hydrapy-tracker-3'
+    doc['chain'] = list(range(4))
+    doc['seed'] = 0
+    doc['lanes'] = [{'name': n} for n in ['Kick', 'Snare', 'Hat', 'FM', 'Lane 5', 'Lane 6']]
+    doc['sounds'] = [{'machine': None, 'params': {}} for _ in range(6)]
+    doc['mutes'] = [False] * 6
+    for pattern in doc['patterns']:
+        audio = pattern.pop('audio') + [[None] * 64 for _ in range(2)]
+        pattern.update(rate=1, bar=16, bars=4,
+                       lanes=[{'len': 64, 'cells': cells, 'transforms': []} for cells in audio])
+    doc['patterns'] += [None] * 124
     out = dict(demo, document=doc) if 'document' in demo else doc
     (HERE / 'kit.json').write_text(json.dumps(out, indent=1) + '\n')
 

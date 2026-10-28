@@ -4,7 +4,7 @@ title: Scenes and lane signals
 defaults:
   needs: [controller]
   setup:
-    studio: {patch: patches/gorgon_scenes.py, score: scores/demo.json, transport: stop}
+    studio: {patch: patches/gorgon_scenes.py, score: scores/editor-v3.json, transport: stop}
 shots:
   - id: code
     title: Scenes in a patch
@@ -12,17 +12,15 @@ shots:
     asset: diagrams/scenes.svg
     source: [hydrapy/docs/gorgon-tracker.md#scenes-and-lane-signals, hydrapy/patches/gorgon_scenes.py]
     narration: >
-      A patch can declare named scenes. Each is a function that returns a chain for one output.
-      The tracker's scene column picks which one plays from a row onwards,
-      with an optional crossfade measured in rows.
+      A patch can declare named scenes. Each is a function that returns a chain for one output. The tracker's scene column picks which one plays
+      from a row onwards, with an optional crossfade measured in rows.
     verify:
       - "@scene('name') returns the chain for o0 by default (tracker guide)"
   - id: column
     title: The scene column
     narration: >
-      Enter on an empty scene cell writes the next scene after the one above it, {enter}
-      so repeated entries step through the patch. Set a fade of eight rows, {fade} write it, and then press play. {play}
-      Every scene draws into the same output, so feedback carries across the change.
+      Enter on an empty scene cell writes the next scene after the one above it, {enter} so repeated entries step through the patch. Set a fade
+      of eight rows, {fade} write it, and then press play. {play} Every scene draws into the same output, so feedback carries across the change.
     actions:
       - studio.click: '#visualPageTab'     # the scene column is on the Visual page
       - studio.click: {selector: '#trackerRows [aria-label^="Scene, row 00"]'}
@@ -36,7 +34,7 @@ shots:
         studio.fill: {target: '#sceneFade', text: '8'}
       - studio.click: '#writeSceneBtn'
       - at: play
-        studio.click: {role: button, name: 'Play from pattern 1'}
+        studio.click: {role: button, name: 'Play pattern A01'}
       - after: 7
         studio.press: Space
     frames:
@@ -45,13 +43,16 @@ shots:
     verify:
       - "scene cells are labelled 'Scene, row NN, <name|empty>' with NN in hex (app.js:18, 385); #sceneFade 0-64 rows; #writeSceneBtn"
       - "feedback (src(o0)) and delay() history carry across scene changes"
+    source:
+      - hydrapy/docs/gorgon-tracker.md
   - id: signals
     title: Lane signals
     kind: still
     asset: diagrams/lane-signals.svg
     narration: >
-      Inside a patch, the audio lanes are signals too. tracker dot hit gives a decaying one on every hit,
-      gate is high for half a row, note and vel hold the last hit's pitch and velocity,
-      and beat and row are the playhead. Muted lanes and zero-velocity hits send nothing.
+      Inside a patch, the six audio lanes are signals too. tracker dot hit gives a decaying one on every hit, gate is high for half a row, note
+      and vel hold the last hit's pitch and velocity, and beat and row are the playhead. Muted lanes and zero-velocity hits send nothing.
     verify:
       - "signal names and meanings from the tracker guide's table"
+    source:
+      - hydrapy/docs/gorgon-tracker.md
