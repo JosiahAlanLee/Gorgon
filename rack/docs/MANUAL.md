@@ -102,6 +102,8 @@ arrives. The map is saved with the patch.
 - Unclocked (8 channels or fewer), every sample is read. Clocked (9 or more,
   CLK on channel 9), the word changes on CLK's rising edges: a Register latched
   on Gorgon's CLOCK changes mutes on rows, a Counter's CARRY at modulus 16 on bars.
+  CLOCK runs steadily through cycle wraps, so in a chain that mixes rates and isn't
+  a whole number of clock periods long, a pulse after a wrap can fall inside a row.
 - A change counts from the first tick Gorgon hasn't played yet. A mute that
   arrives while a note sounds doesn't cut it; the lane's next hit is muted.
 - A loop from BUS OUT through logic back into BUS IN acts on the next row: the

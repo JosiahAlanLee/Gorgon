@@ -83,7 +83,10 @@ read in either mode:
   edges.
 
 The record is the same either way; clocking decides when changes can happen.
-- A Register latched on Gorgon's own CLOCK changes mutes on rows.
+- A Register latched on Gorgon's own CLOCK changes mutes on rows. CLOCK runs
+  steadily through cycle wraps ([cv-semantics.md](cv-semantics.md#signals)), so
+  in a chain that mixes rates and isn't a whole number of clock periods long, a
+  pulse after a wrap can fall inside a row.
 - A Counter's CARRY at modulus 16 changes them on bars.
 - Counter → Lookup → BUS IN is per-bar mute automation from a table, as in
   Elektron's song-mode mutes.
