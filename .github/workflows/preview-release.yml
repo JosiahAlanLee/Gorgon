@@ -166,9 +166,11 @@ jobs:
               echo '::error::MinGW runtime DLL dependency'; exit 1
             fi
           done
+          # make re-expands CMAKE_ARGS unquoted, which strips D:\a\... backslashes.
+          gorgon_dir=$(cygpath -m "$GITHUB_WORKSPACE")
           for name in machinemodule monomodule; do
             folder=".integration/DSP_Emulation/vcv/$name"
-            make -C "$folder" dist RACK_DIR=/tmp/Rack-SDK CMAKE_ARGS="-DGORGON_DIR=$GITHUB_WORKSPACE"
+            make -C "$folder" dist RACK_DIR=/tmp/Rack-SDK CMAKE_ARGS="-DGORGON_DIR=$gorgon_dir"
             if [[ '${{ matrix.arch }}' = mac-* ]]; then
               want=arm64; if [ '${{ matrix.arch }}' = mac-x64 ]; then want=x86_64; fi
               test "$(lipo -archs "$folder/plugin.dylib")" = "$want"
