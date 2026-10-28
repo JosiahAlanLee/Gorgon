@@ -40,7 +40,7 @@ shots:
       Clock is sixteenths by default. {clock} Reset fires on start, on a seek and at the loop boundary. {reset} Run is high while Gorgon plays.
       {pitch} Pitch, velocity and gates carry one channel per audio lane: six in version three, four in older scores. This legacy example has
       four, in lane order: Breaks, FM hits, Sub, Texture. Gates one to six are the same gates on separate jacks. {lanes} Z, Roll and Feedback
-      are the visual lanes as control voltage. {audio} The next four jacks carry audio from Studio; chapter thirteen covers them. {bus} BUS OUT,
+      are the visual lanes as control voltage. {audio} The next four jacks carry audio from Studio; chapter thirteen covers them. {bus} BUS OUT
       sends one byte on every clock, over one cable, to the byte-bus inputs in DSP Emulation. By default the byte follows Dolly Z.
     actions:
       - at: clock

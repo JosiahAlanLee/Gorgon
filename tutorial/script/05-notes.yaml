@@ -107,8 +107,8 @@ shots:
     title: Conditions, transforms and FILL
     kind: live
     narration: >
-      Condition decides whether a note plays. {note} Write a note before giving it a condition. {condition} F requires FILL; First selects the
-      first bar. A colon B selects bar A of every B, and percent P gives a seeded probability. An exclamation mark negates a condition. {length}
+      Condition decides whether a note plays. {note} Write a note before giving it a condition. {condition} F requires FILL. One S T plays only on the
+      first bar. A colon B selects bar A of every B. Percent P gives a seeded probability. Exclamation mark negates a condition. {length}
       Length sets the lane’s repeating length. {transform} Transforms change its event stream: rot shifts, rev reverses, ply repeats and degrade
       removes candidates. {fill} FILL plays cells marked F. The score keeps the original cells.
     source:
@@ -120,7 +120,7 @@ shots:
       - 'Condition is disabled until a note exists; FILL is enabled for v3. Fill commits on Tab in gtut/studio.py; #condInput, #laneLen and #laneTransforms
         use onchange in app.js at 789faed.'
       - Rehearse lane 5 selection, note insertion, condition, length, transform commit, and FILL toggle; 1ST is the UI spelling for the
-        spoken First condition.
+        spoken One S T condition.
     needs:
       - controller
     setup:

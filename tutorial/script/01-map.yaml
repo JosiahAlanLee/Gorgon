@@ -30,11 +30,9 @@ shots:
     source: [Gorgon/AGENTS.md#where-a-change-goes, Gorgon/spec/README.md]
     narration: >
       The contract is the score format, the bridge API, what each signal means, and the audio ports. HydraPy is the reference implementation,
-      and the Rack module is tested against its outputs at a pinned HydraPy commit. This refresh uses the recorded HydraPy revision shown here,
-      ahead of the compatibility pin.
+      and the Rack module is tested against its outputs at the pinned HydraPy commit shown here. That is the commit Studio runs in this video.
     overlays:
-      - {at: 0, until: '+6', kind: lower_third, text: 'HydraPy revision filmed', sub: '{hydrapy_sha}'}
+      - {at: 0, until: '+6', kind: lower_third, text: 'HydraPy at the Gorgon pin', sub: '{hydrapy_sha}'}
     verify:
       - "AGENTS.md: fixture byte-identical to pinned HydraPy's TrackerCV"
-      - Refresh targets 789faed; compatibility pin is 4ca90cd. Record actual work/hydrapy.sha and rerun cross-repository checks before
-        filming.
+      - hydrapy.pin = 789faedf52919141f6c69cf9cd153b3bf2a0d693 after the preview-release PR merges. Confirm work/hydrapy.sha matches before filming.
