@@ -56,7 +56,7 @@ starting at [score-v3.md](spec/score-v3.md).
 Versions 1 and 2 are still supported: **four fixed 64-row patterns** and four
 note lanes. A score stays in its format while the edits fit it. The first edit
 that needs version 3 (a fifth lane, a pattern past A04, a rate, a condition…)
-upgrades it, and undo restores the old format. Row numbers are hexadecimal:
+upgrades it, and undo restores the old format. Launching, looping or seeking into a pattern past A04 upgrades it without an undo step. Row numbers are hexadecimal:
 `00`–`3F` means rows 0–63. The green playback row and amber edit cursor are
 separate: clicking a cell selects where to edit; it does not move playback.
 
@@ -64,7 +64,7 @@ separate: clicking a cell selects where to edit; it does not move playback.
 | --- | --- |
 | **Arrangement cards** | Select the pattern to edit (in format 3, from banks A–H; the chain sets their song order); each card shows note activity and explicit automation keys. Its **▶** button launches that pattern. Pattern tools rename, copy or clear it. |
 | **Transport** | Set tempo and key, play/pause, Stop, Loop and Follow. **Seek to row** moves playback to the edit cursor. Follow tracks the playing pattern; manual editing turns it off. Selecting another card while looping edits that pattern without switching the active loop. |
-| **Breaks / FM hits / Sub / Texture** | The note lanes: four in versions 1 and 2, six in format 3. Each occupied cell has a note and velocity, and in format 3 an optional condition. Their names describe the browser demo voices; the lanes also supply gates, held pitches and velocities to CV/Rack instruments. |
+| **Note lanes** | Six lanes, four of them in a version-1 or 2 score. Each shows the score's own lane name (`Lane 1`–`Lane 6` until you rename it), not the voice that auditions it. Each occupied cell has a note and velocity, and in format 3 an optional condition. The lanes supply gates, held pitches and velocities to CV/Rack instruments. |
 | **Dolly Z / Roll / Feedback** | Three automation lanes, bound to the loaded patch's named controls under **Patch bindings**. Values use their lane units: 0–1, −45° to +45°, and 0–0.9. |
 | **SCENE** | Choose a scene declared by the patch and a fade length in rows. The scene holds until the next change. Try [gorgon_scenes.py](https://github.com/JosiahAlanLee/hydrapy/blob/main/patches/gorgon_scenes.py) for a patch with named scenes. |
 | **Selected-cell editor and curve** | Enter an exact note/velocity, automation value, or scene/fade. The automation curve writes at the edit cursor; **Hold**, **Linear** and **Smooth** choose how that lane moves between keys. |
