@@ -1,7 +1,7 @@
 # Score format 3: bus I/O
 
 **Status: contract, part 4 of 4; implemented** in the Rack module
-`GorgonBridge` 2.4.0 and HydraPy 0.1.0 at `3c01f32` (the
+`GorgonBridge` 2.4.1 and HydraPy 0.1.0 at `4ca90cd` (the
 [`hydrapy.pin`](../hydrapy.pin)). This is A-spec-4 of the
 [roadmap](../docs/ROADMAP.md) (§2.A, §4). It defines the **bus layer**: FILL and
 six lane mutes that Rack sets live from a new BUS IN, stamped by Rack and merged

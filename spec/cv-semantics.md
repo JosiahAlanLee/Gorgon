@@ -85,7 +85,7 @@ While a lane is muted or the cell is silent, nothing below updates for that lane
 
 | Signal | Value |
 | --- | --- |
-| `clock` | high while `frac(beat · ppqn) < 0.5` and `moving`. `ppqn` default 4 (sixteenths). |
+| `clock` | high while `frac(beat · ppqn) < 0.5` and `moving`. `ppqn` default 4 (sixteenths). In version 3, `beat` here is `b = (start tick + u) / TICKS`: the segment's start tick plus the elapsed ticks `u`, in beats, never wrapped at the cycle. It lines up with the cycle beat at every start, resume and seek and then keeps its period through every cycle wrap, so a cycle that isn't a whole number of clock periods (3 rows at rate 8 is 180 ticks, under half a 4 PPQN period) neither cuts a pulse short, merges two, nor holds `clock` high. The two rules coincide wherever a cycle is a whole number of beats, so versions 1 and 2, whose cycles are, are unaffected. |
 | `reset` | high during the transport-change pulse, and while `(beat − cycle start) · 60 / bpm < reset_ms`, and `moving`. So every cycle wrap produces a pulse. |
 | `run` | high while `moving`. |
 | `gate n` | high while **on** and `row phase < gate`, and during a landing gate; low during a retrigger (above). `gate` default 0.5 (half a row). |

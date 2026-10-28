@@ -3,6 +3,34 @@
 Newest first. Each entry names the HydraPy commit and Rack module version it
 describes.
 
+## 2026-10-28 — version 3's CLOCK runs steadily through cycle wraps; four clarifications
+
+HydraPy `4ca90cd08cca538352b36e643629f8d0718d7477` (pin moved from `3c01f32`) · Rack module
+`GorgonBridge` 2.4.1 (unreleased).
+
+- **CLOCK in a version-3 score follows elapsed ticks, not the cycle beat**
+  ([cv-semantics.md](cv-semantics.md#signals)). It is high while
+  `frac(b · ppqn) < 0.5` and moving, with `b = (start tick + u) / 1920`, never
+  wrapped. Before, CLOCK restarted at every cycle wrap: a cycle that isn't a
+  whole number of clock periods cut or merged pulses, and one shorter than half a
+  period (3 rows at rate 8 is 180 ticks) held CLOCK high, so BUS OUT, which
+  publishes on CLOCK's edges, never published. RESET is unchanged. Versions 1
+  and 2 loop in whole beats, where the two rules coincide, and `fixture.txt` is
+  unchanged. `fixture3.txt` gains a ninth score with that 180-tick cycle;
+  `evaluator_test` checks that a short cycle keeps CLOCK and BUS OUT going.
+- **A new segment's FILL and bus layer** start in the state last set, including
+  a change stamped past the old segment's last evaluated tick
+  ([evaluator.md](evaluator.md#fill)). That is what HydraPy and the Rack module
+  already did (HydraPy #67); the page said "the state that was in force when it
+  began".
+- **The trace's `refused` window lines** are shown, for both reasons, `bus held
+  by another module` and `malformed window` (new in this HydraPy; `from` is null
+  when the window has no valid `from`) ([evaluator.md](evaluator.md#trace)).
+- **The sound link's gates** ([sound-locks.md](sound-locks.md#rack-sound-link)):
+  a falling gate ends a pitched receiver's note, and a receiver reads pitch at the
+  gate's rising edge, so a pitch change while the gate stays high neither glides
+  nor retriggers. Monomodule and Machinemodule already behave so.
+
 ## 2026-10-27 — the Rack module offers 32 PPQN; BUS IN survives a slow Studio
 
 HydraPy `3c01f32eb0c5a396d4e854e20d0b0d9b14de27d7` (pin unchanged) · Rack module

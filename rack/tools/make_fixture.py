@@ -152,6 +152,22 @@ def random_score_v3(rng):
     return validate(d)
 
 
+def short_cycle_v3():
+    """A cycle that isn't a whole number of clock periods: rate 8, bar 3, bars 1 is 180 ticks,
+    under half a 4 PPQN period, so CLOCK must run on elapsed ticks through the wraps
+    (cv-semantics.md#signals)."""
+    from hydrapy.tracker_v3 import empty_pattern, upgrade, validate
+    d = upgrade(Tracker().document)
+    p = empty_pattern(0)
+    p.update(rate=8, bar=3, bars=1)
+    for n, lane in enumerate(p['lanes']):
+        lane['len'] = 3
+        lane['cells'] = [{'note': 'C-4', 'vel': 100} if (n + r) % 3 == 0 else None for r in range(3)]
+    p['lanes'][1]['cells'][2] = {'note': 'D#4', 'vel': 64, 'cond': {'kind': 'fill'}}
+    d.update(patterns=[p] + [None] * 127, loop=False, pattern=0, chain=[0])
+    return validate(d)
+
+
 def automate(rng, score):
     """Automation keys on the score's patterns, for the signal section."""
     for p in score['patterns']:
@@ -278,6 +294,10 @@ def main_v3():
     play = random.Random(20261028)
     for score in scores:
         automate(play, score)
+    # Last, with its own generator for automation, so the scores before it are as before.
+    short = short_cycle_v3()
+    automate(random.Random(20261029), short)
+    scores.append(short)
     print('GORGON_FIXTURE_3', len(scores))
     for revision, score in enumerate(scores):
         print('SCORE', json.dumps(score, separators=(',', ':')))

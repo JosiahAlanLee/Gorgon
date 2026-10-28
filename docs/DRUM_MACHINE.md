@@ -101,17 +101,22 @@ browser audition, bridge, direct CV, mute state and fixtures.
 
 ## An Otis flavor: a kit sampler and a capture companion
 
-The proposed pair is **Otis Kit** for playing a bank and **Capture** for writing
-new generations. These are planned names and responsibilities, not existing
-modules. Reuse the playback arithmetic and sample-sharing machinery; do not
-instantiate sixteen complete current OTIS engines with their own converters,
-recorders and sample memories.
+The pair is built, in DSP_Emulation's OtisLab plugin: **Otis Kit** plays a bank
+and **Otis Capture** writes new generations into it
+([KIT.md][otis-kit], [CAPTURE.md][otis-capture]). As this section asked, they
+reuse OTIS's playback arithmetic rather than instantiating complete OTIS engines
+with their own converters, recorders and sample memories: Otis Kit's eight slots
+are regions of one sample memory, played on one chip's voices through one
+output converter.
 
-Start with a small bounded bank. A hit selects a slot or slice and captures
-pitch, region, direction, hold/decay, filter settings and degradation. Add
-tempo-relative repeats through the shared event scheduler. The relevant sound
-is an EPS-era playback character with new drum behavior; a 12-bit setting alone
-would not reproduce UW capture or playback.
+The bank is small and bounded: eight slots, one voice each. A hit selects a
+slot and latches its take, its PITCH CV and its LEVEL CV. The slot's knobs stay
+live instead of being captured by the hit: TUNE, DECAY, LEVEL, FILTER and START
+act on a sounding hit as they move, and REV is read when playback starts. Hits
+are one-shots; a falling gate does not stop them. Tempo-relative repeats
+through the shared event scheduler are still to come. The relevant sound is an
+EPS-era playback character with new drum behavior; a 12-bit setting alone would
+not reproduce UW capture or playback.
 
 Capture should record an external input, the drum mix, or an effects return for a
 specified beat length. The destination is an explicit bank slot. Publish a new
@@ -168,5 +173,7 @@ Elektron's machines or complete the sampler/sequencer work.
 
 [md-manual]: https://www.bhphotovideo.com/lit_files/85384.pdf
 [drumlab]: https://github.com/JosiahAlanLee/DSP_Emulation/blob/main/vcv/drumlab/docs/MANUAL.md
+[otis-kit]: https://github.com/JosiahAlanLee/DSP_Emulation/blob/main/vcv/otislab/docs/KIT.md
+[otis-capture]: https://github.com/JosiahAlanLee/DSP_Emulation/blob/main/vcv/otislab/docs/CAPTURE.md
 [strudel-patterns]: https://strudel.cc/technical-manual/patterns/
 [strudel-time]: https://strudel.cc/learn/time-modifiers/
