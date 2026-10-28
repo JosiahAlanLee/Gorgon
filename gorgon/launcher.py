@@ -83,8 +83,9 @@ def executable(command):
     resolved = shutil.which(command[0])
     if not resolved:
         raise LaunchError(f'Executable {command[0]!r} is missing; edit the command in your launch profile')
-    # Keep symlinks: Rack uses its executable directory to find resources.
-    return os.path.abspath(resolved)
+    # Resolve symlinks: Rack runs with its executable's directory as the working directory,
+    # which must be the real install, not the directory holding a link to it.
+    return str(Path(resolved).resolve())
 
 
 def other_racks():

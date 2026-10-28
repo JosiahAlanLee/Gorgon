@@ -169,8 +169,6 @@ workstation's actual device/CV routes still need workstation testing.
 
 ### 0.1.1
 
-- Preserve Rack executable symlinks during initialization and launch so the
-  installed executable path remains available for resource lookup.
 - Discard malformed session-state containers and ignore invalid process records
   so status and stop remain usable without signalling unverified processes.
 - Remove a newly created invalid profile when initialization fails validation,

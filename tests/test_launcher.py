@@ -289,11 +289,17 @@ def test_cli_help_and_exit_status(capsys):
     assert result.returncode == 1
 
 
-def test_executable_preserves_symlink_install_path(tmp_path):
-    executable = tmp_path / 'Rack install ü' / 'Rack'
-    executable.parent.mkdir()
-    executable.symlink_to('/bin/true')
-    assert launcher.executable([str(executable)]) == str(executable)
+def test_executable_resolves_a_linked_rack_to_its_install(tmp_path):
+    # Rack runs with cwd = its executable's directory: that must be the install, not the link's.
+    install = tmp_path / 'Rack install ü'
+    install.mkdir()
+    real = install / 'Rack'
+    real.write_text('#!/bin/sh\n')
+    real.chmod(0o755)
+    (tmp_path / 'bin').mkdir()
+    link = tmp_path / 'bin' / 'Rack'
+    link.symlink_to(real)
+    assert launcher.executable([str(link)]) == str(real.resolve())
 
 
 @pytest.mark.parametrize('state', [[], None, 42, {'supervisor': []},
@@ -323,12 +329,3 @@ def test_window_close_tool_failure_is_best_effort(monkeypatch, error):
     monkeypatch.setattr(launcher.subprocess, 'run', fail)
     assert launcher.close_rack_window(12345) is False
 
-
-def test_init_preserves_rack_symlink_install_path(tmp_path, monkeypatch):
-    monkeypatch.setenv('XDG_DATA_HOME', str(tmp_path / 'data'))
-    executable = tmp_path / 'Rack install ü' / 'Rack'
-    executable.parent.mkdir()
-    executable.symlink_to('/bin/true')
-    path = tmp_path / 'launch.json'
-    assert main(['--config', str(path), 'init', '--rack', str(executable)]) == 0
-    assert load(path)['rack']['command'] == [str(executable)]

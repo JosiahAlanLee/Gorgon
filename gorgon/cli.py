@@ -24,7 +24,7 @@ def initialize(path, args=None):
         if args.visual_patch:
             config['studio']['patch'] = args.visual_patch
         if args.rack:
-            config['rack']['command'] = [os.path.abspath(Path(args.rack).expanduser())]
+            config['rack']['command'] = [str(Path(args.rack).expanduser().resolve())]
         if args.rack_patch:
             config['rack']['patch'] = str(Path(args.rack_patch).expanduser().resolve())
         if args.rack_user:
