@@ -62,9 +62,9 @@ jobs:
             arch: lin-x64
           - os: windows-latest
             arch: win-x64
-          - os: macos-latest
+          - os: macos-15
             arch: mac-arm64
-          - os: macos-latest
+          - os: macos-15-intel
             arch: mac-x64
     runs-on: ${{ matrix.os }}
     env:
@@ -91,7 +91,7 @@ jobs:
           python -m build .integration/hydrapy --outdir python-dist
       - name: Linux build tools
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends zstd jq zip libjack-jackd2-0 libpulse0
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends zstd jq zip cmake ninja-build libjack-jackd2-0 libpulse0
       - name: Windows build tools
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
@@ -101,9 +101,10 @@ jobs:
           install: >-
             make zip unzip jq rsync
             mingw-w64-x86_64-gcc mingw-w64-x86_64-zstd
+            mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja mingw-w64-x86_64-python git
       - name: macOS build tools
         if: runner.os == 'macOS'
-        run: brew install zstd jq
+        run: brew install zstd jq ninja
       - name: Build Linux/macOS plugins
         if: runner.os != 'Windows'
         shell: bash
@@ -111,34 +112,82 @@ jobs:
           arch='${{ matrix.arch }}'
           curl --fail --location "https://vcvrack.com/downloads/Rack-SDK-${RACK_SDK_VERSION}-${arch}.zip" -o /tmp/rack-sdk.zip
           unzip -q /tmp/rack-sdk.zip -d /tmp
-          cross=()
-          if [ "$arch" = mac-x64 ]; then cross=(CROSS_COMPILE=x86_64-apple-darwin); fi
-          for folder in rack .integration/DSP_Emulation/vcv/{otislab,vastish,spoonbender,seance,bytebus}; do
-            make -C "$folder" -j2 RACK_DIR=/tmp/Rack-SDK "${cross[@]}"
-            make -C "$folder" dist RACK_DIR=/tmp/Rack-SDK "${cross[@]}"
+          for folder in rack .integration/DSP_Emulation/vcv/{otislab,vastish,spoonbender,seance,bytebus,drumlab,czish}; do
+            make -C "$folder" -j2 RACK_DIR=/tmp/Rack-SDK
+            make -C "$folder" dist RACK_DIR=/tmp/Rack-SDK
             if [[ "$arch" = mac-* ]]; then
               want=arm64; if [ "$arch" = mac-x64 ]; then want=x86_64; fi
               test "$(lipo -archs "$folder/plugin.dylib")" = "$want"
             fi
           done
+      - name: Build and test OS adapters and added portable cores
+        if: runner.os != 'Windows'
+        shell: bash
+        env:
+          DYLD_LIBRARY_PATH: /tmp/Rack-SDK
+        run: |
+          for name in machinemodule monomodule; do
+            folder=".integration/DSP_Emulation/vcv/$name"
+            make -C "$folder" dist RACK_DIR=/tmp/Rack-SDK CMAKE_ARGS="-DGORGON_DIR=$GITHUB_WORKSPACE"
+            if [[ '${{ matrix.arch }}' = mac-* ]]; then
+              want=arm64; if [ '${{ matrix.arch }}' = mac-x64 ]; then want=x86_64; fi
+              test "$(lipo -archs "$folder/plugin.dylib")" = "$want"
+              codesign --verify --strict "$folder/dist/$(jq -r .slug "$folder/plugin.json")/plugin.dylib"
+            fi
+            if [ '${{ matrix.arch }}' = win-x64 ]; then
+              if objdump -p "$folder/plugin.dll" | grep -Ei 'DLL Name: (libstdc|libgcc|libwinpthread)'; then exit 1; fi
+            fi
+          done
+          for name in drumlab czish; do
+            make -C ".integration/DSP_Emulation/vcv/$name/tests" test RACK_DIR=/tmp/Rack-SDK
+          done
+      - name: Extract Windows Rack runtime for OS-adapter module tests
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $installer = Join-Path $env:RUNNER_TEMP 'RackFree.exe'
+          $runtime = Join-Path $env:RUNNER_TEMP 'Rack-runtime'
+          Invoke-WebRequest "https://vcvrack.com/downloads/RackFree-$env:RACK_SDK_VERSION-win-x64.exe" -OutFile $installer
+          & 'C:\Program Files\7-Zip\7z.exe' x $installer "-o$runtime" -y
+          if ($LASTEXITCODE -ne 0) { throw 'Rack extraction failed' }
+          $dll = Get-ChildItem $runtime -Recurse -Filter libRack.dll | Select-Object -First 1
+          if (-not $dll) { throw 'Rack runtime missing' }
+          $dll.Directory.FullName | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
       - name: Build Windows plugins
         if: runner.os == 'Windows'
         shell: msys2 {0}
         run: |
           curl --fail --location "https://vcvrack.com/downloads/Rack-SDK-${RACK_SDK_VERSION}-win-x64.zip" -o /tmp/rack-sdk.zip
           unzip -q /tmp/rack-sdk.zip -d /tmp
-          for folder in rack .integration/DSP_Emulation/vcv/{otislab,vastish,spoonbender,seance,bytebus}; do
+          for folder in rack .integration/DSP_Emulation/vcv/{otislab,vastish,spoonbender,seance,bytebus,drumlab,czish}; do
             make -C "$folder" -j2 RACK_DIR=/tmp/Rack-SDK
             make -C "$folder" dist RACK_DIR=/tmp/Rack-SDK
             if objdump -p "$folder/plugin.dll" | grep -Ei 'DLL Name: (libstdc|libgcc|libwinpthread)'; then
               echo '::error::MinGW runtime DLL dependency'; exit 1
             fi
           done
+          for name in machinemodule monomodule; do
+            folder=".integration/DSP_Emulation/vcv/$name"
+            make -C "$folder" dist RACK_DIR=/tmp/Rack-SDK CMAKE_ARGS="-DGORGON_DIR=$GITHUB_WORKSPACE"
+            if [[ '${{ matrix.arch }}' = mac-* ]]; then
+              want=arm64; if [ '${{ matrix.arch }}' = mac-x64 ]; then want=x86_64; fi
+              test "$(lipo -archs "$folder/plugin.dylib")" = "$want"
+              codesign --verify --strict "$folder/dist/$(jq -r .slug "$folder/plugin.json")/plugin.dylib"
+            fi
+            if [ '${{ matrix.arch }}' = win-x64 ]; then
+              if objdump -p "$folder/plugin.dll" | grep -Ei 'DLL Name: (libstdc|libgcc|libwinpthread)'; then exit 1; fi
+            fi
+          done
+          for name in drumlab czish; do
+            make -C ".integration/DSP_Emulation/vcv/$name/tests" test RACK_DIR=/tmp/Rack-SDK
+          done
       - name: Linux instrument and bus checks
         if: runner.os == 'Linux'
         shell: bash
         run: |
           dsp="$GITHUB_WORKSPACE/.integration/DSP_Emulation/vcv"
+          make -C "$dsp/drumlab/tests" check RACK_DIR=/tmp/Rack-SDK
+          make -C "$dsp/czish/tests" check RACK_DIR=/tmp/Rack-SDK
           make -C "$dsp/bytebus/tests" -j2 check tools-check RACK_DIR=/tmp/Rack-SDK
           make -C "$dsp/otislab/tests" -j2 test bus-check RACK_DIR=/tmp/Rack-SDK
           make -C "$dsp/seance/tests" -j2 engine_test module_test bridge-check RACK_DIR=/tmp/Rack-SDK

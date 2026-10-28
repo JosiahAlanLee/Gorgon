@@ -24,13 +24,13 @@ def commit(path):
     return release.git(path, 'rev-parse', 'HEAD')
 
 
-def plugin(folder, slug, packed_version='2.0.0'):
+def plugin(folder, slug, packed_version='2.0.0', extra=()):
     folder.mkdir(parents=True, exist_ok=True)
     (folder / 'plugin.json').write_text(json.dumps(dict(slug=slug, version='2.0.0')))
     payload = io.BytesIO()
     with tarfile.open(fileobj=payload, mode='w') as archive:
         for name, data in [('plugin.json', json.dumps(dict(slug=slug, version=packed_version)).encode()),
-                           ('plugin.so', b'fixture library')]:
+                           ('plugin.so', b'fixture library'), *extra]:
             info = tarfile.TarInfo(slug + '/' + name)
             info.size = len(data)
             archive.addfile(info, io.BytesIO(data))
@@ -54,12 +54,19 @@ class BundleTests(unittest.TestCase):
         plugin(self.root / 'rack', 'GorgonBridge')
         (self.root / 'rack/examples').mkdir()
         (self.root / 'rack/examples/gorgon-bytebus.vcv').write_text('{}')
-        for name in release.DSP_PLUGINS:
+        for name in set(release.DSP_PLUGINS) | {'machinemodule', 'monomodule'}:
             plugin(self.dsp / 'vcv' / name, name)
+        for name in ('machinemodule', 'monomodule'):
+            metadata = json.loads((self.dsp / 'vcv' / name / 'plugin.json').read_text())
+            with tarfile.open(self.dsp / 'vcv' / name / 'dist' / f"{metadata['slug']}-2.0.0-source.tar.gz", 'w:gz') as package:
+                info = tarfile.TarInfo('source/LICENSE')
+                info.size = 7
+                package.addfile(info, io.BytesIO(b'license'))
         self.dsp_sha = commit(self.dsp)
         members = ['hydrapy/studio.py', 'hydrapy/tracker/demo.json',
                    'hydrapy/tracker/app.js', 'hydrapy/tracker/editor.js',
-                   'hydrapy/tracker/style.css', 'hydrapy/tracker/index.html']
+                   'hydrapy/tracker/style.css', 'hydrapy/tracker/index.html',
+                   'hydrapy/studio.html', 'hydrapy/tracker_v3.py']
         for name in members:
             p = self.hydrapy / name
             p.parent.mkdir(parents=True, exist_ok=True)
@@ -67,28 +74,60 @@ class BundleTests(unittest.TestCase):
         (self.hydrapy / 'patches').mkdir()
         for name in ('gorgon_corridor.py', 'gorgon_scenes.py'):
             (self.hydrapy / 'patches' / name).write_text('# patch')
+        for name in ('pyproject.toml', 'README.md', 'LICENSE'):
+            (self.hydrapy / name).write_text('fixture ' + name)
         self.hydrapy_sha = commit(self.hydrapy)
         self.wheel = self.python_dist / 'hydrapy-0.1.0-py3-none-any.whl'
         with zipfile.ZipFile(self.wheel, 'w') as package:
             for name in members:
                 package.writestr(name, (self.hydrapy / name).read_bytes())
-        (self.python_dist / 'hydrapy-0.1.0.tar.gz').write_bytes(b'source fixture')
+        self.sdist = self.python_dist / 'hydrapy-0.1.0.tar.gz'
+        self.write_sdist()
         self.manifest = dict(format='gorgon-preview-1', tag='preview-1', rack_sdk='2.6.4',
                              dsp_commit=self.dsp_sha, blocked_by=['Fix a known transport defect'])
         (self.root / 'release.json').write_text(json.dumps(self.manifest))
         (self.root / 'hydrapy.pin').write_text(self.hydrapy_sha + '\n')
         self.gorgon_sha = commit(self.root)
 
+    def write_sdist(self, omit=None, stale=None):
+        with tarfile.open(self.sdist, 'w:gz') as package:
+            for name in release.git(self.hydrapy, 'ls-files').splitlines():
+                if name == omit:
+                    continue
+                data = b'stale' if name == stale else (self.hydrapy / name).read_bytes()
+                info = tarfile.TarInfo('hydrapy-0.1.0/' + name)
+                info.size = len(data)
+                package.addfile(info, io.BytesIO(data))
+
+    def test_wheel_missing_python_module_or_studio_html_is_rejected(self):
+        original = self.wheel.read_bytes()
+        for missing in ('hydrapy/tracker_v3.py', 'hydrapy/studio.html'):
+            with zipfile.ZipFile(io.BytesIO(original)) as source, zipfile.ZipFile(self.wheel, 'w') as target:
+                for name in source.namelist():
+                    if name != missing:
+                        target.writestr(name, source.read(name))
+            with self.assertRaisesRegex(ValueError, 'wheel package manifest differs'):
+                self.assemble()
+
+    def test_sdist_missing_or_stale_source_is_rejected(self):
+        for name in ('hydrapy/tracker_v3.py', 'pyproject.toml'):
+            self.write_sdist(omit=name)
+            with self.assertRaisesRegex(ValueError, 'sdist is missing'):
+                self.assemble()
+            self.write_sdist(stale=name)
+            with self.assertRaisesRegex(ValueError, 'sdist does not match'):
+                self.assemble()
+
     def assemble(self):
         return release.assemble(self.root, self.dsp, self.hydrapy, self.python_dist, 'lin-x64', self.output)
 
-    def test_bundle_has_all_six_plugins_exact_pins_and_valid_checksums(self):
+    def test_bundle_has_all_ten_plugins_exact_pins_and_valid_checksums(self):
         target = self.assemble()
         original = target.read_bytes()
         self.assertEqual(original, self.assemble().read_bytes())
         prefix = 'Gorgon-preview-1-Linux-x64/'
         with zipfile.ZipFile(target) as archive:
-            self.assertEqual(len([n for n in archive.namelist() if n.endswith('.vcvplugin')]), 6)
+            self.assertEqual(len([n for n in archive.namelist() if n.endswith('.vcvplugin')]), 10)
             manifest = json.loads(archive.read(prefix + 'RELEASE.json'))
             self.assertEqual(manifest['sources'], dict(Gorgon=self.gorgon_sha, hydrapy=self.hydrapy_sha,
                                                       DSP_Emulation=self.dsp_sha))
@@ -98,6 +137,25 @@ class BundleTests(unittest.TestCase):
             for line in checksums:
                 digest, name = line.split('  ')
                 self.assertEqual(hashlib.sha256(archive.read(prefix + name)).hexdigest(), digest)
+
+    def test_lookup_tables_require_exact_pinned_source_bytes(self):
+        folder = self.dsp / 'vcv/bytebus'
+        (folder / 'res').mkdir()
+        (folder / 'res/lookup-v3.bin').write_bytes(b'generated table fixture')
+        metadata = {'slug': 'ByteBusLab', 'version': '2.0.0'}
+        package = folder / 'dist/ByteBusLab-2.0.0-lin-x64.vcvplugin'
+        plugin(folder, 'ByteBusLab', extra=[('res/lookup-v3.bin', b'generated table fixture')])
+        release.check_plugin(package, metadata, 'plugin.so', folder)
+        plugin(folder, 'ByteBusLab', extra=[('res/lookup-v3.bin', b'foreign data')])
+        with self.assertRaisesRegex(ValueError, 'firmware'):
+            release.check_plugin(package, metadata, 'plugin.so', folder)
+
+    def test_os_adapter_rejects_firmware_payload(self):
+        folder = self.dsp / 'vcv' / 'machinemodule'
+        plugin(folder, 'MachinemoduleRack', extra=[('docs/private.syx', b'synthetic test marker')])
+        package = folder / 'dist/MachinemoduleRack-2.0.0-lin-x64.vcvplugin'
+        with self.assertRaisesRegex(ValueError, 'forbidden OS-adapter payload'):
+            release.check_plugin(package, {'slug': 'MachinemoduleRack', 'version': '2.0.0'}, 'plugin.so')
 
     def test_publication_refuses_blockers_while_dry_run_remains_available(self):
         release.config(self.root)
