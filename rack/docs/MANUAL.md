@@ -68,8 +68,15 @@ does: the same candidates from the same evaluator, so conditions, `ply`,
   plain hit, and at every sub-step of a `ply` hit, so a mute that arrives
   mid-ratchet silences the sub-steps after it. A mute that arrives while a gate
   is open doesn't cut it.
-- CLOCK and RESET count from the start of the chain, or of the looped pattern.
-  RESET sends the playhead there.
+- RESET counts from the start of the chain, or of the looped pattern, and pulses
+  at every wrap. RESET sends the playhead there.
+- CLOCK lines up with the chain at every start, resume and seek, and then runs
+  steadily on elapsed time, through every cycle wrap (from Gorgon 2.4.1). A cycle
+  that isn't a whole number of clock periods no longer cuts or merges pulses: a
+  looped 3-row pattern at rate 8 is shorter than half a sixteenth, and before
+  2.4.1 it held CLOCK high, so BUS OUT, which publishes on CLOCK's edges, never
+  published. Version-1 and 2 scores loop in whole beats, so their clock is as
+  before.
 - The display shows the playing pattern's code and its bar and row, as the
   editor does: `A01 002:03` is pattern A01, bar 2, row 3.
 
@@ -95,6 +102,8 @@ arrives. The map is saved with the patch.
 - Unclocked (8 channels or fewer), every sample is read. Clocked (9 or more,
   CLK on channel 9), the word changes on CLK's rising edges: a Register latched
   on Gorgon's CLOCK changes mutes on rows, a Counter's CARRY at modulus 16 on bars.
+  CLOCK runs steadily through cycle wraps, so in a chain that mixes rates and isn't
+  a whole number of clock periods long, a pulse after a wrap can fall inside a row.
 - A change counts from the first tick Gorgon hasn't played yet. A mute that
   arrives while a note sounds doesn't cut it; the lane's next hit is muted.
 - A loop from BUS OUT through logic back into BUS IN acts on the next row: the

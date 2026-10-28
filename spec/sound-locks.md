@@ -70,6 +70,16 @@ note after the key's transposition). Masked-off values have
 no meaning. Version-1 scores publish unspecified machine/parameters, retaining
 their existing note behavior. Never infer a hit from a parameter change alone.
 
+**What a lane's gate means to a receiver.** A hit is a rising link gate while
+the packet is moving, with velocity above 0. A falling link gate ends a pitched
+receiver's note on that lane; a drum receiver lets its voice ring out, since
+rests, velocity zero and muted lanes do not choke voices. A receiver reads the
+lane's pitch (and velocity and sound) at the gate's rising edge only, so a
+pitch change while the gate stays high neither glides nor retriggers: the next
+note needs the gate to fall and rise again. Monomodule ends the note on a fall
+and reads the note at the rise; Machinemodule is unpitched, ignores pitch and
+falls, and plays each hit out.
+
 **Version 2** of the link has six lanes, one per lane of a `hydrapy-tracker-3`
 score; a version-1 or -2 score leaves lanes 5 and 6 at rest (gate, velocity and
 pitch 0, nothing specified). **Version 1** has four. The receiver's buffers

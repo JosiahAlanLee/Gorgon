@@ -1,7 +1,7 @@
 # Score format 3: bus I/O
 
 **Status: contract, part 4 of 4; implemented** in the Rack module
-`GorgonBridge` 2.4.0 and HydraPy 0.1.0 at `3c01f32` (the
+`GorgonBridge` 2.4.1 and HydraPy 0.1.0 at `4ca90cd` (the
 [`hydrapy.pin`](../hydrapy.pin)). This is A-spec-4 of the
 [roadmap](../docs/ROADMAP.md) (§2.A, §4). It defines the **bus layer**: FILL and
 six lane mutes that Rack sets live from a new BUS IN, stamped by Rack and merged
@@ -83,7 +83,10 @@ read in either mode:
   edges.
 
 The record is the same either way; clocking decides when changes can happen.
-- A Register latched on Gorgon's own CLOCK changes mutes on rows.
+- A Register latched on Gorgon's own CLOCK changes mutes on rows. CLOCK runs
+  steadily through cycle wraps ([cv-semantics.md](cv-semantics.md#signals)), so
+  in a chain that mixes rates and isn't a whole number of clock periods long, a
+  pulse after a wrap can fall inside a row.
 - A Counter's CARRY at modulus 16 changes them on bars.
 - Counter → Lookup → BUS IN is per-bar mute automation from a table, as in
   Elektron's song-mode mutes.

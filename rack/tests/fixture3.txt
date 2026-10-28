@@ -1,4 +1,4 @@
-GORGON_FIXTURE_3 8
+GORGON_FIXTURE_3 9
 SCORE {"version":1,"bpm":138,"key":2,"sound":false,"loop":true,"pattern":33,"scene":0,"modes":{"program":"o0","aux":"o1"},"mutes":[false,false,false,false,false,false],"patterns":[null,null,null,null,null,null,null,null,null,null,null,null,{"name":"A13","rate":4,"bar":4,"bars":4,"lanes":[{"len":14,"cells":[{"note":"C0","vel":0},null,null,null,{"note":"A-5","vel":1},{"note":"D#4","vel":127,"locks":{"p1":94}},{"note":"C0","vel":0},{"note":"D#4","vel":1,"cond":{"kind":"first"}},null,null,null,null,null,null],"transforms":[{"kind":"degrade","p":81},{"kind":"every","a":1,"b":3,"inner":{"kind":"rev"}}]},{"len":10,"cells":[null,null,{"note":"AIR","vel":0},{"note":"G9","vel":1},null,{"note":"AIR","vel":1},null,null,null,null],"transforms":[]},{"len":13,"cells":[{"note":"A-5","vel":0,"cond":{"kind":"prob","p":61,"not":true}},{"note":"C0","vel":64,"locks":{"p1":18}},{"note":"G9","vel":127},{"note":"AIR","vel":127},{"note":"C0","vel":64,"locks":{"p1":85}},null,{"note":"C0","vel":1},{"note":"A-5","vel":127},{"note":"C0","vel":64,"cond":{"kind":"fill","not":true}},{"note":"A-5","vel":1,"cond":{"kind":"fill","not":true}},null,{"note":"A-5","vel":1,"cond":{"kind":"first"}},{"note":"D#4","vel":1}],"transforms":[]},{"len":4,"cells":[{"note":"AIR","vel":1},{"note":"C0","vel":127},null,null],"transforms":[]},{"len":4,"cells":[{"note":"G9","vel":0,"cond":{"kind":"every","a":1,"b":3,"not":true}},{"note":"G9","vel":64},{"note":"G9","vel":1},null],"transforms":[]},{"len":9,"cells":[null,null,null,null,null,null,null,null,null],"transforms":[{"kind":"every","a":3,"b":3,"inner":{"kind":"every","a":8,"b":8,"inner":{"kind":"rot","k":-77}}},{"kind":"rev"},{"kind":"rev"}]}],"keys":{"z":[{"r":1,"v":0.0376},{"r":3,"v":0.5407},{"r":9,"v":0.8218},{"r":10,"v":0.0072}],"roll":[{"r":6,"v":21.2241},{"r":9,"v":37.6919},{"r":10,"v":7.6567},{"r":12,"v":-44.8814}],"feedback":[{"r":10,"v":0.1837},{"r":11,"v":0.4174},{"r":14,"v":0.5485}]},"easing":{"z":"hold","roll":"linear","feedback":"hold"},"scenes":[]},null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,{"name":"C02","rate":0.5,"bar":4,"bars":1,"lanes":[{"len":2,"cells":[null,null],"transforms":[{"kind":"ply","n":3},{"kind":"rot","k":-107}]},{"len":1,"cells":[null],"transforms":[]},{"len":4,"cells":[null,{"note":"C0","vel":64,"cond":{"kind":"first"}},null,null],"transforms":[{"kind":"degrade","p":32},{"kind":"every","a":1,"b":1,"inner":{"kind":"every","a":3,"b":5,"inner":{"kind":"rev"}}},{"kind":"degrade","p":52}]},{"len":2,"cells":[{"note":"C-4","vel":0,"cond":{"kind":"prob","p":60}},{"note":"C0","vel":127}],"transforms":[{"kind":"rev"},{"kind":"rev"},{"kind":"rev"}]},{"len":2,"cells":[{"note":"AIR","vel":127,"cond":{"kind":"first"}},null],"transforms":[{"kind":"every","a":4,"b":7,"inner":{"kind":"every","a":2,"b":4,"inner":{"kind":"rot","k":126}}},{"kind":"degrade","p":26}]},{"len":4,"cells":[null,null,null,{"note":"A-5","vel":1,"cond":{"kind":"every","a":5,"b":5}}],"transforms":[]}],"keys":{"z":[],"roll":[],"feedback":[{"r":0,"v":0.1402},{"r":1,"v":0.6786},{"r":2,"v":0.699}]},"easing":{"z":"smooth","roll":"hold","feedback":"linear"},"scenes":[]},null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"format":"hydrapy-tracker-3","bindings":{"z":"Dolly Z","roll":"Roll","feedback":"Feedback"},"chain":[12,33,65,12,93],"seed":3335578542,"lanes":[{"name":"Lane 1"},{"name":"Lane 2"},{"name":"Lane 3"},{"name":"Lane 4"},{"name":"Lane 5"},{"name":"Lane 6"}],"sounds":[{"machine":null,"params":{}},{"machine":null,"params":{}},{"machine":null,"params":{}},{"machine":null,"params":{}},{"machine":null,"params":{}},{"machine":null,"params":{}}]}
 SEGMENTS 3
 SEGMENT {"transport_revision":0,"start":{"tick":3714,"entry":null},"fill":[{"at":0,"on":true}],"bus":null,"u0":-1920,"u1":4408}
@@ -4742,3 +4742,565 @@ AUTOS 53
 132000 0.593920091 0 0.8493
 134400 0.667478034 0 0.8493
 136800 0.741035977 0 0.8493
+SCORE {"version":1,"bpm":138,"key":2,"sound":false,"loop":false,"pattern":0,"scene":0,"modes":{"program":"o0","aux":"o1"},"mutes":[false,false,false,false,false,false],"patterns":[{"name":"A01","rate":8,"bar":3,"bars":1,"lanes":[{"len":3,"cells":[{"note":"C-4","vel":100},null,null],"transforms":[]},{"len":3,"cells":[null,null,{"note":"D#4","vel":64,"cond":{"kind":"fill"}}],"transforms":[]},{"len":3,"cells":[null,{"note":"C-4","vel":100},null],"transforms":[]},{"len":3,"cells":[{"note":"C-4","vel":100},null,null],"transforms":[]},{"len":3,"cells":[null,null,{"note":"C-4","vel":100}],"transforms":[]},{"len":3,"cells":[null,{"note":"C-4","vel":100},null],"transforms":[]}],"keys":{"z":[{"r":0,"v":0.2835},{"r":1,"v":0.721},{"r":2,"v":0.4585}],"roll":[{"r":0,"v":-31.7476},{"r":1,"v":37.2174},{"r":2,"v":14.3137}],"feedback":[{"r":1,"v":0.3263}]},"easing":{"z":"smooth","roll":"smooth","feedback":"smooth"},"scenes":[]},null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"format":"hydrapy-tracker-3","bindings":{"z":"Dolly Z","roll":"Roll","feedback":"Feedback"},"chain":[0],"seed":0,"lanes":[{"name":"Lane 1"},{"name":"Lane 2"},{"name":"Lane 3"},{"name":"Lane 4"},{"name":"Lane 5"},{"name":"Lane 6"}],"sounds":[{"machine":null,"params":{}},{"machine":null,"params":{}},{"machine":null,"params":{}},{"machine":null,"params":{}},{"machine":null,"params":{}},{"machine":null,"params":{}}]}
+SEGMENTS 3
+SEGMENT {"transport_revision":8,"start":{"tick":165,"entry":0},"fill":[{"at":0,"on":true},{"at":8,"on":true},{"at":109,"on":true},{"at":140,"on":false}],"bus":null,"u0":-1920,"u1":-1701}
+CANDIDATES 0
+SEGMENT {"transport_revision":8,"start":{"tick":0,"entry":0},"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false},{"at":24,"on":true},{"at":193,"on":false},{"at":258,"on":true}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false},{"at":245,"on":true}],[{"at":0,"on":true},{"at":48,"on":false},{"at":318,"on":false}],[{"at":0,"on":false},{"at":6,"on":true},{"at":198,"on":true}],[{"at":0,"on":false},{"at":83,"on":true},{"at":143,"on":false},{"at":231,"on":false},{"at":268,"on":false}],[{"at":0,"on":true},{"at":31,"on":true},{"at":265,"on":false},{"at":350,"on":false}]]},"u0":140,"u1":396}
+CANDIDATES 8
+{"transport_revision": 8, "start": {"tick": 0, "entry": 0}, "id": "1.0.0", "at": 180, "lane": 0, "duration": 60, "note": "C-4", "vel": 100, "locks": null, "fires": true, "why": null, "origin": {"play": 1, "entry": 0, "pattern": 0, "row": 0, "lane_row": 0, "cell": 0, "sub": 0, "of": 1, "bar": 1, "cond": null, "via": []}}
+{"transport_revision": 8, "start": {"tick": 0, "entry": 0}, "id": "1.3.0", "at": 180, "lane": 3, "duration": 60, "note": "C-4", "vel": 100, "locks": null, "fires": false, "why": "muted (bus)", "origin": {"play": 1, "entry": 0, "pattern": 0, "row": 0, "lane_row": 0, "cell": 0, "sub": 0, "of": 1, "bar": 1, "cond": null, "via": []}}
+{"transport_revision": 8, "start": {"tick": 0, "entry": 0}, "id": "1.2.1", "at": 240, "lane": 2, "duration": 60, "note": "C-4", "vel": 100, "locks": null, "fires": true, "why": null, "origin": {"play": 1, "entry": 0, "pattern": 0, "row": 1, "lane_row": 1, "cell": 1, "sub": 0, "of": 1, "bar": 1, "cond": null, "via": []}}
+{"transport_revision": 8, "start": {"tick": 0, "entry": 0}, "id": "1.5.1", "at": 240, "lane": 5, "duration": 60, "note": "C-4", "vel": 100, "locks": null, "fires": false, "why": "muted (bus)", "origin": {"play": 1, "entry": 0, "pattern": 0, "row": 1, "lane_row": 1, "cell": 1, "sub": 0, "of": 1, "bar": 1, "cond": null, "via": []}}
+{"transport_revision": 8, "start": {"tick": 0, "entry": 0}, "id": "1.1.2", "at": 300, "lane": 1, "duration": 60, "note": "D#4", "vel": 64, "locks": null, "fires": false, "why": "muted (bus)", "origin": {"play": 1, "entry": 0, "pattern": 0, "row": 2, "lane_row": 2, "cell": 2, "sub": 0, "of": 1, "bar": 1, "cond": "F", "via": []}}
+{"transport_revision": 8, "start": {"tick": 0, "entry": 0}, "id": "1.4.2", "at": 300, "lane": 4, "duration": 60, "note": "C-4", "vel": 100, "locks": null, "fires": true, "why": null, "origin": {"play": 1, "entry": 0, "pattern": 0, "row": 2, "lane_row": 2, "cell": 2, "sub": 0, "of": 1, "bar": 1, "cond": null, "via": []}}
+{"transport_revision": 8, "start": {"tick": 0, "entry": 0}, "id": "2.0.0", "at": 360, "lane": 0, "duration": 60, "note": "C-4", "vel": 100, "locks": null, "fires": true, "why": null, "origin": {"play": 2, "entry": 0, "pattern": 0, "row": 0, "lane_row": 0, "cell": 0, "sub": 0, "of": 1, "bar": 2, "cond": null, "via": []}}
+{"transport_revision": 8, "start": {"tick": 0, "entry": 0}, "id": "2.3.0", "at": 360, "lane": 3, "duration": 60, "note": "C-4", "vel": 100, "locks": null, "fires": false, "why": "muted (bus)", "origin": {"play": 2, "entry": 0, "pattern": 0, "row": 0, "lane_row": 0, "cell": 0, "sub": 0, "of": 1, "bar": 2, "cond": null, "via": []}}
+SEGMENT {"transport_revision":8,"start":{"tick":104,"entry":0},"fill":[{"at":0,"on":false},{"at":48,"on":false},{"at":63,"on":true},{"at":198,"on":true}],"bus":{"fill":[{"at":0,"on":true},{"at":159,"on":false}],"mutes":[[{"at":0,"on":false},{"at":34,"on":true},{"at":36,"on":false},{"at":212,"on":false},{"at":325,"on":false}],[{"at":0,"on":false},{"at":190,"on":false},{"at":235,"on":true}],[{"at":0,"on":false},{"at":69,"on":true},{"at":270,"on":true},{"at":274,"on":false}],[{"at":0,"on":false},{"at":261,"on":true}],[{"at":0,"on":false},{"at":35,"on":false},{"at":62,"on":true},{"at":140,"on":true},{"at":330,"on":false}],[{"at":0,"on":false},{"at":22,"on":true},{"at":76,"on":true},{"at":146,"on":true}]]},"u0":-1920,"u1":-1692}
+CANDIDATES 0
+SIGNALS 12 268 87
+PLAYHEAD 12 {"transport_revision":0,"start":{"tick":0,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.0,"clock_time":0.11999999999999998,"wall":0.12,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 15 {"transport_revision":0,"start":{"tick":0,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.0,"clock_time":0.15,"wall":0.15,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 18 {"transport_revision":0,"start":{"tick":0,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.0,"clock_time":0.18000000000000002,"wall":0.18,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 21 {"transport_revision":0,"start":{"tick":0,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.0,"clock_time":0.21000000000000005,"wall":0.21,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 24 {"transport_revision":0,"start":{"tick":0,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.0,"clock_time":0.24000000000000007,"wall":0.24,"fill":[{"at":0,"on":false},{"at":1060,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 27 {"transport_revision":0,"start":{"tick":0,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.0,"clock_time":0.2700000000000001,"wall":0.27,"fill":[{"at":0,"on":false},{"at":1060,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 30 {"transport_revision":0,"start":{"tick":0,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.0,"clock_time":0.3000000000000001,"wall":0.3,"fill":[{"at":0,"on":false},{"at":1060,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 33 {"transport_revision":0,"start":{"tick":0,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.0,"clock_time":0.3300000000000001,"wall":0.33,"fill":[{"at":0,"on":false},{"at":1060,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 36 {"transport_revision":0,"start":{"tick":0,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.0,"clock_time":0.36000000000000015,"wall":0.36,"fill":[{"at":0,"on":false},{"at":1060,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 39 {"transport_revision":0,"start":{"tick":0,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.0,"clock_time":0.3900000000000002,"wall":0.39,"fill":[{"at":0,"on":false},{"at":1060,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 42 {"transport_revision":0,"start":{"tick":0,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.0,"clock_time":0.4200000000000002,"wall":0.42,"fill":[{"at":0,"on":false},{"at":1060,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 45 {"transport_revision":0,"start":{"tick":0,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.0,"clock_time":0.45000000000000023,"wall":0.45,"fill":[{"at":0,"on":false},{"at":1060,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 48 {"transport_revision":0,"start":{"tick":0,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.0,"clock_time":0.48000000000000026,"wall":0.48,"fill":[{"at":0,"on":false},{"at":1060,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 51 {"transport_revision":0,"start":{"tick":0,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.0,"clock_time":0.5100000000000002,"wall":0.51,"fill":[{"at":0,"on":false},{"at":1060,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 54 {"transport_revision":0,"start":{"tick":0,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.0,"clock_time":0.5400000000000003,"wall":0.54,"fill":[{"at":0,"on":false},{"at":1060,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 57 {"transport_revision":0,"start":{"tick":0,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.0,"clock_time":0.5700000000000003,"wall":0.57,"fill":[{"at":0,"on":false},{"at":1060,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 60 {"transport_revision":0,"start":{"tick":0,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.0,"clock_time":0.6000000000000003,"wall":0.6,"fill":[{"at":0,"on":false},{"at":1060,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 63 {"transport_revision":0,"start":{"tick":0,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.0,"clock_time":0.6300000000000003,"wall":0.63,"fill":[{"at":0,"on":false},{"at":1060,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 67 {"transport_revision":1,"start":{"tick":178,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.6600000000000004,"clock_time":0.6700000000000004,"wall":0.67,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 69 {"transport_revision":1,"start":{"tick":178,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.6600000000000004,"clock_time":0.6900000000000004,"wall":0.69,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 72 {"transport_revision":1,"start":{"tick":178,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.6600000000000004,"clock_time":0.7200000000000004,"wall":0.72,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 75 {"transport_revision":1,"start":{"tick":178,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.6600000000000004,"clock_time":0.7500000000000004,"wall":0.75,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 78 {"transport_revision":1,"start":{"tick":178,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.6600000000000004,"clock_time":0.7800000000000005,"wall":0.78,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 81 {"transport_revision":1,"start":{"tick":178,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.6600000000000004,"clock_time":0.8100000000000005,"wall":0.81,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 84 {"transport_revision":1,"start":{"tick":178,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.6600000000000004,"clock_time":0.8400000000000005,"wall":0.84,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 87 {"transport_revision":1,"start":{"tick":178,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.6600000000000004,"clock_time":0.8700000000000006,"wall":0.87,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 90 {"transport_revision":1,"start":{"tick":178,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.6600000000000004,"clock_time":0.9000000000000006,"wall":0.9,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 93 {"transport_revision":1,"start":{"tick":178,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.6600000000000004,"clock_time":0.9300000000000006,"wall":0.93,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 96 {"transport_revision":1,"start":{"tick":178,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.6600000000000004,"clock_time":0.9600000000000006,"wall":0.96,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 99 {"transport_revision":1,"start":{"tick":178,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.6600000000000004,"clock_time":0.9900000000000007,"wall":0.99,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 102 {"transport_revision":1,"start":{"tick":178,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.6600000000000004,"clock_time":1.0200000000000007,"wall":1.02,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false},{"at":1590,"on":false}],"mutes":[[{"at":0,"on":false},{"at":1590,"on":false}],[{"at":0,"on":false},{"at":1590,"on":true}],[{"at":0,"on":false},{"at":1590,"on":false}],[{"at":0,"on":false},{"at":1590,"on":true}],[{"at":0,"on":false},{"at":1590,"on":false}],[{"at":0,"on":false},{"at":1590,"on":false}]]},"bpm":138}
+PLAYHEAD 105 {"transport_revision":1,"start":{"tick":178,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":0.6600000000000004,"clock_time":1.0500000000000007,"wall":1.05,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false},{"at":1590,"on":false}],"mutes":[[{"at":0,"on":false},{"at":1590,"on":false}],[{"at":0,"on":false},{"at":1590,"on":true}],[{"at":0,"on":false},{"at":1590,"on":false}],[{"at":0,"on":false},{"at":1590,"on":true}],[{"at":0,"on":false},{"at":1590,"on":false}],[{"at":0,"on":false},{"at":1590,"on":false}]]},"bpm":138}
+PLAYHEAD 109 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.0800000000000007,"clock_time":1.0900000000000007,"wall":1.09,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 111 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.0800000000000007,"clock_time":1.1100000000000008,"wall":1.11,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 114 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.0800000000000007,"clock_time":1.1400000000000008,"wall":1.14,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 117 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.0800000000000007,"clock_time":1.1700000000000008,"wall":1.17,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 120 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.0800000000000007,"clock_time":1.2000000000000008,"wall":1.2,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 123 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.0800000000000007,"clock_time":1.2300000000000009,"wall":1.23,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 126 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.0800000000000007,"clock_time":1.260000000000001,"wall":1.26,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 129 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.0800000000000007,"clock_time":1.290000000000001,"wall":1.29,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 132 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.0800000000000007,"clock_time":1.320000000000001,"wall":1.32,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 135 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.0800000000000007,"clock_time":1.350000000000001,"wall":1.35,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 138 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.0800000000000007,"clock_time":1.380000000000001,"wall":1.38,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 141 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.0800000000000007,"clock_time":1.410000000000001,"wall":1.41,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 144 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.0800000000000007,"clock_time":1.440000000000001,"wall":1.44,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 147 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.0800000000000007,"clock_time":1.470000000000001,"wall":1.47,"fill":[{"at":0,"on":true}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 150 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.0800000000000007,"clock_time":1.500000000000001,"wall":1.5,"fill":[{"at":0,"on":true},{"at":1855,"on":false}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 153 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.0800000000000007,"clock_time":1.5300000000000011,"wall":1.53,"fill":[{"at":0,"on":true},{"at":1855,"on":false}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 156 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.0800000000000007,"clock_time":1.5600000000000012,"wall":1.56,"fill":[{"at":0,"on":true},{"at":1855,"on":false}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 159 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.0800000000000007,"clock_time":1.5900000000000012,"wall":1.59,"fill":[{"at":0,"on":true},{"at":1855,"on":false}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 162 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.0800000000000007,"clock_time":1.6200000000000012,"wall":1.62,"fill":[{"at":0,"on":true},{"at":1855,"on":false}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 165 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.0800000000000007,"clock_time":1.6500000000000012,"wall":1.65,"fill":[{"at":0,"on":true},{"at":1855,"on":false}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 168 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.0800000000000007,"clock_time":1.6800000000000013,"wall":1.68,"fill":[{"at":0,"on":true},{"at":1855,"on":false}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 171 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.0800000000000007,"clock_time":1.7100000000000013,"wall":1.71,"fill":[{"at":0,"on":true},{"at":1855,"on":false}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 174 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":0,"enabled":true,"playing":false,"anchor_time":1.0800000000000007,"clock_time":1.7400000000000013,"wall":1.74,"fill":[{"at":0,"on":true},{"at":1855,"on":false}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 177 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":0,"enabled":true,"playing":false,"anchor_time":1.0800000000000007,"clock_time":1.7400000000000013,"wall":1.77,"fill":[{"at":0,"on":true},{"at":1855,"on":false}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 180 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":2914,"enabled":true,"playing":false,"anchor_time":1.7398731884057979,"clock_time":1.7400000000000013,"wall":1.8,"fill":[{"at":0,"on":true},{"at":1855,"on":false}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 183 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":2914,"enabled":true,"playing":false,"anchor_time":1.7398731884057979,"clock_time":1.7400000000000013,"wall":1.83,"fill":[{"at":0,"on":true},{"at":1855,"on":false}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 186 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":2914,"enabled":true,"playing":false,"anchor_time":1.7398731884057979,"clock_time":1.7400000000000013,"wall":1.86,"fill":[{"at":0,"on":true},{"at":1855,"on":false}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 189 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":2914,"enabled":true,"playing":false,"anchor_time":1.7398731884057979,"clock_time":1.7400000000000013,"wall":1.89,"fill":[{"at":0,"on":true},{"at":1855,"on":false}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 192 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":2914,"enabled":true,"playing":false,"anchor_time":1.7398731884057979,"clock_time":1.7400000000000013,"wall":1.92,"fill":[{"at":0,"on":true},{"at":1855,"on":false}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 195 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":2914,"enabled":true,"playing":false,"anchor_time":1.7398731884057979,"clock_time":1.7400000000000013,"wall":1.95,"fill":[{"at":0,"on":true},{"at":1855,"on":false}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 198 {"transport_revision":2,"start":{"tick":15,"entry":0},"elapsed":2914,"enabled":true,"playing":false,"anchor_time":1.7398731884057979,"clock_time":1.7400000000000013,"wall":1.98,"fill":[{"at":0,"on":true},{"at":1855,"on":false}],"bus":{"fill":[{"at":0,"on":false},{"at":265,"on":false}],"mutes":[[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":true}],[{"at":0,"on":true},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}],[{"at":0,"on":false},{"at":265,"on":false}]]},"bpm":138}
+PLAYHEAD 200 {"transport_revision":2,"start":{"tick":50,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.7400000000000013,"clock_time":1.7400000000000013,"wall":2.0,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 201 {"transport_revision":2,"start":{"tick":50,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.7400000000000013,"clock_time":1.7500000000000013,"wall":2.01,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 204 {"transport_revision":3,"start":{"tick":65,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.7800000000000014,"clock_time":1.7800000000000014,"wall":2.04,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 207 {"transport_revision":3,"start":{"tick":65,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.7800000000000014,"clock_time":1.8100000000000014,"wall":2.07,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 210 {"transport_revision":3,"start":{"tick":65,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.7800000000000014,"clock_time":1.8400000000000014,"wall":2.1,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 213 {"transport_revision":3,"start":{"tick":65,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.7800000000000014,"clock_time":1.8700000000000014,"wall":2.13,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 216 {"transport_revision":3,"start":{"tick":65,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.7800000000000014,"clock_time":1.9000000000000015,"wall":2.16,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 219 {"transport_revision":3,"start":{"tick":65,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.7800000000000014,"clock_time":1.9300000000000015,"wall":2.19,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 222 {"transport_revision":3,"start":{"tick":65,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.7800000000000014,"clock_time":1.9600000000000015,"wall":2.22,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 225 {"transport_revision":3,"start":{"tick":65,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.7800000000000014,"clock_time":1.9900000000000015,"wall":2.25,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 228 {"transport_revision":3,"start":{"tick":65,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.7800000000000014,"clock_time":2.020000000000001,"wall":2.28,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 231 {"transport_revision":3,"start":{"tick":65,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.7800000000000014,"clock_time":2.0500000000000003,"wall":2.31,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 234 {"transport_revision":3,"start":{"tick":65,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.7800000000000014,"clock_time":2.0799999999999996,"wall":2.34,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 237 {"transport_revision":3,"start":{"tick":65,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.7800000000000014,"clock_time":2.109999999999999,"wall":2.37,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 240 {"transport_revision":3,"start":{"tick":65,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.7800000000000014,"clock_time":2.1399999999999983,"wall":2.4,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 243 {"transport_revision":3,"start":{"tick":65,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.7800000000000014,"clock_time":2.1699999999999977,"wall":2.43,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 246 {"transport_revision":3,"start":{"tick":65,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.7800000000000014,"clock_time":2.199999999999997,"wall":2.46,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 249 {"transport_revision":3,"start":{"tick":65,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.7800000000000014,"clock_time":2.2299999999999964,"wall":2.49,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 252 {"transport_revision":3,"start":{"tick":65,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.7800000000000014,"clock_time":2.259999999999996,"wall":2.52,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 255 {"transport_revision":3,"start":{"tick":65,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.7800000000000014,"clock_time":2.289999999999995,"wall":2.55,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 258 {"transport_revision":3,"start":{"tick":65,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.7800000000000014,"clock_time":2.3199999999999945,"wall":2.58,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 261 {"transport_revision":3,"start":{"tick":65,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.7800000000000014,"clock_time":2.349999999999994,"wall":2.61,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 264 {"transport_revision":3,"start":{"tick":65,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.7800000000000014,"clock_time":2.3799999999999932,"wall":2.64,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+PLAYHEAD 267 {"transport_revision":3,"start":{"tick":65,"entry":0},"elapsed":0,"enabled":true,"playing":true,"anchor_time":1.7800000000000014,"clock_time":2.4099999999999926,"wall":2.67,"fill":[{"at":0,"on":false}],"bus":{"fill":[{"at":0,"on":false}],"mutes":[[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":true}],[{"at":0,"on":false}],[{"at":0,"on":false}],[{"at":0,"on":false}]]},"bpm":138}
+ROWS 405
+5760 7 0 0 0 0 0 0 0 0 0 0 0 0
+5870 79 0.787401575 0 0 0.787401575 0 0 0 0 0 0 0 0
+6110 77 0.787401575 0 0 0.787401575 0 0 0 0 0 0 0 0
+6196 5 0.787401575 0 0 0.787401575 0 0 0 0 0 0 0 0
+6522 293 0.787401575 0 0.787401575 0.787401575 0 0.787401575 0 0 0 0 0 0
+6848 5 0.787401575 0 0.787401575 0.787401575 0 0.787401575 0 0 0 0 0 0
+7174 133 0.787401575 0 0.787401575 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+7500 5 0.787401575 0 0.787401575 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+7827 78 0.787401575 0 0.787401575 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+8067 76 0.787401575 0 0.787401575 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+8153 4 0.787401575 0 0.787401575 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+8479 292 0.787401575 0 0.787401575 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+8805 4 0.787401575 0 0.787401575 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+9131 132 0.787401575 0 0.787401575 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+9457 4 0.787401575 0 0.787401575 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+9783 78 0.787401575 0 0.787401575 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+10023 76 0.787401575 0 0.787401575 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+10109 4 0.787401575 0 0.787401575 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+10435 293 0.787401575 0 0.787401575 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+10761 5 0.787401575 0 0.787401575 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+11087 133 0.787401575 0 0.787401575 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+11414 5 0.787401575 0 0.787401575 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+11740 79 0.787401575 0 0.787401575 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+11980 77 0.787401575 0 0.787401575 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+12066 5 0.787401575 0 0.787401575 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+12392 293 0.787401575 0 0.787401575 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+12718 5 0.787401575 0 0.787401575 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+13044 148 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+13370 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+13696 78 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+13936 76 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+14022 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+14348 292 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+14674 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+15000 148 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+15327 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+15653 79 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+15893 77 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+15979 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+16305 293 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+16631 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+16957 149 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+17283 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+17609 79 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+17849 77 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+17935 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+18261 292 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+18587 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+18914 148 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+19240 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+19566 78 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+19806 76 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+19892 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+20218 292 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+20544 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+20870 149 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+21196 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+21522 79 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+21762 77 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+21848 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+22174 293 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+22500 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+22827 149 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+23153 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+23479 78 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+23719 76 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+23805 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+24131 292 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+24457 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+24783 148 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+25109 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+25435 78 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+25675 76 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+25761 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+26087 293 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+26414 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+26740 149 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+27066 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+27392 79 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+27632 77 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+27718 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+28044 293 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+28370 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+28696 148 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+29022 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+29348 78 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+29588 76 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+29674 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+30000 292 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+30327 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+30653 148 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+30979 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+31305 79 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+31545 77 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+31631 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+31957 293 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+32160 7 0.787401575 0 0 0.787401575 0 0 0 0 0 0 0 0
+32354 294 0.787401575 0 0.787401575 0.787401575 0 0.787401575 0 0 0 0 0 0
+32400 292 0.787401575 0 0.787401575 0.787401575 0 0.787401575 0 0 0 0 0 0
+32680 4 0.787401575 0 0.787401575 0.787401575 0 0.787401575 0 0 0 0 0 0
+33007 148 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+33333 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+33659 78 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+33899 76 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+33985 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+34311 292 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+34637 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+34963 149 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+35289 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+35615 79 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+35855 77 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+35941 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+36267 293 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+36594 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+36920 149 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+37246 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+37572 78 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+37812 76 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+37898 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+38224 292 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+38550 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+38876 148 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+39202 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+39528 78 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+39768 76 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+39854 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+40180 293 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+40507 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+40833 149 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+41159 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+41485 79 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+41725 77 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+41811 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+42137 293 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+42463 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+42789 148 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+43115 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+43441 78 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+43681 76 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+43767 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+44094 292 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+44420 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+44746 148 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+45072 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+45398 79 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+45638 77 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+45724 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+46050 293 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+46376 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+46702 149 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+47028 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+47354 79 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+47594 77 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+47680 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+48007 292 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+48333 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+48659 148 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+48985 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+49311 14 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+49551 12 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+49637 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+49963 292 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+50289 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+50615 133 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+50941 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+51267 15 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+51507 13 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+51594 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+51920 293 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+52246 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+52320 7 0.787401575 0 0 0 0 0 0 0 0 0 0 0
+52330 295 0.787401575 0 0.787401575 0 0 0.787401575 0 0 0 0 0 0
+52560 293 0.787401575 0 0.787401575 0 0 0.787401575 0 0 0 0 0 0
+52656 5 0.787401575 0 0.787401575 0 0 0.787401575 0 0 0 0 0 0
+52982 133 0.787401575 0 0.787401575 0 0.787401575 0.787401575 0 0 0 0 0 0
+53308 5 0.787401575 0 0.787401575 0 0.787401575 0.787401575 0 0 0 0 0 0
+53634 15 0.787401575 0 0.787401575 0 0.787401575 0.787401575 0 0 0 0 0 0
+53874 13 0.787401575 0 0.787401575 0 0.787401575 0.787401575 0 0 0 0 0 0
+53960 5 0.787401575 0 0.787401575 0 0.787401575 0.787401575 0 0 0 0 0 0
+54286 292 0.787401575 0 0.787401575 0 0.787401575 0.787401575 0 0 0 0 0 0
+54612 4 0.787401575 0 0.787401575 0 0.787401575 0.787401575 0 0 0 0 0 0
+54938 148 0.787401575 0.503937008 0.787401575 0 0.787401575 0.787401575 0 0.25 0 0 0 0
+55264 4 0.787401575 0.503937008 0.787401575 0 0.787401575 0.787401575 0 0.25 0 0 0 0
+55590 70 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+55830 68 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+55917 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+56243 260 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+56569 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+56895 149 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+57221 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+57547 71 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+57787 69 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+57873 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+58199 261 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+58525 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+58851 149 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+59177 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+59504 70 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+59744 68 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+59830 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+60156 260 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+60482 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+60808 148 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+61134 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+61460 70 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+61700 68 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+61786 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+62112 261 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+62438 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+62764 149 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+63090 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+63417 71 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+63657 69 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+63743 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+64069 261 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+64395 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+64721 148 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+65047 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+65373 70 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+65613 68 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+65699 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+66025 260 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+66351 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+66677 148 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+67004 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+67330 71 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+67570 69 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+67656 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+67982 261 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+68308 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+68634 149 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+68960 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+69286 71 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+69526 69 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+69612 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+69938 260 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+70264 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+70590 148 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+70917 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+71243 70 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+71483 68 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+71569 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+71895 260 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+72221 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+72547 133 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+72873 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+73199 71 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+73439 69 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+73525 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+73851 261 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+74177 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+74504 133 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+74830 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+75156 70 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+75396 68 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+75482 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+75808 260 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+76134 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+76460 132 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+76786 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+77112 70 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+77352 68 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+77438 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+77764 261 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+78090 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+78417 133 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+78743 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+79069 71 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+79309 69 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+79395 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+79721 261 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+80047 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+80373 132 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+80699 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+81025 70 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+81265 68 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+81351 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+81677 260 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+82004 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+82330 132 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+82656 4 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+82982 71 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+83222 69 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+83308 5 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+83520 0 0.787401575 0.503937008 0.787401575 0.787401575 0.787401575 0.787401575 0 0.25 0 0 0 0
+96000 7 0 0 0 0.787401575 0 0 0 0 0 0 0 0
+96109 263 0 0 0 0.787401575 0 0.787401575 0 0 0 0 0 0
+96240 261 0 0 0 0.787401575 0 0.787401575 0 0 0 0 0 0
+96435 5 0 0 0 0.787401575 0 0.787401575 0 0 0 0 0 0
+96761 133 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+97087 5 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+97414 71 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+97654 69 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+97740 5 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+97920 263 0 0 0 0 0 0.787401575 0 0 0 0 0 0
+98160 261 0 0 0 0 0 0.787401575 0 0 0 0 0 0
+98192 5 0 0 0 0 0 0.787401575 0 0 0 0 0 0
+98518 133 0 0 0 0 0.787401575 0.787401575 0 0 0 0 0 0
+98844 5 0 0 0 0 0.787401575 0.787401575 0 0 0 0 0 0
+99171 71 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+99411 69 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+99497 5 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+99823 260 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+100149 4 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+100475 132 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+100801 4 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+101127 70 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+101367 68 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+101453 4 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+101779 260 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+102105 4 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+102431 133 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+102757 5 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+103084 71 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+103324 69 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+103410 5 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+103736 261 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+104062 5 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+104388 133 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+104714 5 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+105040 70 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+105280 68 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+105366 4 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+105692 260 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+106018 4 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+106344 132 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+106670 4 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+106997 70 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+107237 68 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+107323 4 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+107649 261 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+107975 5 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+108301 133 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+108627 5 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+108953 71 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+109193 69 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+109279 5 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+109605 261 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+109931 5 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+110257 132 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+110584 4 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+110910 70 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+111150 68 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+111236 4 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+111562 260 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+111888 4 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+112214 132 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+112540 4 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+112866 71 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+113106 69 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+113192 5 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+113518 261 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+113844 5 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+114171 133 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+114497 5 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+114823 71 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+115063 69 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+115149 5 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+115475 260 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+115801 4 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+116127 132 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+116453 4 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+116779 70 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+117019 68 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+117105 4 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+117431 260 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+117757 4 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+118084 133 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+118410 5 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+118736 71 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+118976 69 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+119062 5 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+119388 261 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+119714 5 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+120040 133 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+120366 5 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+120692 70 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+120932 68 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+121018 4 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+121344 260 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+121671 4 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+121997 132 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+122323 4 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+122649 70 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+122889 68 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+122975 4 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+123301 261 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+123627 5 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+123953 133 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+124279 5 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+124605 71 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+124845 69 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+124931 5 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+125257 261 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+125584 5 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+125910 132 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+126236 4 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+126562 70 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+126802 68 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+126888 4 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+127214 260 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+127540 4 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+127866 132 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+128192 4 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+128518 71 0 0 0 0.787401575 0.787401575 0.787401575 0 0 0 0 0 0
+AUTOS 51
+7200 0.4585 14.3137 0.3263
+9600 0.4585 14.3137 0.3263
+12000 0.4375 -7.47192 0.3263
+14400 0.7162288 36.8011023 0.3263
+16800 0.4966024 17.6382179 0.3263
+19200 0.4585 14.3137 0.3263
+21600 0.300888 -29.006655 0.3263
+24000 0.6755 30.04504 0.3263
+26400 0.5976208 26.4522945 0.3263
+28800 0.4585 14.3137 0.3263
+31200 0.4585 14.3137 0.3263
+33600 0.4585 14.3137 0.3263
+36000 0.561097845 12.011338 0.3263
+38400 0.673717709 33.0919166 0.3263
+40800 0.460353565 14.4754276 0.3263
+43200 0.4585 14.3137 0.3263
+45600 0.383938671 -15.9150218 0.3263
+48000 0.720886378 37.1994893 0.3263
+50400 0.525159789 20.1299126 0.3263
+52800 0.50808155 18.6397989 0.3263
+55200 0.4585 14.3137 0.3263
+57600 0.291842803 -30.4324882 0.3263
+60000 0.658450863 27.3575115 0.3263
+62400 0.612485066 27.7492343 0.3263
+64800 0.4585 14.3137 0.3263
+67200 0.4585 14.3137 0.3263
+69600 0.490442603 0.873649408 0.3263
+72000 0.702564902 35.6088973 0.3263
+74400 0.476088386 15.8483252 0.3263
+76800 0.4585 14.3137 0.3263
+79200 0.329843143 -24.4423318 0.3263
+81600 0.704162403 34.5632174 0.3263
+84000 0.685872271 31.6800655 0.3263
+86400 0.685872271 31.6800655 0.3263
+88800 0.685872271 31.6800655 0.3263
+91200 0.685872271 31.6800655 0.3263
+93600 0.685872271 31.6800655 0.3263
+96000 0.688592593 32.1088815 0.3263
+98400 0.481108404 16.2863328 0.3263
+100800 0.4585 14.3137 0.3263
+103200 0.320664074 -25.8892678 0.3263
+105600 0.69746488 33.5074582 0.3263
+108000 0.574294448 24.4170192 0.3263
+110400 0.4585 14.3137 0.3263
+112800 0.4585 14.3137 0.3263
+115200 0.553875607 10.8728657 0.3263
+117600 0.677194252 33.3952525 0.3263
+120000 0.461281128 14.5563595 0.3263
+122400 0.4585 14.3137 0.3263
+124800 0.377632734 -16.9090538 0.3263
+127200 0.72044714 37.1302503 0.3263

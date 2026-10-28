@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "../src/engine/BridgeJson.hpp"
+#include "../src/engine/ByteBusOutput.hpp"
 
 using namespace gorgon;
 
@@ -271,11 +272,67 @@ static void fixture(const char* path) {
 	std::printf("fixture3: %ld candidates and their trace lines compared, %ld samples of signals\n", compared, samples);
 }
 
+// A cycle that isn't a whole number of clock periods (cv-semantics.md#signals): rate 8, bar 3,
+// bars 1 is 180 ticks, under half of a 4 PPQN period (480 ticks). CLOCK follows elapsed
+// ticks, not the cycle beat, so it keeps its period through every wrap and BUS OUT, which
+// publishes on CLOCK's rising edges, keeps publishing.
+static void shortCycle() {
+	std::string text = "{\"format\":\"hydrapy-tracker-3\",\"bpm\":120,\"key\":2,\"loop\":false,\"pattern\":0,\"seed\":0,"
+	                   "\"chain\":[0],\"mutes\":[false,false,false,false,false,false],\"sounds\":[";
+	for (int l = 0; l < 6; l++)
+		text += std::string(l ? "," : "") + "{\"machine\":null,\"params\":{}}";
+	text += "],\"patterns\":[{\"name\":\"A01\",\"rate\":8,\"bar\":3,\"bars\":1,\"lanes\":[";
+	for (int l = 0; l < 6; l++)
+		text += std::string(l ? "," : "") + "{\"len\":3,\"cells\":[null,null,null],\"transforms\":[]}";
+	text += "],\"keys\":{\"z\":[],\"roll\":[],\"feedback\":[]},\"easing\":{\"z\":\"smooth\",\"roll\":\"smooth\",\"feedback\":\"smooth\"},"
+	        "\"scenes\":[]}";
+	for (int p = 1; p < v3::PATTERNS; p++)
+		text += ",null";
+	text += "]}";
+	json_error_t e;
+	json_t* document = json_loads(text.c_str(), 0, &e);
+	v3::ScoreV3 score;
+	CHECK(document && parseScoreV3(document, score), "the short-cycle score doesn't parse: %s", e.text);
+	json_decref(document);
+	if (!document)
+		return;
+	CHECK(score.cycle == 180, "short cycle: %lld ticks", (long long)score.cycle);
+	const double SR = 48000.;
+	const int64_t start = 60;   // the anchor inside the cycle, so the first wrap comes early
+	v3::EngineV3 engine;
+	v3::TransportV3 transport;
+	transport.tick = start;   // FILL and the bus layer empty: off
+	Options o;
+	ByteBusOutput bus;
+	long edges = 0, strobes = 0, mismatches = 0;
+	bool was = false;
+	// 2 s at 120 BPM is 7680 ticks, ticks 60 to 7740: CLOCK starts high (60 is in the first half
+	// of a period) and rises again at every multiple of 480, 16 times, across 42 cycle wraps.
+	const long samples = long(2. * SR);
+	for (long n = 0; n < samples; n++) {
+		double u = double(n) / SR * score.bpm / 60. * double(v3::TICKS);
+		Outputs out = engine.render(score, transport, true, u, 1, o, SR);
+		bool high = out.clock > 0.f;
+		double b = (double(start) + u) / double(v3::TICKS);
+		double phase = b * o.ppqn;
+		mismatches += high != (phase - std::floor(phase) < .5);
+		edges += high && !was;
+		was = high;
+		strobes += bus.render(out, true, 1, BusSource::Z).strobe;
+	}
+	CHECK(mismatches == 0, "short cycle: CLOCK differs from frac(b * ppqn) < 0.5 on %ld samples", mismatches);
+	CHECK(edges == 17, "short cycle: %ld CLOCK rising edges in 2 s, want 17", edges);
+	// The transport's start publishes on the first sample, with the first edge; then one per edge.
+	CHECK(strobes == 17, "short cycle: BUS OUT strobed %ld times in 2 s, want 17", strobes);
+	std::printf("short cycle: %ld clock edges, %ld BUS OUT strobes\n", edges, strobes);
+}
+
 int main(int argc, char** argv) {
 	CHECK(v3::lowbias32(1) == 1753845952u && v3::lowbias32(0xffffffffu) == 1734902346u, "lowbias32");
 	const uint32_t want[] = {1936593078u, 1284988505u, 1732901356u, 3891962147u, 2080199420u, 1655901407u};
 	for (int bar = 0; bar < 6; bar++)
 		CHECK(v3::chance(0x1234, v3::PROB, 0, 1, 12, bar, 0) == want[bar], "chance bar %d", bar);
+	shortCycle();
 	fixture(argc > 1 ? argv[1] : "fixture3.txt");
 	if (failures)
 		std::printf("%d failures\n", failures);

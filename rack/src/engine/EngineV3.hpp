@@ -332,7 +332,12 @@ struct EngineV3 {
 		Position p = position(score, transport.tick, u);
 		double beat = p.tick / double(TICKS);
 		if (moving) {
-			double phase = beat * o.ppqn;
+			// CLOCK counts beats from the segment's start tick plus elapsed ticks, never wrapped
+			// at the cycle, so it runs steadily through wraps (cv-semantics.md#signals). The
+			// same expression, in the same order, as TrackerCV: the fixture compares the two
+			// sample by sample.
+			double b = (double(transport.tick) + u) / double(TICKS);
+			double phase = b * o.ppqn;
 			out.clock = (phase - std::floor(phase) < .5) ? float(o.high) : 0.f;
 			out.reset = (reset || beat < o.resetSeconds * score.bpm / 60.) ? float(o.high) : 0.f;
 			out.run = float(o.high);
