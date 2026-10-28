@@ -3,7 +3,5 @@
   "tag": "preview-1",
   "rack_sdk": "2.6.4",
   "dsp_commit": "a9f2d2f481fbf57b69739a1e13df38228afc3244",
-  "blocked_by": [
-    "Run the updated preview bundle workflow without publication; clear this entry only after all four platform assemblies and contract checks pass."
-  ]
+  "blocked_by": []
 }
