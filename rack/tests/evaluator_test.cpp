@@ -258,13 +258,25 @@ static void fixture(const char* path) {
 				json_decref(line);
 				compared++;
 			}
-			// Invariant 2: the same candidates whatever the interval is split into.
-			std::vector<v3::Candidate> split;
+			// Invariant 2: partition once at all occurrence boundaries and their neighbors.
+			// Sorting/deduplicating keeps work proportional to the interval, rather than
+			// evaluating both halves of the whole interval once per candidate.
+			std::vector<int64_t> cuts{u0, u1};
 			for (int64_t a = u0, step = (u1 - u0) / 7 + 1; a < u1; a += step)
-				v3::evaluate(score, transport, a, std::min(a + step, u1), [&](const v3::Candidate& c) { split.push_back(c); });
+				cuts.push_back(a);
+			for (const auto& c : got)
+				for (int delta : {-1, 0, 1})
+					if (c.at + delta > u0 && c.at + delta < u1)
+						cuts.push_back(c.at + delta);
+			std::sort(cuts.begin(), cuts.end());
+			cuts.erase(std::unique(cuts.begin(), cuts.end()), cuts.end());
+			std::vector<v3::Candidate> split;
+			for (size_t k = 1; k < cuts.size(); k++)
+				v3::evaluate(score, transport, cuts[k - 1], cuts[k], [&](const v3::Candidate& c) { split.push_back(c); });
 			bool same = split.size() == got.size();
 			for (size_t k = 0; same && k < got.size(); k++)
-				same = split[k].at == got[k].at && split[k].lane == got[k].lane && split[k].sub == got[k].sub && split[k].fires == got[k].fires;
+				same = v3::traceLine(v3::candidateRecord(split[k], score.patternAt(split[k].pattern)->lanes[split[k].lane], 1, transport.tick, -1, 0)) ==
+				       v3::traceLine(v3::candidateRecord(got[k], score.patternAt(got[k].pattern)->lanes[got[k].lane], 1, transport.tick, -1, 0));
 			CHECK(same, "score %d segment %d: a split interval differs", s, g);
 		}
 		samples += signals(score, in, s);
@@ -327,7 +339,76 @@ static void shortCycle() {
 	std::printf("short cycle: %ld clock edges, %ld BUS OUT strobes\n", edges, strobes);
 }
 
+// Every supported rate and ply product, including two ply-2 nodes. Geometry is
+// W = TICKS / R, with R = 4 * rate (evaluator.md); no v3 transform stretches rows.
+static void candidateBound() {
+	int64_t longest = 0;
+	for (int64_t w : {1920, 960, 480, 240, 120, 60}) {
+		for (int mode = 1; mode <= 5; mode++) {
+			v3::ScoreV3 score;
+			score.store.emplace_back();
+			score.index[0] = 0;
+			auto& pattern = score.store[0];
+			pattern.geometry = {w, 3, 3, 1};
+			for (auto& lane : pattern.lanes) {
+				lane.len = 3;
+				lane.cells.resize(3);
+				for (auto& cell : lane.cells) {
+					cell.present = true;
+					cell.vel = 100;
+					cell.midi = 60;
+				}
+				if (mode > 1) {
+					v3::Node node;
+					node.kind = v3::NODE_PLY;
+					node.value = mode == 5 ? 2 : mode;
+					lane.nodes.push_back(node);
+					if (mode == 5) lane.nodes.push_back(node);
+				}
+			}
+			score.buildTimeline();
+			v3::TransportV3 transport;
+			transport.tick = w - 1; // anchor just before the longest possible landing span ends
+			std::vector<v3::Candidate> all;
+			v3::evaluate(score, transport, -w, 6 * w, [&](const v3::Candidate& c) {
+				all.push_back(c);
+				longest = std::max(longest, c.duration);
+				CHECK(c.duration <= v3::LONGEST_ROW, "candidate exceeds lookback");
+				CHECK(c.duration == w / (mode == 5 ? 4 : mode), "candidate duration");
+			});
+			CHECK(!all.empty(), "bound case has candidates");
+			// Bound the work/trace after a large forward correction, independently of
+			// LONGEST_ROW, so a safe but wastefully wide lookback also fails this test.
+			v3::TraceRing trace(4096);
+			v3::EngineV3 jumped;
+			jumped.trace = &trace;
+			jumped.segmentTick = transport.tick;
+			const int64_t far = 20 * v3::TICKS;
+			uint64_t expected = 0;
+			v3::evaluate(score, transport, far - v3::TICKS, far + 1, [&](const v3::Candidate&) { expected++; });
+			jumped.advance(score, transport, double(far));
+			CHECK(trace.written() == expected, "jump trace is limited to one beat: %llu vs %llu",
+			      (unsigned long long)trace.written(), (unsigned long long)expected);
+			// A frontier jump must retain every covering candidate, even near the end
+			// of the slowest row, and through cycle wraps. Compare against full history.
+			for (int64_t u : {int64_t(0), w, 4 * w}) {
+				v3::EngineV3 engine;
+				engine.segmentTick = transport.tick;
+				engine.frontier = -w;
+				engine.advance(score, transport, double(u));
+				int covering = 0;
+				for (const auto& c : all)
+					covering += c.at <= u && u < c.at + c.duration;
+				CHECK(engine.count == covering && engine.dropped == 0, "jump retains covering candidates");
+			}
+		}
+	}
+	CHECK(longest == v3::LONGEST_ROW, "lookback is tight: max duration %lld, bound %lld",
+	      (long long)longest, (long long)v3::LONGEST_ROW);
+}
+
 int main(int argc, char** argv) {
+	candidateBound();
 	CHECK(v3::lowbias32(1) == 1753845952u && v3::lowbias32(0xffffffffu) == 1734902346u, "lowbias32");
 	const uint32_t want[] = {1936593078u, 1284988505u, 1732901356u, 3891962147u, 2080199420u, 1655901407u};
 	for (int bar = 0; bar < 6; bar++)

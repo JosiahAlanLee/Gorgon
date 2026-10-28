@@ -3,6 +3,24 @@
 Newest first. Each entry names the HydraPy commit and Rack module version it
 describes.
 
+## 2026-10-28 — bounded version-3 lookback and evaluator boundary coverage
+
+HydraPy `4ca90cd08cca538352b36e643629f8d0718d7477` (pin unchanged) · Rack module
+`GorgonBridge` 2.4.2 (unreleased).
+
+- After a frontier jump, Rack evaluates at most 1920 ticks of history instead
+  of 7680. The slowest row is `1920 / (4 · ¼) = 1920` ticks; `ply` divides
+  its span and no v3 transform stretches it. Covering hits and FILL history
+  remain available, with fewer ended candidates evaluated and traced.
+- The evaluator fixture test partitions at every candidate's `at` and `at ± 1`,
+  deduplicating boundaries and comparing complete trace records. Extreme rate
+  and ply tests check spans, covering hits and the jump's trace workload.
+  Both HydraPy fixtures remain byte-identical.
+- [bus-io.md](bus-io.md#bus-in) clarifies that paused changes use Rack's first
+  unevaluated tick too; it can be ahead of Studio's paused tick.
+- A deterministic overflow test checks reserved SEGMENT and DISCONNECT delivery,
+  alongside the existing threaded recovery and 32 PPQN save/load tests.
+
 ## 2026-10-28 — version 3's CLOCK runs steadily through cycle wraps; four clarifications
 
 HydraPy `4ca90cd08cca538352b36e643629f8d0718d7477` (pin moved from `3c01f32`) · Rack module

@@ -230,6 +230,32 @@ static void traceRing() {
 	CHECK(torn == 0 && copies > 0, "%ld torn records in %ld copies", torn, copies);
 }
 
+// CHANGE overflow leaves reserved ring slots for ordered SEGMENT and DISCONNECT delivery.
+static void busReservedMessages() {
+	v3::BusChannel<64> channel;
+	v3::BusChange change;
+	for (int i = 0; i < 128; i++) channel.push(change);
+	CHECK(channel.lost() == 80, "changes fill only the 48 unreserved slots");
+	change.kind = v3::BusChange::SEGMENT;
+	change.revision = 42;
+	change.tick = 123;
+	change.states = 0x7f;
+	channel.push(change);
+	change.kind = v3::BusChange::DISCONNECT;
+	channel.push(change);
+	v3::BusChange got;
+	int n = 0;
+	while (channel.ring.pop(got)) {
+		if (n == 48)
+			CHECK(got.kind == v3::BusChange::SEGMENT && got.revision == 42 && got.tick == 123 && got.states == 0x7f,
+			      "SEGMENT survives overflow in order");
+		if (n == 49)
+			CHECK(got.kind == v3::BusChange::DISCONNECT, "DISCONNECT survives overflow in order");
+		n++;
+	}
+	CHECK(n == 50 && channel.lost() == 80, "reserved messages were retained");
+}
+
 // BUS IN's channel with the audio thread and the worker on their own threads (#21): an
 // audio-rate bus overflows a small ring while the worker drains only now and then, yet
 // once the cable is pulled the worker's record is disconnected and all clear.
@@ -268,6 +294,7 @@ static void busChannelThreads() {
 
 int main() {
 	traceRing();
+	busReservedMessages();
 	busChannelThreads();
 	CHECK(noteMidi("C4") == 60 && noteMidi("C-4") == 60 && noteMidi("D#4") == 63, "note spellings");
 	CHECK(noteMidi("C0") == 12 && noteMidi("G9") == 127, "pitch range");
