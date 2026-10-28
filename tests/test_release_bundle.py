@@ -54,7 +54,7 @@ class BundleTests(unittest.TestCase):
         plugin(self.root / 'rack', 'GorgonBridge')
         (self.root / 'rack/examples').mkdir()
         (self.root / 'rack/examples/gorgon-bytebus.vcv').write_text('{}')
-        for name in set(release.DSP_PLUGINS) | {'machinemodule', 'monomodule'}:
+        for name in set(release.DSP_PLUGINS) | release.RETIRED_DSP_PLUGINS:
             plugin(self.dsp / 'vcv' / name, name)
         for name in ('machinemodule', 'monomodule'):
             metadata = json.loads((self.dsp / 'vcv' / name / 'plugin.json').read_text())
@@ -121,13 +121,14 @@ class BundleTests(unittest.TestCase):
     def assemble(self):
         return release.assemble(self.root, self.dsp, self.hydrapy, self.python_dist, 'lin-x64', self.output)
 
-    def test_bundle_has_all_ten_plugins_exact_pins_and_valid_checksums(self):
+    def test_bundle_has_all_nine_plugins_exact_pins_and_valid_checksums(self):
         target = self.assemble()
         original = target.read_bytes()
         self.assertEqual(original, self.assemble().read_bytes())
         prefix = 'Gorgon-preview-1-Linux-x64/'
         with zipfile.ZipFile(target) as archive:
-            self.assertEqual(len([n for n in archive.namelist() if n.endswith('.vcvplugin')]), 10)
+            self.assertEqual(len([n for n in archive.namelist() if n.endswith('.vcvplugin')]), 9)
+            self.assertFalse(any('drumlab' in n.lower() for n in archive.namelist()))
             manifest = json.loads(archive.read(prefix + 'RELEASE.json'))
             self.assertEqual(manifest['sources'], dict(Gorgon=self.gorgon_sha, hydrapy=self.hydrapy_sha,
                                                       DSP_Emulation=self.dsp_sha))
@@ -156,6 +157,52 @@ class BundleTests(unittest.TestCase):
         package = folder / 'dist/MachinemoduleRack-2.0.0-lin-x64.vcvplugin'
         with self.assertRaisesRegex(ValueError, 'forbidden OS-adapter payload'):
             release.check_plugin(package, {'slug': 'MachinemoduleRack', 'version': '2.0.0'}, 'plugin.so')
+
+    def test_new_plugin_requires_explicit_workflow_update(self):
+        plugin(self.dsp / 'vcv/newplugin', 'NewPlugin')
+        with self.assertRaisesRegex(ValueError, 'DSP plugin set changed'):
+            self.assemble()
+
+    def test_source_archive_rejects_os_zip(self):
+        source = self.dsp / 'vcv/machinemodule/dist/machinemodule-2.0.0-source.tar.gz'
+        with tarfile.open(source, 'w:gz') as package:
+            data = b'synthetic archive marker, no firmware'
+            info = tarfile.TarInfo('source/private-os.ZIP')
+            info.size = len(data)
+            package.addfile(info, io.BytesIO(data))
+        with self.assertRaisesRegex(ValueError, 'forbidden firmware payload'):
+            self.assemble()
+
+    def test_source_zip_exception_requires_exact_pinned_blob(self):
+        folder = self.dsp / 'vcv/machinemodule'
+        dependency = folder / '_deps/machinemodule/libs/dsp56300'
+        relative = 'samples/help/doc.zip'
+        fixture = dependency / 'source/wxWidgets' / relative
+        fixture.parent.mkdir(parents=True)
+        fixture.write_bytes(b'synthetic source fixture')
+        revision = commit(dependency)
+        (folder / 'docs').mkdir()
+        (folder / 'docs/SOURCE_REVISIONS.txt').write_text('libs/dsp56300: ' + revision + '\n')
+        source = folder / 'dist/source-test.tar.gz'
+        for data in (fixture.read_bytes(), b'foreign archive'):
+            with tarfile.open(source, 'w:gz') as package:
+                info = tarfile.TarInfo('MachinemoduleRack/vcv/machinemodule/_deps/machinemodule/libs/dsp56300/source/wxWidgets/' + relative)
+                info.size = len(data)
+                package.addfile(info, io.BytesIO(data))
+            if data == fixture.read_bytes():
+                release.check_source_archive(source, folder, 'MachinemoduleRack')
+            else:
+                with self.assertRaisesRegex(ValueError, 'forbidden firmware payload'):
+                    release.check_source_archive(source, folder, 'MachinemoduleRack')
+
+    def test_plugin_rejects_archived_and_raw_os_extensions(self):
+        folder = self.dsp / 'vcv/bytebus'
+        for suffix in ('.zip', '.img', '.hex'):
+            with self.subTest(suffix=suffix):
+                plugin(folder, 'ByteBusLab', extra=[('res/private-os' + suffix, b'synthetic marker')])
+                package = folder / 'dist/ByteBusLab-2.0.0-lin-x64.vcvplugin'
+                with self.assertRaisesRegex(ValueError, 'firmware'):
+                    release.check_plugin(package, {'slug': 'ByteBusLab', 'version': '2.0.0'}, 'plugin.so', folder)
 
     def test_publication_refuses_blockers_while_dry_run_remains_available(self):
         release.config(self.root)

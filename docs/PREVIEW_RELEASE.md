@@ -1,13 +1,12 @@
 # Gorgon preview-1
 
 Coordinated preview of the Gorgon tracker and VCV ecosystem. Each platform zip
-contains all ten Rack plugins, a pinned HydraPy wheel and source distribution,
+contains nine Rack plugins, a pinned HydraPy wheel and source distribution,
 two visual starter patches, the ByteBus example, corresponding source archives for the two OS adapters,
-and `INSTALL.txt`. Pins: HydraPy `789faed` (0.1.0), DSP_Emulation `5041b66`.
-DSP main `a9f2d2f` was not selected: its Monomodule platform run
-[failed](https://github.com/JosiahAlanLee/DSP_Emulation/actions/runs/40720062439)
-with the ARM job cancelled. `5041b66` has green relevant checks; the later
-Monomodule link-identity fix awaits a green repin.
+and `INSTALL.txt`. Pins: HydraPy `789faed` (0.1.0), DSP_Emulation `a9f2d2f`.
+All four jobs in the [Monomodule platform rerun](https://github.com/JosiahAlanLee/DSP_Emulation/actions/runs/40720062439)
+are green. Its earlier ARM job was delayed by GitHub runner capacity.
+DrumLab is retired and excluded from this preview.
 
 | Plugin | Version | Includes |
 | --- | --- | --- |
@@ -17,9 +16,8 @@ Monomodule link-identity fix awaits a green repin.
 | SpoonBenderLab | 2.2.1 | Echo, reverb and sample capture |
 | SeanceLab | 2.1.1 | Spectral core and five expanders, including Bridge |
 | ByteBusLab | 2.16.5 | Converter, Register, Lookup, counters, routing and NLC bus modules |
-| DrumLab | 2.0.0 | Percussion (retired from the roadmap; retained in this complete plugin set) |
 | MachinemoduleRack | 2.2.2 | Machinedrum OS adapter, six-lane sound link |
-| MonomoduleRack | 2.0.3 | Monomachine OS adapter, six-lane sound link |
+| MonomoduleRack | 2.0.4 | Monomachine OS adapter, six-lane sound link |
 | CZishLab | 2.1.3 | CZish phase-distortion voice and DAC Stage |
 
 ## Installation
@@ -70,20 +68,23 @@ independent of native Breaks audio and is not included in exports.
    tested commit in `release.json`; if a check is red, use the newest fully
    green commit. Queued checks remain a publication blocker until green.
    Update the version table from each pinned `plugin.json`. The default set
-   is every `vcv/*/plugin.json`, plus GorgonBridge; `shared` and `adapter` are
-   libraries. DrumLab remains included by this rule despite its retirement.
-3. Build all ten plugins with their own `make dist` targets. The two OS
+   is every active `vcv/*/plugin.json`, plus GorgonBridge; `shared` and `adapter` are
+   libraries; the explicit retired set excludes DrumLab. New plugins still
+   require matching bundler and workflow updates.
+3. Build all nine plugins with their own `make dist` targets. The two OS
    adapters fetch pinned open-source cores, test without firmware, and produce
    corresponding source archives. Use native Intel and ARM macOS runners,
    matching the adapters’ own CI. Do not pass an OS path to any build or test.
    The assembler restricts adapter binary payloads to metadata, libraries,
-   documentation and panel assets, and rejects firmware file extensions
-   in their source archives. It validates the wheel’s complete package set and
+   documentation and panel assets, and rejects firmware file extensions (including `.zip`, `.img` and `.hex`)
+   in their source archives. Seven exact upstream wxWidgets documentation/test
+   ZIP paths are allowed only when their bytes match the pinned dependency
+   revision. It validates the wheel’s complete package set and
    bytes against the pinned checkout and checks required sdist source and bytes.
    The package-content rule mirrors HydraPy’s explicit setuptools package-data
    declarations; review it whenever the pin’s packaging configuration changes.
 4. Run **Gorgon preview bundles** with `publish` unchecked. Inspect all four
-   artifacts: ten `.vcvplugin` files, two corresponding-source archives, wheel,
+   artifacts: nine `.vcvplugin` files, two corresponding-source archives, wheel,
    sdist, two patches, example, install text, release manifest and checksums.
    Resolve each `blocked_by` entry only after its stated check passes.
 5. Publication is Josiah’s decision. Run with `publish` checked, or push the
@@ -91,7 +92,7 @@ independent of native Breaks audio and is not included in exports.
    pre-release. Inspect the draft before publishing. Existing releases are
    never overwritten.
 
-Local assembly, after building the ten plugins with `make dist` and building
+Local assembly, after building the nine plugins with `make dist` and building
 the pinned HydraPy with `python -m build`:
 
 ```sh

@@ -112,7 +112,7 @@ jobs:
           arch='${{ matrix.arch }}'
           curl --fail --location "https://vcvrack.com/downloads/Rack-SDK-${RACK_SDK_VERSION}-${arch}.zip" -o /tmp/rack-sdk.zip
           unzip -q /tmp/rack-sdk.zip -d /tmp
-          for folder in rack .integration/DSP_Emulation/vcv/{otislab,vastish,spoonbender,seance,bytebus,drumlab,czish}; do
+          for folder in rack .integration/DSP_Emulation/vcv/{otislab,vastish,spoonbender,seance,bytebus,czish}; do
             make -C "$folder" -j2 RACK_DIR=/tmp/Rack-SDK
             make -C "$folder" dist RACK_DIR=/tmp/Rack-SDK
             if [[ "$arch" = mac-* ]]; then
@@ -138,7 +138,7 @@ jobs:
               if objdump -p "$folder/plugin.dll" | grep -Ei 'DLL Name: (libstdc|libgcc|libwinpthread)'; then exit 1; fi
             fi
           done
-          for name in drumlab czish; do
+          for name in czish; do
             make -C ".integration/DSP_Emulation/vcv/$name/tests" test RACK_DIR=/tmp/Rack-SDK
           done
       - name: Extract Windows Rack runtime for OS-adapter module tests
@@ -159,7 +159,7 @@ jobs:
         run: |
           curl --fail --location "https://vcvrack.com/downloads/Rack-SDK-${RACK_SDK_VERSION}-win-x64.zip" -o /tmp/rack-sdk.zip
           unzip -q /tmp/rack-sdk.zip -d /tmp
-          for folder in rack .integration/DSP_Emulation/vcv/{otislab,vastish,spoonbender,seance,bytebus,drumlab,czish}; do
+          for folder in rack .integration/DSP_Emulation/vcv/{otislab,vastish,spoonbender,seance,bytebus,czish}; do
             make -C "$folder" -j2 RACK_DIR=/tmp/Rack-SDK
             make -C "$folder" dist RACK_DIR=/tmp/Rack-SDK
             if objdump -p "$folder/plugin.dll" | grep -Ei 'DLL Name: (libstdc|libgcc|libwinpthread)'; then
@@ -178,7 +178,7 @@ jobs:
               if objdump -p "$folder/plugin.dll" | grep -Ei 'DLL Name: (libstdc|libgcc|libwinpthread)'; then exit 1; fi
             fi
           done
-          for name in drumlab czish; do
+          for name in czish; do
             make -C ".integration/DSP_Emulation/vcv/$name/tests" test RACK_DIR=/tmp/Rack-SDK
           done
       - name: Linux instrument and bus checks
@@ -186,7 +186,6 @@ jobs:
         shell: bash
         run: |
           dsp="$GITHUB_WORKSPACE/.integration/DSP_Emulation/vcv"
-          make -C "$dsp/drumlab/tests" check RACK_DIR=/tmp/Rack-SDK
           make -C "$dsp/czish/tests" check RACK_DIR=/tmp/Rack-SDK
           make -C "$dsp/bytebus/tests" -j2 check tools-check RACK_DIR=/tmp/Rack-SDK
           make -C "$dsp/otislab/tests" -j2 test bus-check RACK_DIR=/tmp/Rack-SDK
