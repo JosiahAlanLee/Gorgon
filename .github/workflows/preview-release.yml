@@ -170,8 +170,9 @@ jobs:
           done
           # make re-expands CMAKE_ARGS unquoted, which strips D:\a\... backslashes.
           gorgon_dir=$(cygpath -m "$GITHUB_WORKSPACE")
-          # plugin_load and rack_module load plugin.dll, which needs libRack.dll.
-          export PATH="$(cygpath -u "$RACK_RUNTIME_DIR"):$PATH"
+          # plugin_load and rack_module load plugin.dll, which needs libRack.dll. Append, as DSP's
+          # path-type inherit does: Rack's DLLs ahead of mingw64/bin break the compiler.
+          export PATH="$PATH:$(cygpath -u "$RACK_RUNTIME_DIR")"
           for name in machinemodule monomodule; do
             folder=".integration/DSP_Emulation/vcv/$name"
             make -C "$folder" dist RACK_DIR=/tmp/Rack-SDK CMAKE_ARGS="-DGORGON_DIR=$gorgon_dir"
