@@ -3,7 +3,8 @@
 Contract v1. Written against HydraPy `67d08975a17b203652ecb53bb777e80446626816`
 and DSP_Emulation `4587b48293929448419eff428126d6f8008b7872`. The hit mask for
 version-3 documents ([below](#version-3)) is part of
-[bus-io.md](bus-io.md) (A-spec-4) and not yet implemented.
+[bus-io.md](bus-io.md) (A-spec-4) and implemented in the Rack module
+`GorgonBridge` 2.4.0.
 
 This is a Rack-side encoding of the existing automation lanes and hit state.
 It adds no score fields, bridge endpoints, Python signals, or direct hardware
