@@ -63,6 +63,9 @@ struct Gorgon : Module {
 
 	// Set from the context menu (UI thread), read by process().
 	std::atomic<float> ppqn{4.f}, gateLength{.5f};
+	// The Clock menu's rates. 32 clocks the fastest row grid (rate 8) once per row, 16 rate 4
+	// (score-v3.md#signals-automation-and-scenes).
+	static constexpr float PPQN_CHOICES[] = {1.f, 2.f, 4.f, 8.f, 16.f, 24.f, 32.f};
 	std::atomic<int> pitchZero{60};
 	std::atomic<float> outputHigh{10.f};
 	// For the display (written by process()).
@@ -186,8 +189,8 @@ struct Gorgon : Module {
 			int64_t first = engine3.firstUnevaluated(h.transportRevision, h.startTick, tickFollower.u);
 			gorgon::v3::BusChange changes[gorgon::v3::BUS_FUNCTIONS + 2];
 			int n = busIn.process(busWord, busMap, score, h.transportRevision, h.startTick, h.startEntry, first, changes);
+			bridge.pushBus(changes, n, busIn.state());
 			for (int k = 0; k < n; k++) {
-				bridge.pushBus(changes[k]);
 				const gorgon::v3::BusChange& c = changes[k];
 				if (c.kind == gorgon::v3::BusChange::CHANGE)
 					traceRing.write(gorgon::v3::busRecord(c.function, c.at, c.on, std::max<int64_t>(first, 0), c.revision, c.tick, c.entry,
@@ -479,8 +482,14 @@ struct GorgonWidget : ModuleWidget {
 		std::string busState = busIn < 0 ? "not patched" : string::f("%02X", busIn);
 		if (module->bridge.busRefused())
 			busState += " · another module holds the bus";
+		uint64_t lost = module->bridge.busLost();
+		if (lost)   // the worker fell behind an audio-rate bus; its record was resent from the current state
+			busState += string::f(" · %llu changes dropped", (unsigned long long)lost);
 		menu->addChild(createSubmenuItem("BUS IN bits", busState, [=](Menu* sub) {
 			sub->addChild(createMenuLabel("High is on; a version-3 score only"));
+			if (lost)
+				sub->addChild(createMenuLabel(string::f("%llu changes dropped while Studio was slow; resent as the current state",
+				                                        (unsigned long long)lost)));
 			for (int f = 0; f < gorgon::v3::BUS_FUNCTIONS; f++) {
 				std::string name = f == gorgon::v3::BUS_FILL ? "FILL" : string::f("Mute lane %d", f);
 				int bit = module->busBits[f].load();
@@ -512,7 +521,7 @@ struct GorgonWidget : ModuleWidget {
 		}, traced == 0));
 
 		menu->addChild(createSubmenuItem("Clock", string::f("%g PPQN", module->ppqn.load()), [=](Menu* sub) {
-			for (float p : {1.f, 2.f, 4.f, 8.f, 24.f})
+			for (float p : Gorgon::PPQN_CHOICES)
 				sub->addChild(createCheckMenuItem(string::f("%g per quarter note%s", p, p == 4.f ? " (sixteenths)" : ""), "",
 					[=] { return module->ppqn.load() == p; }, [=] { module->ppqn = p; }));
 		}));

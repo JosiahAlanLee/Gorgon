@@ -81,8 +81,7 @@ int main(int argc, char** argv) {
 				int64_t first = engine3.firstUnevaluated(h.transportRevision, h.startTick, ticks.u);
 				v3::BusChange changes[v3::BUS_FUNCTIONS + 2];
 				int n = busIn.process(busWord, busMap, *snap.score3, h.transportRevision, h.startTick, h.startEntry, first, changes);
-				for (int k = 0; k < n; k++)
-					bridge.pushBus(changes[k]);
+				bridge.pushBus(changes, n, busIn.state());
 				busIn.prune(std::max<int64_t>(first, 0), v3::LONGEST_ROW);
 				bridge.setBusFrontier(std::max<int64_t>(first, 0));
 				v3::TransportV3 transport = snap.layer->transport(h.startTick);
