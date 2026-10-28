@@ -3,12 +3,19 @@
 A plan across Gorgon, HydraPy and DSP_Emulation, written from the design
 decisions made on 2026-10-26. It is **not a contract change**: nothing here
 alters `spec/`, the HydraPy pin or the Rack outputs until the PRs it names land.
-Proposed home: Gorgon `docs/ROADMAP.md`, next to
+This plan lives in Gorgon `docs/ROADMAP.md`, next to
 [DRUM_MACHINE.md](DRUM_MACHINE.md), which it extends and in places supersedes.
 
-Snapshot inspected: Gorgon `edfd116`, HydraPy pin `e5999b2`, DSP_Emulation
-`3a7447b`. Versions: GorgonBridge 2.3.1, Machinemodule 2.0.0, Vastish 2.5.0,
-OtisLab 2.8.0, ByteBusLab 2.2.0.
+Snapshot inspected 2026-10-28: Gorgon main `a758045`, HydraPy main
+`789faed` (0.1.0; merged pin `4ca90cd`), DSP_Emulation main `a9f2d2f`.
+Versions: GorgonBridge 2.4.2, gorgon-live 0.1.1, MachinemoduleRack 2.2.2,
+MonomoduleRack 2.0.4, OtisLab 2.11.6, VastishLab 2.8.2, ByteBusLab 2.16.5,
+CZishLab 2.1.3, SeanceLab 2.1.1, SpoonBenderLab 2.2.1 and DrumLab 2.0.0
+(retired).
+
+Preview-1 preparation is open for review: it moves the HydraPy pin to
+`789faed`, pins DSP_Emulation `a9f2d2f`, and ships nine plugins without DrumLab.
+See the [preview procedure](PREVIEW_RELEASE.md).
 
 ## 1. Decisions this plan is built on
 
@@ -43,7 +50,7 @@ OtisLab 2.8.0, ByteBusLab 2.2.0.
    OTIS gains EPS-style patch-select bits; the Analog Four and Rytm are reached
    through Rack's Core MIDI modules.
 
-Open questions are collected in §5.
+Ratification outcomes are collected in §5.
 
 ## 2. Workstreams
 
@@ -412,7 +419,9 @@ follows the same rules (it is the third implementation, per `spec/README.md`).
 
 ## 3. Sequence
 
-**Phase 0 — ratify (no code).** B1. The §5 questions. Agree this document.
+**Phase 0 — ratify (no code). Done.** B1’s bus contract and the §5 decisions
+are encoded in the specs and merged work below; the naming choice is recorded
+in §5.8.
 
 **Phase 1 — cheap, independent, immediately playable.** No contract change;
 each is one PR in DSP_Emulation. **Done 2026-10-26:**
@@ -421,7 +430,7 @@ each is one PR in DSP_Emulation. **Done 2026-10-26:**
 2. B2 Counter — ByteBusLab 2.3.0 (#32, #33). B2b run modes are a follow-up.
 3. B3 Machinemodule BUS TRIG — MachinemoduleRack 2.1.0.
 4. F1 DrumLab retired from README, dev docs and CI; directory kept.
-5. H1 deferred as far-future; G1's measurement utility still open (Phase 4: Ping).
+5. H1 deferred as far-future; G1’s measurement utility followed in Phase 4 (Ping).
 
 After phase 1 the chain Counter → Lookup → Machinemodule plays, the modular
 and the drum machine run through Vastish, and the bus experiment has had its
@@ -442,7 +451,13 @@ where the tracker becomes the instrument you will take to a show, so it is not
 rushed to fit around phase 1. Merged 2026-10-27: HydraPy #63–#65, #67 and #68;
 the Rack module's evaluator and fixture3 (Gorgon #49), BUS IN (#51), version-3
 playback with C1's sound link v2 and the pin move (#52), and G2's trace (#53).
-The workstation validation of the full event path is not part of these merges.
+Workstation validation followed on 2026-10-27: all expected six-lane hits
+matched GATE edges with no missing or extra hits (≤0.09 ms error), and every
+hit reached Machinemodule; locks, polymeter, transforms, BUS IN mutes and FILL
+matched the evaluator. Both the private JACK and desktop PipeWire runs had
+zero xruns. The picture and GUI trace dump were not covered by that run.
+**Phase 3 is complete for this software event path**; physical interfaces and
+A/V latency remain separate hardware work.
 
 **Phase 4 — destinations on the new contract.** C2a refactor, then C2b
 Monomodule; E1 OTIS patch select; G1 offsets table. C2a and C2b are merged
@@ -450,6 +465,12 @@ Monomodule; E1 OTIS patch select; G1 offsets table. C2a and C2b are merged
 taking §5.6's default. G1 is Ping, a latency meter in GorgonBridge (nothing in
 the VCV Library sends a pulse and times its return), with the measured table in
 the [Gorgon manual](../rack/docs/MANUAL.md#destination-latency).
+**Phase 4 software validation is done (2026-10-27):** Monomodule’s 233 gates
+all reached their tracks on private JACK and desktop PipeWire, with pitch and
+machine-lock checks, zero xruns, and a separate INP A/THRU check. OTIS played
+all 63 bus-selected patches correctly. Ping measured MD, MnM, OTIS and Vastish
+at 44.1/48 kHz; the sound-link and recorded cable paths agreed to the sample.
+These are workstation software measurements, not physical round trips.
 
 **Phase 5 — depth.** B2b Counter run modes; B4 Switch and Pipeline; B5 Lookup
 JUMP, then B6 Lookup2, B7 Counter 2 and B8 library v2 in whatever order the
@@ -460,9 +481,28 @@ Progress, 2026-10-27: B2b, B5, B4's Switch and B8 are ByteBusLab 2.4.0–2.7.0
 defaults Josiah approved the same day, Pipeline, B6 and B7 followed as
 ByteBusLab 2.8.0–2.10.0 (#49–#51), D2 as VastishLab 2.8.0 (#52) and E2's Otis
 Kit playback as OtisLab 2.10.0 (#53). Then E2's Capture as OtisLab 2.11.0 (#55)
-and the ratio Lookup family, library v3, as ByteBusLab 2.11.0 (#56). Left: the
-tutorial kit. The six lanes settled the GUI decisions it waited on (Josiah,
-2026-10-27), so it is unblocked.
+and the ratio Lookup family, library v3, as ByteBusLab 2.11.0 (#56).
+
+The bus depth now also includes Fan, Lattice, Parallel Sum, Wheel and Roulette
+(ByteBusLab 2.12–2.16; DSP_Emulation #63–#67), with the
+[NLC bus design](https://github.com/JosiahAlanLee/DSP_Emulation/blob/a9f2d2f481fbf57b69739a1e13df38228afc3244/docs/NLC_BUS_SPEC.md)
+and its revisions (#54, #59). That document still says “draft; nothing
+implemented”; the merged modules are the implementation evidence, and its
+status needs a DSP-side correction. CZish and DAC Stage are software-complete
+(DSP_Emulation #48, #57), with the
+[DAC Stage contract](https://github.com/JosiahAlanLee/DSP_Emulation/blob/a9f2d2f481fbf57b69739a1e13df38228afc3244/docs/DAC_STAGE_SPEC.md);
+the CZ hardware session remains open.
+
+The 2026-10-28 review/hardening batch is merged across Gorgon #60–#65,
+HydraPy #70–#76 and DSP_Emulation #68–#90 (timing, state/lifecycle and docs).
+
+**Left:**
+
+- The tutorial script refresh is open for review; filming follows.
+- Preview-1: four-platform bundle validation and publication.
+- Hardware: the CZ session, physical interfaces (including ES-40 transport),
+  and measured end-to-end audio/display latency. The software destination table
+  does not close those hardware checks.
 
 ## 4. Score v3 proposal (for A-spec-1..3)
 
@@ -624,12 +664,14 @@ v1 and v2 load as: six lanes with lanes 5–6 empty, `rate 1`, `bar 16`,
 does not upgrade; the first v3 edit does, explicitly, with undo restoring the
 old format — pattern-timing.md's rule.
 
-## 5. Decisions to ratify
+## 5. Decisions and outcomes
 
-Defaults are what the plan assumes if nobody objects.
+The defaults below have outcomes; retained questions explain what was ratified.
 
 1. **Six lanes** — what fixes six? If it is the Monomachine's six tracks, say
    so in the spec; it changes nothing but it should be written down.
+   *Ratified:* six tracks is the reason, encoded in
+   [score-v3.md](../spec/score-v3.md#decisions-this-page-encodes).
 2. **Pattern count** stays four in v3. Raising it is a separate migration.
    *Superseded:* ratified as 128 patterns in eight banks, with a chain
    ([score-v3.md](../spec/score-v3.md#decisions-this-page-encodes)).
@@ -637,20 +679,30 @@ Defaults are what the plan assumes if nobody objects.
    immediately and Studio reconciling from the stamp (default), vs
    Studio-only ownership with ~35 ms applied to everyone. The default keeps
    one record and gives Rack zero latency; the cost is the transition shape in
-   the snapshot.
+   the snapshot. *Ratified:* effective-from-tick transitions, with Rack
+   applying locally and Studio reconciling stamped changes; see
+   [bus-io.md](../spec/bus-io.md#transport-endpoint).
 3a. **`evaluate()` is pure** — no `state` argument. The price is deferring
    PRE/NEI (decision 5); the benefit is the fixture and three implementations
-   that can be compared at any beat.
+   that can be compared at any beat. *Ratified:* the pure
+   [evaluator contract](../spec/evaluator.md#evaluate).
 4. **BUS IN bit map**: FILL + six mutes (default), vs FILL only with a
-   separate mute input.
+   separate mute input. *Ratified:* six mutes on bits 0–5, FILL on bit 6,
+   bit 7 reserved; [bus-io.md](../spec/bus-io.md#one-word-layout).
 5. **PRE/NEI** deferred to v3.1 (default), vs defined now with a recursion
-   bound.
+   bound. *Deferred:* no PRE/NEI in v3; a pure definition remains future
+   work, not a promised v3.1 delivery;
+   [evaluator.md](../spec/evaluator.md#not-in-this-part).
 6. **OTIS patch-select**: two bits of the existing FRAME BUS word, vs a second
    bus input. Default: a second input, so frame scanning and layer selection
    can come from different sources. E1 (DSP_Emulation #43) takes the default:
-   a PATCH input.
+   a PATCH input ([DSP_Emulation #43](https://github.com/JosiahAlanLee/DSP_Emulation/pull/43)).
 7. **Counter before Pipeline** in the bus roadmap (default yes).
-8. **Byte bus name** — still "Harriot" pending a better one. Not blocking.
+   *Done:* Counter shipped in Phase 1, Pipeline in Phase 5; see
+   [the sequence](#3-sequence).
+8. **Byte bus name** — *retained:* Harriot, as used in the
+   [ratified byte bus spec](https://github.com/JosiahAlanLee/DSP_Emulation/blob/a9f2d2f481fbf57b69739a1e13df38228afc3244/docs/BYTE_BUS_SPEC.md).
+   Renaming remains optional and does not block the plan.
 
 ## 6. Release-blocking, already enforced
 
