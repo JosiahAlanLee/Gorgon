@@ -1,9 +1,9 @@
 # Gorgon
 
-A CV and audio/video tracker, in development. One score, four 64-row patterns
-of notes and automation, drives a picture, a modular synthesizer and VCV Rack
-from a single playhead. Gorgon is the master clock; nothing follows an external
-one.
+A CV and audio/video tracker, in development. One score, up to 128 patterns
+of notes in six lanes plus automation, drives a picture, a modular synthesizer
+and VCV Rack from a single playhead. Gorgon is the master clock; nothing
+follows an external one.
 
 The tracker runs inside [HydraPy](https://github.com/JosiahAlanLee/hydrapy)
 Studio. Use it to enter musical phrases, automate a patch's visual controls,
@@ -44,16 +44,27 @@ also gives a smaller CPU setup.
 
 ## Tracker interface
 
-The score has **four fixed patterns**, each **64 sixteenth-note rows** long
-(16 quarter-note beats). Row numbers are hexadecimal: `00`–`3F` means rows
-0–63. The green playback row and amber edit cursor are separate: clicking a
-cell selects where to edit; it does not move playback.
+A score in **format 3** (`hydrapy-tracker-3`) has **six note lanes** and
+**128 patterns** in eight banks, A–H, of sixteen. A **chain** of pattern codes
+plays them in song order, or ↻ loops the one you are editing. Each pattern has a
+**rate** (¼× to 8×), rows per bar and a number of bars, up to 128 rows. Each lane
+can be shorter than its pattern and repeat. Notes can carry a **condition**
+(`1:4`, `%50`, `F` for FILL, `1ST`) and lanes take **transforms** (`rot`, `rev`,
+`ply`, `degrade`, `every`). The contract is in [`spec/`](spec/README.md),
+starting at [score-v3.md](spec/score-v3.md).
+
+Versions 1 and 2 are still supported: **four fixed 64-row patterns** and four
+note lanes. A score stays in its format while the edits fit it. The first edit
+that needs version 3 (a fifth lane, a pattern past A04, a rate, a condition…)
+upgrades it, and undo restores the old format. Launching, looping or seeking into a pattern past A04 upgrades it without an undo step. Row numbers are hexadecimal:
+`00`–`3F` means rows 0–63. The green playback row and amber edit cursor are
+separate: clicking a cell selects where to edit; it does not move playback.
 
 | Area | What you use it for |
 | --- | --- |
-| **Arrangement cards** | Select the pattern to edit; each card shows note activity and explicit automation keys. Its **▶** button launches that pattern. Pattern tools rename, copy or clear it. |
+| **Arrangement cards** | Select the pattern to edit (in format 3, from banks A–H; the chain sets their song order); each card shows note activity and explicit automation keys. Its **▶** button launches that pattern. Pattern tools rename, copy or clear it. |
 | **Transport** | Set tempo and key, play/pause, Stop, Loop and Follow. **Seek to row** moves playback to the edit cursor. Follow tracks the playing pattern; manual editing turns it off. Selecting another card while looping edits that pattern without switching the active loop. |
-| **Breaks / FM hits / Sub / Texture** | Four note lanes. Each occupied cell has a note and velocity. Their names describe the browser demo voices; the lanes also supply gates, held pitches and velocities to CV/Rack instruments. |
+| **Note lanes** | Six lanes, four of them in a version-1 or 2 score. Each shows the score's own lane name (`Lane 1`–`Lane 6` until you rename it), not the voice that auditions it. Each occupied cell has a note and velocity, and in format 3 an optional condition. The lanes supply gates, held pitches and velocities to CV/Rack instruments. |
 | **Dolly Z / Roll / Feedback** | Three automation lanes, bound to the loaded patch's named controls under **Patch bindings**. Values use their lane units: 0–1, −45° to +45°, and 0–0.9. |
 | **SCENE** | Choose a scene declared by the patch and a fade length in rows. The scene holds until the next change. Try [gorgon_scenes.py](https://github.com/JosiahAlanLee/hydrapy/blob/main/patches/gorgon_scenes.py) for a patch with named scenes. |
 | **Selected-cell editor and curve** | Enter an exact note/velocity, automation value, or scene/fade. The automation curve writes at the edit cursor; **Hold**, **Linear** and **Smooth** choose how that lane moves between keys. |
@@ -122,11 +133,19 @@ is published, build [`rack/`](rack) against the Rack SDK.
    [`rack/`](rack) against the Rack SDK, then add **Gorgon** to a patch. It
    finds Studio by itself ([manual](rack/docs/MANUAL.md)).
 2. Patch its clock, gates, polyphonic V/OCT and velocities to your instruments.
-   The four channels correspond to the tracker's four music lanes. CV 1–4
-   can drive free named patch controls back in Studio.
+   The channels are the tracker's note lanes: six for a format-3 score
+   ([GATE 1–6](rack/docs/MANUAL.md#version-3-scores)), four for versions 1 and 2.
+   CV 1–4 can drive free named patch controls back in Studio. **BUS OUT** can
+   send the lanes' hits and FILL as a byte bus, and **BUS IN** mutes lanes and
+   turns on FILL from one ([manual](rack/docs/MANUAL.md#bus-in),
+   [bus-io.md](spec/bus-io.md)).
 3. For audio into Rack, enable the JACK/PipeWire ports in Studio's Output routing
    and select them as Gorgon's capture device
    ([audio guide](https://github.com/JosiahAlanLee/hydrapy/blob/main/docs/gorgon-audio.md)).
+
+The plugin also has **Ping**, a latency meter: it times a destination from its
+trigger to its sound and stores the result with the patch
+([manual](rack/docs/MANUAL.md#ping-measuring-latency)).
 
 ## Status
 
