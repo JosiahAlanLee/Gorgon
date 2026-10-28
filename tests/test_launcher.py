@@ -176,18 +176,14 @@ def test_the_picture_and_rack_end_up_on_different_monitors(profile, monkeypatch,
     assert launcher.separate_windows(profile, 100, 200) is None and moves == []
 
 
-def test_stale_pid_is_never_signalled(profile):
-    process = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(30)'])
-    try:
-        info = launcher.identity(process.pid)
-        assert info
-        info['start'] = str(int(info['start']) + 1)
-        write_private(run_dir(profile) / 'state.json', dict(supervisor=info, children={}))
-        launcher.stop(profile)
-        assert process.poll() is None
-    finally:
-        process.terminate()
-        process.wait(timeout=3)
+def test_stale_pid_is_never_signalled(profile, monkeypatch):
+    current = dict(pid=12345, proc_pid=12345, namespace='pid:[test]', start='200', boot='test')
+    stale = dict(current, start='199')
+    monkeypatch.setattr(launcher, 'identity', lambda pid, proc_pid=None: current if pid == 12345 else None)
+    monkeypatch.setattr(launcher.os, 'kill', lambda *args: pytest.fail('must not signal a recycled PID'))
+    monkeypatch.setattr(launcher, '_terminate', lambda *args: pytest.fail('must not terminate a recycled PID'))
+    write_private(run_dir(profile) / 'state.json', dict(supervisor=stale, children={'rack': stale}))
+    assert launcher.stop(profile)['phase'] == 'stopped'
 
 
 def test_managed_capture_reconnects_only_its_own_listening_inputs(profile, monkeypatch):
@@ -291,3 +287,48 @@ def test_cli_help_and_exit_status(capsys):
     assert '_run' not in capsys.readouterr().out
     result = subprocess.run([sys.executable, '-m', 'gorgon', '--config', '/nonexistent/gorgon-test.json', 'status'], capture_output=True)
     assert result.returncode == 1
+
+
+def test_executable_preserves_symlink_install_path(tmp_path):
+    executable = tmp_path / 'Rack install ü' / 'Rack'
+    executable.parent.mkdir()
+    executable.symlink_to('/bin/true')
+    assert launcher.executable([str(executable)]) == str(executable)
+
+
+@pytest.mark.parametrize('state', [[], None, 42, {'supervisor': []},
+                                    {'children': []}, {'children': {'rack': 'invalid'}}])
+def test_malformed_session_state_is_recoverable(profile, state):
+    write_private(run_dir(profile) / 'state.json', state)
+    assert launcher.status(profile)['phase'] == 'stopped'
+    assert launcher.stop(profile)['phase'] == 'stopped'
+
+
+def test_invalid_init_does_not_leave_a_profile_that_blocks_retry(tmp_path, monkeypatch):
+    path = tmp_path / 'profile.json'
+    # The normal CLI accepts this argument, but profile validation rejects it.
+    assert main(['--config', str(path), 'init', '--visual-patch', '../outside.py']) == 1
+    assert not path.exists()
+    monkeypatch.setenv('XDG_DATA_HOME', str(tmp_path / 'data'))
+    assert main(['--config', str(path), 'init']) == 0
+
+
+@pytest.mark.parametrize('error', [FileNotFoundError('wmctrl disappeared'),
+                                 subprocess.TimeoutExpired('wmctrl', 3)])
+def test_window_close_tool_failure_is_best_effort(monkeypatch, error):
+    monkeypatch.setenv('DISPLAY', ':1')
+    monkeypatch.setattr(launcher.shutil, 'which', lambda _: '/usr/bin/wmctrl')
+    def fail(*args, **kwargs):
+        raise error
+    monkeypatch.setattr(launcher.subprocess, 'run', fail)
+    assert launcher.close_rack_window(12345) is False
+
+
+def test_init_preserves_rack_symlink_install_path(tmp_path, monkeypatch):
+    monkeypatch.setenv('XDG_DATA_HOME', str(tmp_path / 'data'))
+    executable = tmp_path / 'Rack install ü' / 'Rack'
+    executable.parent.mkdir()
+    executable.symlink_to('/bin/true')
+    path = tmp_path / 'launch.json'
+    assert main(['--config', str(path), 'init', '--rack', str(executable)]) == 0
+    assert load(path)['rack']['command'] == [str(executable)]

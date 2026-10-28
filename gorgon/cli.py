@@ -24,7 +24,7 @@ def initialize(path, args=None):
         if args.visual_patch:
             config['studio']['patch'] = args.visual_patch
         if args.rack:
-            config['rack']['command'] = [str(Path(args.rack).expanduser().resolve())]
+            config['rack']['command'] = [os.path.abspath(Path(args.rack).expanduser())]
         if args.rack_patch:
             config['rack']['patch'] = str(Path(args.rack_patch).expanduser().resolve())
         if args.rack_user:
@@ -38,7 +38,12 @@ def initialize(path, args=None):
     with os.fdopen(descriptor, 'w') as stream:
         json.dump(config, stream, indent=2)
         stream.write('\n')
-    result = load(path)
+    try:
+        result = load(path)
+    except (LaunchError, OSError, ValueError):
+        # Only remove the profile this call just created; invalid init is retryable.
+        path.unlink()
+        raise
     starter.prepare(result)
     return result
 

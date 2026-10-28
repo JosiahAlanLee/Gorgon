@@ -56,12 +56,17 @@ def identity(pid, proc_pid=None):
 
 
 def alive(info):
-    return bool(info and identity(info.get('pid'), info.get('proc_pid')) == info)
+    return bool(isinstance(info, dict) and info and identity(info.get('pid'), info.get('proc_pid')) == info)
 
 
 def read_state(config):
     try:
-        return json.loads((run_dir(config) / 'state.json').read_text())
+        state = json.loads((run_dir(config) / 'state.json').read_text())
+        if not isinstance(state, dict):
+            return {}
+        if not isinstance(state.get('children', {}), dict):
+            state['children'] = {}
+        return state
     except (OSError, ValueError):
         return {}
 
@@ -78,7 +83,8 @@ def executable(command):
     resolved = shutil.which(command[0])
     if not resolved:
         raise LaunchError(f'Executable {command[0]!r} is missing; edit the command in your launch profile')
-    return str(Path(resolved).resolve())
+    # Keep symlinks: Rack uses its executable directory to find resources.
+    return os.path.abspath(resolved)
 
 
 def other_racks():
@@ -162,11 +168,15 @@ def close_rack_window(pid):
     """Ask the WM to close only our Rack window, preserving Rack's save dialog."""
     if not os.environ.get('DISPLAY') or not shutil.which('wmctrl'):
         return False
-    result = subprocess.run(['wmctrl', '-lp'], capture_output=True, text=True, timeout=3)
-    for line in result.stdout.splitlines():
-        parts = line.split(None, 4)
-        if len(parts) == 5 and parts[2].isdigit() and int(parts[2]) == pid and 'VCV Rack' in parts[4]:
-            return subprocess.run(['wmctrl', '-ic', parts[0]], capture_output=True, timeout=3).returncode == 0
+    try:
+        result = subprocess.run(['wmctrl', '-lp'], capture_output=True, text=True, timeout=3)
+        for line in result.stdout.splitlines():
+            parts = line.split(None, 4)
+            if len(parts) == 5 and parts[2].isdigit() and int(parts[2]) == pid and 'VCV Rack' in parts[4]:
+                return subprocess.run(['wmctrl', '-ic', parts[0]], capture_output=True, timeout=3).returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        pass  # Optional WM tools must never interrupt cleanup of owned apps.
+
     return False
 
 
