@@ -38,7 +38,12 @@ def initialize(path, args=None):
     with os.fdopen(descriptor, 'w') as stream:
         json.dump(config, stream, indent=2)
         stream.write('\n')
-    result = load(path)
+    try:
+        result = load(path)
+    except (LaunchError, OSError, ValueError):
+        # Only remove the profile this call just created; invalid init is retryable.
+        path.unlink()
+        raise
     starter.prepare(result)
     return result
 

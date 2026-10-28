@@ -164,3 +164,14 @@ Unit tests cover malformed profiles, ambiguous devices, PID reuse, startup
 failure cleanup, capture-route ownership, the session quantum and window
 placement; placement was also checked on a two-monitor GNOME (X11) desktop. The
 workstation's actual device/CV routes still need workstation testing.
+
+## Launcher changelog
+
+### 0.1.1
+
+- Discard malformed session-state containers and ignore invalid process records
+  so status and stop remain usable without signalling unverified processes.
+- Remove a newly created invalid profile when initialization fails validation,
+  allowing a corrected `init` command to retry.
+- Treat missing or timed-out `wmctrl` commands as an unsuccessful window-close
+  request so optional desktop tools cannot interrupt app cleanup.
