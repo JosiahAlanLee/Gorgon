@@ -7,10 +7,19 @@ import subprocess
 from .config import LaunchError
 
 
-def align(movie, capture, rate, gate_channel, record_time, first_audio_time, delay_ms=0):
+# Lag 0 is the monotonic estimate; the measurement only corrects Studio's unmeasured video start-up
+# (about +0.05 s on the render box). A window this narrow can't reach a beat alias: a lane that
+# plays on the beat correlates as well one beat early or late (0.47 s at 128 BPM), so a wide
+# search can lock onto the wrong beat with a confident score.
+WINDOW = (-.25, .5)
+
+
+def align(movie, capture, rate, gate_channel, record_time, first_audio_time, delay_ms=0, window=WINDOW):
     """Correlate positive brightness changes in the centre with a selected gate.
 
     Needs a patch whose picture visibly flashes at the selected lane's hits.
+    Searches lags in ``window`` (seconds from the monotonic estimate) and, among peaks within 10%
+    of the best, takes the one nearest the estimate.
     Returns audio time for video frame zero plus diagnostics, never edits sources.
     """
     import numpy as np
@@ -34,18 +43,22 @@ def align(movie, capture, rate, gate_channel, record_time, first_audio_time, del
     if len(edges) < 3:
         raise LaunchError('Measured A/V sync requires at least three gate edges')
     events = first_audio_time + edges / rate + delay_ms / 1000
-    lags = np.arange(-1, 1.5, 1 / fps / 4)
+    lags = np.arange(window[0], window[1] + 1e-9, 1 / fps / 4)
     scores = []
     for lag in lags:
         indices = np.round((events - record_time - lag) * fps).astype(int)
         indices = indices[(indices >= 0) & (indices < len(vis))]
         scores.append(float(vis[indices].mean()) if len(indices) >= 3 else -100.)
-    best = int(np.argmax(scores))
-    far = np.abs(lags - lags[best]) > 3 / fps
-    runner = float(np.array(scores)[far].max()) if far.any() else None
-    if scores[best] <= 0:
+    scores = np.array(scores)
+    top = float(scores.max())
+    if top <= 0:
         raise LaunchError('No positive flash/gate correlation found')
-    report = dict(method='centre flash/gate correlation', lag_s=float(lags[best]), score=scores[best],
+    near = np.flatnonzero(scores >= .9 * top)
+    best = int(near[np.argmin(np.abs(lags[near]))])     # of the near-ties, the one nearest the estimate
+    far = np.abs(lags - lags[best]) > 3 / fps
+    runner = float(scores[far].max()) if far.any() else None
+    report = dict(method='centre flash/gate correlation', lag_s=float(lags[best]), score=float(scores[best]),
                   runner_up=runner, gate_channel=gate_channel, sound_delay_ms=delay_ms,
-                  ambiguous=runner is not None and scores[best] - runner < .1)
+                  window_s=[float(window[0]), float(window[1])],
+                  ambiguous=runner is not None and runner >= .9 * float(scores[best]))
     return record_time + float(lags[best]) - first_audio_time, report

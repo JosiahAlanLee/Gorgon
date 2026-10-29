@@ -172,6 +172,7 @@ class Recorder:
         self.enabled = False
         self.error = None
         self.xruns = 0
+        self.xrun_times = []          # monotonic, so a report can tell start-up and shutdown from the take
         self.first_time = None
         self.blocks = 0
         self.clock = []
@@ -191,6 +192,7 @@ class Recorder:
         @self.client.set_xrun_callback
         def xrun(delay):
             self.xruns += 1
+            self.xrun_times.append(time.monotonic())
         self.thread = threading.Thread(target=self._write, daemon=True)
         self.thread.start()
         self.client.activate()
@@ -308,6 +310,9 @@ def run(config, options):
         write_private(output / 'studio' / '.hydrapy' / 'outputs.json',
                       dict(audio=dict(enabled=True, optical_gain=options['optical_gain'], breaks_gain=0.,
                                       lead_blocks=options['lead_blocks'])))
+        # libjack prints "connect(2) ... failed" for every probe of a server that isn't up yet; those
+        # probes are expected to fail, so keep them quiet until the server answers.
+        jack.set_error_function(lambda message: None)
         if private:
             try:
                 existing = jack.Client('gorgon_collision_check', no_start_server=True)
@@ -321,6 +326,7 @@ def run(config, options):
             with jack.Client('gorgon_probe', no_start_server=True):
                 return True
         wait_for(jack_ready, 'private JACK server')
+        jack.set_error_function(None)
         recorder = Recorder(jack, str(output / 'capture.wav'), monitor=not private)
         studio_process = spawn('studio', cmd['studio'], output / 'studio')
         def studio_ready():
@@ -380,6 +386,8 @@ def run(config, options):
         play_time = time.monotonic()
         launcher.api(info, 'tracker_transport', dict(enabled=True, playing=True, beat=0))
         pause(options['seconds'])
+        stop_time = time.monotonic()
+        recorder.enabled = False         # the take ends here: stopping Studio's encoder stalls JACK, so keep it out
         launcher.api(info, 'tracker_transport', dict(playing=False))
         if video:
             launcher.api(info, 'record', {})
@@ -390,14 +398,24 @@ def run(config, options):
         stamps = np.array(recorder.clock)
         np.savez_compressed(output / 'capture-clock.npz', samples=stamps[:, 0], jack_frames=stamps[:, 1],
                             monotonic=stamps[:, 2])
-        discontinuities = int(np.count_nonzero(np.diff(stamps[:, 1]) != np.diff(stamps[:, 0])))
+        gaps = np.flatnonzero(np.diff(stamps[:, 1]) != np.diff(stamps[:, 0]))
+        discontinuities = int(len(gaps))
+        in_take = lambda t: play_time <= t <= stop_time
+        take_xruns = sum(1 for t in recorder.xrun_times if in_take(t))
+        take_gaps = [round(float(stamps[i, 2]) - play_time, 3) for i in gaps if in_take(stamps[i, 2])]
         report = dict(server=server, private=private, playback_device=device, discontinuities=discontinuities, record_monotonic=record_time, play_monotonic=play_time,
-                      audio_first_callback=recorder.first_time, xruns=recorder.xruns, blocks=recorder.blocks,
+                      stop_monotonic=stop_time, audio_first_callback=recorder.first_time, xruns=recorder.xruns, blocks=recorder.blocks,
+                      xruns_in_take=take_xruns, discontinuities_in_take=take_gaps,
+                      xrun_seconds=[round(t - play_time, 3) for t in recorder.xrun_times],
                       synchronization='monotonic estimate; video API/encoder startup latency is not measured')
         recorder = None
         write_private(output / 'capture.json', report)
-        if report['xruns'] or discontinuities:
-            print(f"Audio warning: {report['xruns']} xruns, {discontinuities} recorded discontinuities; inspect capture.json", file=sys.stderr)
+        if take_xruns or take_gaps:
+            print(f"Audio warning: {take_xruns} xruns and {len(take_gaps)} recorded discontinuities during the take "
+                  f"(at {take_gaps} s); inspect capture.json", file=sys.stderr)
+        elif report['xruns'] or discontinuities:
+            print(f"Audio: clean take; {report['xruns']} xruns before Play or after the take (start-up and shutdown)",
+                  file=sys.stderr)
         if options['command'] == 'measure-latency':
             if discontinuities:
                 raise LaunchError('Latency capture has discontinuities; increase the JACK quantum and repeat')
@@ -433,9 +451,18 @@ def run(config, options):
                     import numpy as np
                     gate = np.concatenate([b[:, options['sync_gate_channel'] - 1] for b in
                                            stream.blocks(blocksize=65536, dtype='float32', always_2d=True)])
-                    offset, alignment = align(movie, gate[:, None], stream.samplerate, 1, record_time,
-                                              report['audio_first_callback'], options.get('sync_delay_ms', 0))
+                    try:
+                        offset, alignment = align(movie, gate[:, None], stream.samplerate, 1, record_time,
+                                                  report['audio_first_callback'], options.get('sync_delay_ms', 0))
+                    except LaunchError as exc:
+                        # The take is already recorded: keep it, muxed on the monotonic estimate.
+                        alignment = dict(method='centre flash/gate correlation', error=str(exc),
+                                         fallback='monotonic estimate')
+                        print(f'A/V sync not measured ({exc}); muxed on the monotonic estimate', file=sys.stderr)
                 alignment['gate_channel'] = options['sync_gate_channel']
+                if alignment.get('ambiguous'):
+                    print('A/V sync is ambiguous: inspect av-sync.json and the video before accepting the take',
+                          file=sys.stderr)
                 write_private(output / 'av-sync.json', alignment)
             offset += options['av_offset_ms'] / 1000
             subprocess.run(['ffmpeg', '-v', 'error', '-n', '-i', str(output / 'studio.mp4'),
