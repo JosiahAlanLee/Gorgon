@@ -22,8 +22,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-      - run: python -m pip install -e '.[test]'
-      - run: gorgon --help && python -m pytest -q tests/test_launcher.py
+      - run: python -m pip install -e '.[test,capture]'
+      - run: gorgon --help && python -m pytest -q tests/test_launcher.py tests/test_launcher_capture.py tests/test_launcher_latency.py
   pipewire:
     runs-on: ubuntu-24.04
     steps:

@@ -175,3 +175,87 @@ workstation's actual device/CV routes still need workstation testing.
   allowing a corrected `init` command to retry.
 - Treat missing or timed-out `wmctrl` commands as an unsuccessful window-close
   request so optional desktop tools cannot interrupt app cleanup.
+
+## Render, record a live performance, and measure lane latency
+
+Install the optional Python capture dependencies with `pip install 'gorgon-live[capture]'`.
+The host also needs `jackd`, `xvfb-run` (with `xauth`), FFmpeg/ffprobe and Rack Free.
+Capture runs in the foreground and stops its own children on completion or Ctrl+C.
+It copies the profile's Studio workspace and Rack plugins into a **new** output
+directory and retains logs there. Existing output directories are refused. The
+original workspace, Rack patch, plugin folder and desktop audio services are not
+changed. Use an output directory outside the source workspace.
+
+Your profile must select a saved `rack.patch` containing exactly one Core Audio-16.
+Wire its first two inputs to the stereo mix and inputs 3–16 to stems or diagnostic
+CV. The launcher gives this module a private 16-channel recording device, and
+points Gorgon's optical input at the actual Studio client. Embedded `.vcv` assets
+are preserved. Install required plugins in the profile's `rack.user_dir`, or add
+built plugin directories with repeated `--plugin-dir /path/to/plugin` options.
+The copied patch preserves the remaining instrument/routing choices.
+
+```sh
+gorgon --config rig.json render score.json --output /path/to/new-take --seconds 40
+
+gorgon --config rig.json live score.json --record --native-output DP-5 \
+  --output /path/to/new-live-take --seconds 384
+```
+
+`render` is offscreen, silent and isolated on a new private **dummy** JACK server.
+It runs at wall-clock speed, not faster than real time. It writes `capture.wav`
+(16-channel float), `mix.wav`, `stems/channel-03.wav` through `channel-16.wav`,
+`studio.mp4`, `render.mp4`, timing/xrun/discontinuity diagnostics in `capture.json`, per-block JACK and
+monotonic timestamps in `capture-clock.npz`, and app logs.
+The mix and stems preserve recorded levels; normalization is not applied.
+Xvfb chooses a free display numbered 147 or higher for headless apps. `live`
+displays Studio fullscreen on the requested monitor and otherwise uses the same
+private capture path; it is silent by default too.
+
+`live --jack-server NAME` names the dummy server the command will create. It
+refuses a name already in use. To use a real device, start the desired native JACK
+server yourself, then explicitly pass **both** `--hardware --jack-server NAME`.
+Only this mode attaches to an existing native server. With a PipeWire profile,
+`live --hardware` (without `--jack-server`) instead uses the launcher's `pw-jack`
+wrapper and existing PipeWire service. It refuses a stopped service rather than
+starting or reconfiguring desktop audio. The mix is sent to the profile's
+`audio.device`, or `--audio-device CLIENT` when supplied; PipeWire's default sink
+is resolved by the existing launcher logic. No hardware route is made without
+`--hardware`. Use `--link SOURCE DESTINATION` repeatedly for additional JACK
+connections. Profile `audio.connections` are also applied. `{studio}` and
+`{capture}` expand to the actual client names. Sixteen repeated `--source PORT`
+options can select explicit JACK capture sources instead of rewriting Audio-16.
+The original `gorgon start` retains the profile's existing PipeWire handling.
+
+Options include `--warmup` (seconds, default 6), `--jack-timeout` (ms, default
+10000), `--size WIDTHxHEIGHT`, `--fps`, `--optical-gain` and `--lead-blocks`.
+Sample rate and period come from the profile's `audio.rate` and `audio.quantum`.
+JACK1's system library path is selected for these capture processes.
+
+By default the mux aligns the recording request and audio callbacks using their
+monotonic timestamps. Studio/encoder startup adds an **unmeasured** delay; this is
+an estimate. For a patch whose centre visibly flashes with a particular lane,
+pass `--sync-gate-channel N` (a 1-based capture channel carrying that gate) and
+`--sync-delay-ms MS` (the measured gate-to-sound delay). This correlates centre
+brightness rises with gate edges, as in the Carrier harness, and writes
+`av-sync.json` with the best lag, correlation, runner-up and ambiguity flag.
+Periodic or unrelated imagery can give ambiguous alignment: inspect that report
+and the video before accepting a take. `--av-offset-ms MS` adds a manual correction
+(positive skips more audio at video frame zero). This is not a universal visual
+onset detector.
+
+```sh
+gorgon --config probe-rig.json measure-latency --output /path/to/new-calibration
+```
+
+For measurement, wire mix to Audio-16 channels 1/2, then each lane's **undelayed**
+gate and isolated sounding voice to pairs 3/4, 5/6, …, 13/14. Inputs 15/16 may be
+silent. The command clears Gorgon's lane offsets in the private patch, plays a
+short C4 probe score (one hit per second), records the six paths and writes
+`latency.json`. Lane sound defaults come from the loaded Studio document, or
+from `--score SCORE.json` when supplied. Clear any external gate delays yourself. The report includes
+per-lane median, percentiles and hit count, and a `laneOffsetMs` array that delays
+faster voices to the slowest voice. It refuses fewer than three audible hits per
+lane, silence and a spread over 100 ms. Apply that array to Gorgon's module JSON
+while stopped (see the Rack manual). It does not guess offsets or rewrite your
+original patch. Calibration depends on the selected voice/envelope and buffers;
+a sharp probe envelope gives a more useful latency than a slow pad.
