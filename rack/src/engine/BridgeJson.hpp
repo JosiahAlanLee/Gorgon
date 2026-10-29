@@ -290,6 +290,13 @@ inline bool parsePatternV3(json_t* j, v3::PatternV3& pattern) {
 			if (!(cell.vel >= 0. && cell.vel <= 127.))
 				return false;
 			cell.present = cell.vel > 0.;
+			if (json_t* length = json_object_get(hit, "len")) {
+				if (!json_is_number(length) || !std::isfinite(json_number_value(length)) ||
+				    json_number_value(length) < .25 || json_number_value(length) > 16.)
+					return false;
+				cell.hasLength = true;
+				cell.length = json_number_value(length);
+			}
 			json_t* locks = json_object_get(hit, "locks");
 			if (locks && !parseSoundParams(locks, cell.locks, true))
 				return false;

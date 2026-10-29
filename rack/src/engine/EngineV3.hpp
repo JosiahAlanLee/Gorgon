@@ -18,8 +18,8 @@ namespace v3 {
 // evaluator.md: W = TICKS / R, R = 4 * rate; minimum rate 1/4 gives R = 1,
 // hence W <= TICKS (1920). transforms.md: ply only divides W by 1..4;
 // rot/rev select cells, every/degrade/conditions/mutes never stretch spans.
-// Version 3 has no swing or nudge. Thus every candidate ends within TICKS
-// of its start, also bounding how far back a covering candidate can read FILL.
+// Legacy candidates end within TICKS of their start. Explicit lengths use
+// HOLD_TICKS instead; the catch-up window must cover both bounds.
 constexpr int64_t LONGEST_ROW = TICKS;
 
 // The playhead's FILL and bus layer (evaluator.md#playhead-fields, bus-io.md). The bridge
@@ -124,7 +124,9 @@ struct TickFollower {
 // A candidate the engine keeps until it ends, with what it plays copied out of the score,
 // so a score edit while it sounds can't change or free it.
 struct Hit {
-	int64_t at = 0, duration = 0;
+	int64_t at = 0;
+	double duration = 0.;
+	bool hasLength = false, gap = false;
 	int lane = 0;
 	bool fires = false;
 	double vel = 0.;
@@ -157,11 +159,16 @@ struct EngineV3 {
 	bool wasMoving = false;
 	int64_t frontier = 0;          // the first tick of the segment not yet evaluated
 	Hit hits[CAPACITY];
+	bool previous[LANES] = {}, previousLength[LANES] = {};
+	double previousEnd[LANES] = {};
+	bool pendingHeld[LANES] = {};
+	double heldVel[LANES] = {};
+	int heldMidi[LANES] = {};
 	int count = 0;
 	long dropped = 0;              // candidates lost to a full buffer (never, in practice)
 	int resetRemaining = 0;
 	int landing[LANES] = {};
-	int64_t landingLow[LANES] = {}, landingHigh[LANES] = {};
+	double landingLow[LANES] = {}, landingHigh[LANES] = {};
 	double stood = NAN;            // u while not moving: where a resume lands
 	bool gateWas[LANES] = {};
 	int retrigger[LANES] = {};
@@ -201,37 +208,63 @@ struct EngineV3 {
 	int64_t firstUnevaluated(int64_t revision, int64_t tick, double u) const {
 		if (begun && revision == segmentRevision && tick == segmentTick)
 			return frontier;
-		return heard ? -TICKS : int64_t(std::floor(u));
+		return -HOLD_TICKS;
 	}
 
-	// Evaluate through tick ⌊u⌋, keeping the candidates that haven't ended by u. Earlier ones
-	// are skipped unevaluated: nothing would hear them, and evaluate() partitions exactly.
+	// Evaluate through tick ⌊u⌋. Ended history inside the hold window can
+	// supersede a held explicit note, so compact it only after ingestion.
 	void advance(const ScoreV3& score, const TransportV3& transport, double u) {
 		int64_t floorU = int64_t(std::floor(u));
 		int64_t top = floorU + 1;
 		if (top <= frontier)
 			return;
-		int64_t first = std::max(frontier, floorU - LONGEST_ROW);
+		bool explicitLane[LANES] = {};
+		for (int k = 0; k < count; k++)
+			explicitLane[hits[k].lane] = explicitLane[hits[k].lane] || hits[k].hasLength;
+		int64_t first = std::max(frontier, floorU - std::max(LONGEST_ROW, HOLD_TICKS));
 		frontier = top;
 		int entry = score.loop ? -1 : score.entryAt(segmentTick);
 		evaluate(score, transport, first, top, [&](const Candidate& c) {
-			if (trace)
+			if (trace && c.at + c.duration > 0)
 				trace->write(candidateRecord(c, score.patternAt(c.pattern)->lanes[c.lane], segmentRevision, segmentTick, entry, frame));
-			if (double(c.at + c.duration) <= u)
+			if (!c.fires)
 				return;
-			if (count == CAPACITY) {
-				dropped++;
-				return;
-			}
-			Hit& h = hits[count++];
+			// One latest firing occurrence per lane, including ended history: an
+			// intervening short note permanently supersedes an earlier held note.
+			int slot = -1;
+			for (int k = 0; k < count; k++)
+				if (hits[k].lane == c.lane) slot = k;
+			bool gap = previous[c.lane] && (previousLength[c.lane] || c.cell->hasLength) &&
+			           previousEnd[c.lane] >= c.at;
+			explicitLane[c.lane] = explicitLane[c.lane] || c.cell->hasLength;
+			previous[c.lane] = true;
+			previousLength[c.lane] = c.cell->hasLength;
+			previousEnd[c.lane] = c.at + c.duration;
+			if (slot < 0) slot = count++;
+			Hit& h = hits[slot];
+			h.hasLength = c.cell->hasLength;
+			h.gap = gap;
+			landing[c.lane] = 0;
 			h.at = c.at;
 			h.duration = c.duration;
 			h.lane = c.lane;
-			h.fires = c.fires;
+			h.fires = c.fires && (heard || c.at >= floorU || c.cell->hasLength);
 			h.vel = c.cell->vel;
 			h.midi = c.cell->midi;
 			h.sound = resolve(score, c.lane, *c.cell);
-		});
+		}, true);
+		int kept = 0;
+		for (int k = 0; k < count; k++) {
+			const Hit& h = hits[k];
+			if (explicitLane[h.lane] && h.fires && (heard || h.at + h.duration > u) &&
+			    (h.at >= 0 || h.at + h.duration > u)) {
+				pendingHeld[h.lane] = true;
+				heldVel[h.lane] = h.vel;
+				heldMidi[h.lane] = h.midi;
+			}
+			if (h.at + h.duration > u) hits[kept++] = h;
+		}
+		count = kept;
 	}
 
 	// The landing gate (cv-semantics.md#landing-gate): per lane, the firing candidate whose
@@ -240,7 +273,8 @@ struct EngineV3 {
 	void startLanding(double at, double u, double bpm, const Options& o, double sampleRate) {
 		for (int k = 0; k < count; k++) {
 			const Hit& h = hits[k];
-			int64_t end = h.at + h.duration;
+			double end = h.at + h.duration;
+			if (h.hasLength) continue;
 			if (!h.fires || !(double(h.at) <= at && at < double(end)) || !(double(h.at) <= u && u < double(end)))
 				continue;
 			double phase = (at - double(h.at)) / double(h.duration);
@@ -261,9 +295,11 @@ struct EngineV3 {
 		bool newSegment = !begun || revision != segmentRevision || transport.tick != segmentTick;
 		if (newSegment) {
 			// Heard as it starts, from at or before the anchor's row; the first playhead this
-			// engine ever sees is joined late, from its own tick (evaluator.md#evaluate).
-			frontier = heard ? -TICKS : int64_t(std::floor(u));
+			// engine ever sees also recovers held explicit notes (evaluator.md#evaluate).
+			frontier = -HOLD_TICKS;
 			count = 0;
+			std::fill(previous, previous + LANES, false);
+			std::fill(pendingHeld, pendingHeld + LANES, false);
 			begun = true;
 			segmentRevision = revision;
 			segmentTick = transport.tick;
@@ -298,13 +334,22 @@ struct EngineV3 {
 
 		Outputs out;
 		for (int l = 0; l < LANES; l++) {
+			if (moving && pendingHeld[l]) {
+				velocity[l] = float(heldVel[l] / 127.);
+				if (heldMidi[l] >= 0) {
+					pitch[l] = float(heldMidi[l] + score.key - 2 - o.pitchZero) / 12.f;
+					linkPitch[l] = float(heldMidi[l] + score.key - 2 - 60) / 12.f;
+				}
+				pendingHeld[l] = false;
+			}
 			bool gate = false;
 			covering[l] = -1;
 			for (int k = 0; k < count; k++) {
 				const Hit& h = hits[k];
 				if (h.lane != l || !h.fires || !(double(h.at) <= u && u < double(h.at + h.duration)))
 					continue;
-				gate = gate || u < double(h.at) + o.gate * double(h.duration);
+				gate = u < double(h.at) + (h.hasLength ? 1. : o.gate) * h.duration;
+				if (h.gap && u < h.at + .001 * score.bpm / 60. * TICKS) gate = false;
 				covering[l] = k;
 			}
 			if (landing[l] > 0) {
@@ -357,17 +402,16 @@ struct EngineV3 {
 		for (int k = 0; k < AUTO_LANES; k++)
 			out.lane[k] = float(pattern ? pattern->autos[k].value(k, p.rowPos) : LANE_DEFAULT[k]);
 
-		// Drop what has ended. A covering hit hasn't, so it moves with its index.
+		// Compact ended hits, retaining only scalar retrigger history per lane.
 		int kept = 0;
 		for (int k = 0; k < count; k++) {
-			if (double(hits[k].at + hits[k].duration) <= u)
-				continue;
+			if (hits[k].at + hits[k].duration <= u) continue;
 			for (int l = 0; l < LANES; l++)
-				if (covering[l] == k)
-					covering[l] = kept;
+				if (covering[l] == k) covering[l] = kept;
 			hits[kept++] = hits[k];
 		}
 		count = kept;
+
 		return out;
 	}
 

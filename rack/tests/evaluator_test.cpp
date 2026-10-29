@@ -45,11 +45,14 @@ struct Row {
 // The SIGNALS section: replay the playheads TrackerCV was given, block by block, through
 // EngineV3, with u computed as TrackerCV computes it, and compare.
 static long signals(v3::ScoreV3& score, std::istream& in, int s) {
-	const int SR = 48000, BLOCK = 480;
+	const int SR = 48000;
+	int BLOCK = 480;
+	double gateFraction = .5;
 	std::string keyword, rest;
 	int first = 0, blocks = 0, count = 0;
 	in >> keyword >> first >> blocks >> count;
-	CHECK(keyword == "SIGNALS", "score %d: no SIGNALS section", s);
+	if (keyword == "SIGNALS_VARIABLE") in >> BLOCK >> gateFraction;
+	CHECK(keyword == "SIGNALS" || keyword == "SIGNALS_VARIABLE", "score %d: no SIGNALS section", s);
 	struct Head {
 		int block = 0;
 		Playhead h;
@@ -100,7 +103,8 @@ static long signals(v3::ScoreV3& score, std::istream& in, int s) {
 	if (heads.empty() || rows.empty())
 		return 0;
 	v3::EngineV3 engine;
-	Options o;   // TrackerCV's defaults: 4 PPQN, half-row gates, 5 ms reset, C4 = 0 V
+	Options o;
+	o.gate = gateFraction;   // TrackerCV's defaults: 4 PPQN, half-row gates, 5 ms reset, C4 = 0 V
 	size_t head = 0, row = 0, next = 0;
 	int failed = 0;
 	for (int k = first; k < blocks; k++) {
@@ -154,7 +158,7 @@ static void compare(const v3::ScoreV3& score, const v3::Candidate& c, json_t* li
 	CHECK(id == text(json_object_get(line, "id")), "%s: id %s vs %s", where, id.c_str(), text(json_object_get(line, "id")).c_str());
 	CHECK(c.at == json_integer_value(json_object_get(line, "at")), "%s %s: at", where, id.c_str());
 	CHECK(c.lane == json_integer_value(json_object_get(line, "lane")), "%s %s: lane", where, id.c_str());
-	CHECK(c.duration == json_integer_value(json_object_get(line, "duration")), "%s %s: duration", where, id.c_str());
+	CHECK(c.duration == json_number_value(json_object_get(line, "duration")), "%s %s: duration", where, id.c_str());
 	CHECK(std::string(c.cell->note) == text(json_object_get(line, "note")), "%s %s: note", where, id.c_str());
 	CHECK(c.cell->vel == json_number_value(json_object_get(line, "vel")), "%s %s: vel", where, id.c_str());
 	json_t* locks = json_object_get(line, "locks");
@@ -199,6 +203,9 @@ static void compare(const v3::ScoreV3& score, const v3::Candidate& c, json_t* li
 	CHECK(mine && json_integer_value(json_object_get(mine, "x_frame")) == 7, "%s %s: trace line doesn't parse: %s", where, id.c_str(),
 	      traced.c_str());
 	json_object_del(mine, "x_frame");
+	CHECK(json_number_value(json_object_get(mine, "duration")) == c.duration, "%s: trace preserves fractional duration", where);
+	// JSON integer and real durations denote the same tick count.
+	json_object_set(mine, "duration", json_object_get(line, "duration"));
 	CHECK(json_equal(mine, line), "%s %s: trace line\n  rack:   %s\n  hydrapy: %s", where, id.c_str(), traced.c_str(),
 	      json_dumps(line, JSON_COMPACT));
 	json_decref(mine);
@@ -372,7 +379,7 @@ static void candidateBound() {
 			std::vector<v3::Candidate> all;
 			v3::evaluate(score, transport, -w, 6 * w, [&](const v3::Candidate& c) {
 				all.push_back(c);
-				longest = std::max(longest, c.duration);
+				longest = std::max(longest, int64_t(c.duration));
 				CHECK(c.duration <= v3::LONGEST_ROW, "candidate exceeds lookback");
 				CHECK(c.duration == w / (mode == 5 ? 4 : mode), "candidate duration");
 			});
@@ -385,9 +392,9 @@ static void candidateBound() {
 			jumped.segmentTick = transport.tick;
 			const int64_t far = 20 * v3::TICKS;
 			uint64_t expected = 0;
-			v3::evaluate(score, transport, far - v3::TICKS, far + 1, [&](const v3::Candidate&) { expected++; });
+			v3::evaluate(score, transport, far - v3::HOLD_TICKS, far + 1, [&](const v3::Candidate&) { expected++; });
 			jumped.advance(score, transport, double(far));
-			CHECK(trace.written() == expected, "jump trace is limited to one beat: %llu vs %llu",
+			CHECK(trace.written() == expected, "jump trace is limited to HOLD_TICKS: %llu vs %llu",
 			      (unsigned long long)trace.written(), (unsigned long long)expected);
 			// A frontier jump must retain every covering candidate, even near the end
 			// of the slowest row, and through cycle wraps. Compare against full history.
@@ -407,7 +414,77 @@ static void candidateBound() {
 	      (long long)longest, (long long)v3::LONGEST_ROW);
 }
 
+// Parser boundaries and bounded ingestion of the maximum held-note lookback.
+static void lengthValidation(const std::string& executable) {
+	json_error_t error;
+	json_t* vectors = json_load_file((executable.substr(0, executable.find_last_of('/') + 1) + "note-length-vectors.json").c_str(), 0, &error);
+	CHECK(vectors, "note-length vectors load");
+	if (!vectors) return;
+	json_t* document = json_deep_copy(json_object_get(json_array_get(vectors, 0), "score"));
+	json_t* hit = json_array_get(json_object_get(json_array_get(json_object_get(json_array_get(json_object_get(document, "patterns"), 0), "lanes"), 0), "cells"), 0);
+	for (const char* value : {"0.25", "16", "0.333", "2.375", "true", "null", "\"3\"", "0.249", "16.01"}) {
+		json_t* length = json_loads(value, JSON_DECODE_ANY, &error);
+		json_object_set_new(hit, "len", length);
+		v3::ScoreV3 score;
+		bool expected = value[0] != 't' && value[0] != 'n' && value[0] != '"' && std::string(value) != "0.249" && std::string(value) != "16.01";
+		CHECK(parseScoreV3(document, score) == expected, "len %s validation", value);
+	}
+	// A late attachment at rate 8 / ply 4 sees over 3000 occurrences.
+	v3::ScoreV3 dense;
+	dense.store.emplace_back();
+	dense.index[0] = 0;
+	dense.loop = true;
+	auto& pattern = dense.store[0];
+	pattern.geometry = {60, 128, 16, 8};
+	for (auto& lane : pattern.lanes) {
+		lane.len = 128;
+		lane.cells.resize(128);
+		for (auto& cell : lane.cells) {
+			cell.present = cell.hasLength = true;
+			cell.length = 16;
+			cell.vel = 100;
+			cell.midi = 60;
+		}
+		v3::Node node;
+		node.kind = v3::NODE_PLY;
+		node.value = 4;
+		lane.nodes.push_back(node);
+	}
+	dense.buildTimeline();
+	v3::EngineV3 engine;
+	v3::TransportV3 transport;
+	Options options;
+	auto out = engine.render(dense, transport, true, 7600., 1, options, 48000.);
+	CHECK(engine.count == 6 && engine.dropped == 0, "dense attachment keeps latest six hits");
+	for (int l = 0; l < 6; l++)
+		CHECK(out.gate[l] > 0 && engine.hits[l].at == 7590, "dense lane %d latest onset", l);
+	// A correction that skips an entire replacement span still holds its values.
+	pattern.geometry = {480, 16, 16, 1};
+	for (auto& lane : pattern.lanes) {
+		lane.nodes.clear();
+		lane.len = 16;
+		lane.cells.assign(16, v3::Cell());
+	}
+	auto& cells = pattern.lanes[0].cells;
+	cells[0].present = cells[0].hasLength = true;
+	cells[0].length = 12;
+	cells[0].midi = 60;
+	cells[0].vel = 100;
+	cells[2].present = true;
+	cells[2].midi = 62;
+	cells[2].vel = 64;
+	dense.buildTimeline();
+	v3::EngineV3 skipped;
+	skipped.render(dense, transport, true, 0., 1, options, 48000.);
+	auto ended = skipped.render(dense, transport, true, 1500., 1, options, 48000.);
+	CHECK(ended.gate[0] == 0 && std::fabs(ended.pitch[0] - 2.f / 12) < 1e-6 &&
+	      std::fabs(ended.velocity[0] - 64.f / 127) < 1e-6, "ended replacement holds values after correction");
+	json_decref(document);
+	json_decref(vectors);
+}
+
 int main(int argc, char** argv) {
+	lengthValidation(argv[0]);
 	candidateBound();
 	CHECK(v3::lowbias32(1) == 1753845952u && v3::lowbias32(0xffffffffu) == 1734902346u, "lowbias32");
 	const uint32_t want[] = {1936593078u, 1284988505u, 1732901356u, 3891962147u, 2080199420u, 1655901407u};

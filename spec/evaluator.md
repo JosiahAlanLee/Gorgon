@@ -254,6 +254,21 @@ velocity don't update on a candidate that doesn't fire, so a muted lane behaves
 as it does in versions 1 and 2. `TrackerCV` and the Rack engine therefore take
 the anchor, `u` and FILL as well as the beat.
 
+### Explicit note length
+
+Explicit-length candidates include `len` alongside `duration`; candidates
+without explicit length keep their previous serialized shape. Evaluate may
+return candidates from earlier rows of the anchor entry when `u0 < 0` if
+their span survives the anchor. Scan back at most 7680 ticks within the
+entry, preserving `u0 <= at < u1` and `at + duration > 0`. Candidate identity,
+conditions, FILL at row onset, chance draws, transform placement and ordering
+are unchanged. Followers restore the latest firing held explicit candidate
+per lane when first attaching or joining late. Prior legacy hits can
+supersede an explicit note, so consider all earlier firing candidates when
+deciding which held note survives; restore only an explicit latest hit. A
+private history evaluation must retain ended intervening hits even before
+the anchor; the public evaluate output still excludes spans ending there.
+
 ## Transport changes
 
 Every transport change has an **effective beat**: the elapsed tick, on the
@@ -481,6 +496,11 @@ Evaluated over `[0, 16 · 1920)` in V1, `[0, 24 · 1920)` in V2, `[−1920, 16 �
 in V3, `[0, 8 · 1920)` in V4, `[0, 80 · 1920)` in V5 and `[−1920, 5640)` in V6,
 each set is the same when the interval is split anywhere, including on an
 occurrence's own tick (invariant 2).
+
+The note-length reference is `rack/tests/fixture-length3.txt`, generated with
+`python rack/tools/make_note_length_fixture.py` from the pinned HydraPy. It
+validates `note-length-vectors.json`, then compares variable callback sizes,
+held-note seeks, fractional durations, clipping and monophonic replacement.
 
 ## Not in this part
 

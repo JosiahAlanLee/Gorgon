@@ -70,6 +70,12 @@ jobs:
             exit 1
           fi
           step rack/tests/evaluator_test /tmp/gorgon-current-fixture3.txt
+          python rack/tools/make_note_length_fixture.py > /tmp/gorgon-current-length3.txt
+          if ! cmp rack/tests/fixture-length3.txt /tmp/gorgon-current-length3.txt; then
+            echo "::error::Note-length fixture differs from pinned HydraPy; review score and gate semantics."
+            exit 1
+          fi
+          step rack/tests/evaluator_test /tmp/gorgon-current-length3.txt
           step make -C rack/tests e2e
           sudo sysctl -w vm.mmap_rnd_bits=28   # ThreadSanitizer on newer runner kernels
           step make -C rack/tests sanitize

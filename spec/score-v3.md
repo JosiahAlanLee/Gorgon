@@ -160,6 +160,19 @@ These patterns and chain are used throughout:
 - Rate 8 at 200 BPM: a row is `60 / 200 / 32` s, about 9.4 ms, and the
   longest pattern (128 rows) is 4 beats.
 
+### Explicit note length
+
+A non-null version-3 cell may have `len`, a finite JSON number from 0.25 to
+16 inclusive, measured in base rows of 480 ticks. Absence preserves the
+existing row/sub-step duration and Gate length fraction. Explicit length
+gives each candidate `duration = min(len * 480, pattern_end - at)`, where
+`pattern_end` is the end of this pattern entry. Rate does not scale explicit
+length. `ply` changes onsets, but each sub-hit inherits the full explicit
+length. Transforms carry length with the source cell. Duration can be a
+fractional number of ticks; onsets and evaluator query boundaries remain
+integer ticks. Notes are clipped at every pattern entry boundary, including
+consecutive entries of the same pattern; ties are not supported.
+
 ## Signals, automation and scenes
 
 - **Signals** follow [cv-semantics.md](cv-semantics.md) with lanes `n` = 1–6,
@@ -242,5 +255,5 @@ mask (with bit 7 reserved for "entry start") and the bus layer of FILL and
 mutes are [bus-io.md](bus-io.md) (A-spec-4). The Rack display's beat is now
 cycle-relative, which the Rack manual must say in Phase 3. The Rack sound
 link's six lanes are C1. Triplet grids, ties, per-lane rates and cells placed
-between rows are not planned for version 3; `ply`'s sub-steps are the only
-events shorter than a row.
+between rows are not planned for version 3; only `ply` places onsets
+between rows. Explicit note length changes duration without moving onsets.

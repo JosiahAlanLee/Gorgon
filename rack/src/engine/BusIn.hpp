@@ -130,7 +130,7 @@ template <class List, class ReadTick> void coalesce(List& list, int& count, int 
 
 // The audio thread's side: the word, the stamps and the layer this module plays at once.
 struct BusInput {
-	static constexpr int FILL_CAPACITY = 192;   // room for a 1920-tick lookback at 60 ticks/row (32), plus margin
+	static constexpr int FILL_CAPACITY = 192;   // room for HOLD_TICKS plus 100 ms lane delay at 60 ticks/row, with margin
 
 	bool connected = false, begun = false;
 	uint8_t states = 0;
@@ -239,8 +239,8 @@ struct BusInput {
 		return transport;
 	}
 
-	// Forget FILL changes no candidate can read again: rows start at most LONGEST_ROW
-	// before the frontier.
+	// Forget FILL changes no candidate can read again. The caller supplies
+	// the held-note lookback plus any delayed lane history.
 	void prune(int64_t frontier, int64_t longestRow) {
 		int64_t horizon = frontier - longestRow;
 		int drop = 0;

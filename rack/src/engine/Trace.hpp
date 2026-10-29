@@ -21,7 +21,9 @@ struct TraceRecord {
 	int16_t entry = -1;                // its start.entry, -1 for null
 	int64_t frame = 0;                 // x_frame: Rack's engine frame when it was written
 	// CANDIDATE
-	int64_t at = 0, duration = 0, play = 0, bar = 0;
+	int64_t at = 0, play = 0, bar = 0;
+	double duration = 0., length = 0.;
+	bool hasLength = false;
 	int8_t lane = 0;
 	bool fires = false, hasLocks = false;
 	char note[4] = {};
@@ -48,6 +50,8 @@ inline TraceRecord candidateRecord(const Candidate& c, const LaneV3& lane, int64
 	r.frame = frame;
 	r.at = c.at;
 	r.duration = c.duration;
+	r.hasLength = c.cell->hasLength;
+	r.length = c.cell->length;
 	r.play = c.play;
 	r.bar = c.bar;
 	r.lane = int8_t(c.lane);
@@ -156,8 +160,8 @@ inline std::string traceLine(const TraceRecord& r) {
 	via += "]";
 	std::string cond = r.cond.kind == COND_NONE ? "null" : "\"" + condCode(r.cond) + "\"";
 	return line + "\"id\": \"" + id + "\", \"at\": " + std::to_string(r.at) + ", \"lane\": " + std::to_string(r.lane) +
-	       ", \"duration\": " + std::to_string(r.duration) + ", \"note\": \"" + std::string(r.note, strnlen(r.note, sizeof r.note)) +
-	       "\", \"vel\": " + detail::number(r.vel) + ", \"locks\": " + locks + ", \"fires\": " + (r.fires ? "true" : "false") +
+	       ", \"duration\": " + detail::number(r.duration) + ", \"note\": \"" + std::string(r.note, strnlen(r.note, sizeof r.note)) +
+	       "\", \"vel\": " + detail::number(r.vel) + (r.hasLength ? ", \"len\": " + detail::number(r.length) : std::string()) + ", \"locks\": " + locks + ", \"fires\": " + (r.fires ? "true" : "false") +
 	       ", \"why\": " + why + ", \"origin\": {\"play\": " + std::to_string(r.play) + ", \"entry\": " +
 	       (r.originEntry < 0 ? std::string("null") : std::to_string(r.originEntry)) + ", \"pattern\": " + std::to_string(r.pattern) +
 	       ", \"row\": " + std::to_string(r.row) + ", \"lane_row\": " + std::to_string(r.laneRow) + ", \"cell\": " + std::to_string(r.cell) +

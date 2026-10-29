@@ -214,6 +214,71 @@ static void activationAtOnset(bool v3) {
 	assert(m.outputs[Gorgon::GATE1_OUTPUT].getVoltage() == 10.f);
 }
 
+// All six private renderers use the same explicit spans and retrigger gap as
+// main, evaluated at each lane's signed timing offset. Check real ports and
+// the sound packet against the score's analytic gate/held-value windows.
+static void explicitLengthOffsets() {
+	TimingRig rig(true);
+	auto& m = *rig.module;
+	auto score = std::make_shared<gorgon::v3::ScoreV3>(*m.snapshot.score3);
+	for (auto& lane : score->store[0].lanes) {
+		lane.cells.assign(16, gorgon::v3::Cell());
+		for (int row : {0, 3}) {
+			auto& cell = lane.cells[row];
+			cell.present = cell.hasLength = true;
+			cell.length = row == 0 ? 3. : 1.;
+			cell.midi = row == 0 ? 60 : 62;
+			cell.vel = row == 0 ? 100 : 64;
+		}
+	}
+	m.snapshot.score3 = score;
+	m.gateLength = .1f; // explicit spans must bypass this fraction in every lane
+	const float offsets[] = {-25.f, 0.f, 25.f, 100.f, -100.f, 12.5f};
+	for (int l = 0; l < 6; ++l) m.laneOffsetMs[l] = offsets[l];
+	for (int i = 0; i < 30000; ++i) {
+		double mainU = m.tickFollower.u;
+		rig.step();
+		for (int l = 0; l < 6; ++l) {
+			double u = gorgon::lanePosition(mainU, 120., gorgon::v3::TICKS, offsets[l]);
+			bool gate = (u >= 0. && u < 1440.) || (u >= 1440. + 3.84 && u < 1920.);
+			float high = gate ? m.options.high : 0.f;
+			float vel = u < 0. ? 0.f : float((u < 1440. ? 100. : 64.) / 127.);
+			float pitch = u < 1440. ? 0.f : 2.f / 12.f;
+			sameFloat(m.outputs[Gorgon::GATES_OUTPUT].getVoltage(l), high);
+			sameFloat(m.outputs[Gorgon::VEL_OUTPUT].getVoltage(l), vel * m.options.high);
+			sameFloat(m.outputs[Gorgon::PITCH_OUTPUT].getVoltage(l), pitch);
+			sameFloat(rig.packet.lanes[l].gate, high);
+			if (l < 4) sameFloat(m.outputs[Gorgon::GATE1_OUTPUT + l].getVoltage(), high);
+			else sameFloat(m.outputs[l == 4 ? Gorgon::GATE5_OUTPUT : Gorgon::GATE6_OUTPUT].getVoltage(), high);
+		}
+	}
+}
+
+// Activating a delayed lane after main's note ended must recover the length
+// under FILL as it was at onset, even though BUS IN went low long ago.
+static void delayedHeldFill() {
+	TimingRig rig(true);
+	auto& m = *rig.module;
+	auto score = std::make_shared<gorgon::v3::ScoreV3>(*m.snapshot.score3);
+	for (auto& lane : score->store[0].lanes) lane.cells.assign(16, gorgon::v3::Cell());
+	auto& hit = score->store[0].lanes[0].cells[0];
+	hit.present = hit.hasLength = true;
+	hit.length = 16.; hit.midi = 60; hit.vel = 100;
+	hit.cond.kind = gorgon::v3::COND_FILL;
+	m.snapshot.score3 = score;
+	m.inputs[Gorgon::BUS_INPUT].channels = 8;
+	m.inputs[Gorgon::BUS_INPUT].setVoltage(10.f, 6);
+	for (int i = 0; i < 98000; ++i) {
+		if (i == 1) m.inputs[Gorgon::BUS_INPUT].setVoltage(0.f, 6);
+		rig.step();
+	}
+	assert(m.outputs[Gorgon::GATE1_OUTPUT].getVoltage() == 0.f);
+	m.laneOffsetMs[0] = 100.f;
+	rig.step();
+	assert(m.outputs[Gorgon::GATE1_OUTPUT].getVoltage() == m.options.high);
+	assert(m.laneEngine[0].trace == nullptr);
+}
+
 static uint64_t cpuNs() {
 	timespec now;
 	int result = clock_gettime(CLOCK_THREAD_CPUTIME_ID, &now);
@@ -249,6 +314,7 @@ int main(int argc, char** argv) {
 	else {
 		identity(false); identity(true); continuity(false); continuity(true);
 		formatContinuity(); activationAtOnset(false); activationAtOnset(true);
+		explicitLengthOffsets(); delayedHeldFill();
 		std::cout << "module_timing_test: byte-identical main outputs and offset transitions passed\n";
 	}
 }

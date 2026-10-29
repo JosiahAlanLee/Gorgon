@@ -1,0 +1,2386 @@
+[
+  {
+    "name": "fraction",
+    "score": {
+      "version": 1,
+      "bpm": 120,
+      "key": 2,
+      "sound": false,
+      "loop": true,
+      "pattern": 0,
+      "scene": 0,
+      "modes": {
+        "program": "o0",
+        "aux": "o1"
+      },
+      "mutes": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "patterns": [
+        {
+          "name": "A01",
+          "rate": 1,
+          "bar": 16,
+          "bars": 1,
+          "lanes": [
+            {
+              "len": 16,
+              "cells": [
+                {
+                  "note": "C-4",
+                  "vel": 100,
+                  "len": 0.333
+                },
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            }
+          ],
+          "keys": {
+            "z": [],
+            "roll": [],
+            "feedback": []
+          },
+          "easing": {
+            "z": "smooth",
+            "roll": "smooth",
+            "feedback": "smooth"
+          },
+          "scenes": []
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "format": "hydrapy-tracker-3",
+      "bindings": {
+        "z": "Dolly Z",
+        "roll": "Roll",
+        "feedback": "Feedback"
+      },
+      "chain": [
+        0
+      ],
+      "seed": 0,
+      "lanes": [
+        {
+          "name": "Lane 1"
+        },
+        {
+          "name": "Lane 2"
+        },
+        {
+          "name": "Lane 3"
+        },
+        {
+          "name": "Lane 4"
+        },
+        {
+          "name": "Lane 5"
+        },
+        {
+          "name": "Lane 6"
+        }
+      ],
+      "sounds": [
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        }
+      ]
+    },
+    "transport": {
+      "tick": 0
+    },
+    "u0": 0,
+    "u1": 1,
+    "candidates": [
+      {
+        "id": "0.0.0",
+        "at": 0,
+        "lane": 0,
+        "duration": 159.84,
+        "len": 0.333,
+        "note": "C-4",
+        "vel": 100,
+        "locks": null,
+        "fires": true,
+        "why": null,
+        "origin": {
+          "play": 0,
+          "entry": null,
+          "pattern": 0,
+          "row": 0,
+          "lane_row": 0,
+          "cell": 0,
+          "sub": 0,
+          "of": 1,
+          "bar": 0,
+          "cond": null,
+          "via": []
+        }
+      }
+    ]
+  },
+  {
+    "name": "fraction-rows",
+    "score": {
+      "version": 1,
+      "bpm": 120,
+      "key": 2,
+      "sound": false,
+      "loop": true,
+      "pattern": 0,
+      "scene": 0,
+      "modes": {
+        "program": "o0",
+        "aux": "o1"
+      },
+      "mutes": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "patterns": [
+        {
+          "name": "A01",
+          "rate": 1,
+          "bar": 16,
+          "bars": 1,
+          "lanes": [
+            {
+              "len": 16,
+              "cells": [
+                {
+                  "note": "C-4",
+                  "vel": 100,
+                  "len": 2.375
+                },
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            }
+          ],
+          "keys": {
+            "z": [],
+            "roll": [],
+            "feedback": []
+          },
+          "easing": {
+            "z": "smooth",
+            "roll": "smooth",
+            "feedback": "smooth"
+          },
+          "scenes": []
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "format": "hydrapy-tracker-3",
+      "bindings": {
+        "z": "Dolly Z",
+        "roll": "Roll",
+        "feedback": "Feedback"
+      },
+      "chain": [
+        0
+      ],
+      "seed": 0,
+      "lanes": [
+        {
+          "name": "Lane 1"
+        },
+        {
+          "name": "Lane 2"
+        },
+        {
+          "name": "Lane 3"
+        },
+        {
+          "name": "Lane 4"
+        },
+        {
+          "name": "Lane 5"
+        },
+        {
+          "name": "Lane 6"
+        }
+      ],
+      "sounds": [
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        }
+      ]
+    },
+    "transport": {
+      "tick": 0
+    },
+    "u0": 0,
+    "u1": 1,
+    "candidates": [
+      {
+        "id": "0.0.0",
+        "at": 0,
+        "lane": 0,
+        "duration": 1140.0,
+        "len": 2.375,
+        "note": "C-4",
+        "vel": 100,
+        "locks": null,
+        "fires": true,
+        "why": null,
+        "origin": {
+          "play": 0,
+          "entry": null,
+          "pattern": 0,
+          "row": 0,
+          "lane_row": 0,
+          "cell": 0,
+          "sub": 0,
+          "of": 1,
+          "bar": 0,
+          "cond": null,
+          "via": []
+        }
+      }
+    ]
+  },
+  {
+    "name": "rate-independent",
+    "score": {
+      "version": 1,
+      "bpm": 120,
+      "key": 2,
+      "sound": false,
+      "loop": true,
+      "pattern": 0,
+      "scene": 0,
+      "modes": {
+        "program": "o0",
+        "aux": "o1"
+      },
+      "mutes": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "patterns": [
+        {
+          "name": "A01",
+          "rate": 2,
+          "bar": 16,
+          "bars": 1,
+          "lanes": [
+            {
+              "len": 16,
+              "cells": [
+                {
+                  "note": "C-4",
+                  "vel": 100,
+                  "len": 2.375
+                },
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            }
+          ],
+          "keys": {
+            "z": [],
+            "roll": [],
+            "feedback": []
+          },
+          "easing": {
+            "z": "smooth",
+            "roll": "smooth",
+            "feedback": "smooth"
+          },
+          "scenes": []
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "format": "hydrapy-tracker-3",
+      "bindings": {
+        "z": "Dolly Z",
+        "roll": "Roll",
+        "feedback": "Feedback"
+      },
+      "chain": [
+        0
+      ],
+      "seed": 0,
+      "lanes": [
+        {
+          "name": "Lane 1"
+        },
+        {
+          "name": "Lane 2"
+        },
+        {
+          "name": "Lane 3"
+        },
+        {
+          "name": "Lane 4"
+        },
+        {
+          "name": "Lane 5"
+        },
+        {
+          "name": "Lane 6"
+        }
+      ],
+      "sounds": [
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        }
+      ]
+    },
+    "transport": {
+      "tick": 0
+    },
+    "u0": 0,
+    "u1": 1,
+    "candidates": [
+      {
+        "id": "0.0.0",
+        "at": 0,
+        "lane": 0,
+        "duration": 1140.0,
+        "len": 2.375,
+        "note": "C-4",
+        "vel": 100,
+        "locks": null,
+        "fires": true,
+        "why": null,
+        "origin": {
+          "play": 0,
+          "entry": null,
+          "pattern": 0,
+          "row": 0,
+          "lane_row": 0,
+          "cell": 0,
+          "sub": 0,
+          "of": 1,
+          "bar": 0,
+          "cond": null,
+          "via": []
+        }
+      }
+    ]
+  },
+  {
+    "name": "clip-ply",
+    "score": {
+      "version": 1,
+      "bpm": 120,
+      "key": 2,
+      "sound": false,
+      "loop": true,
+      "pattern": 0,
+      "scene": 0,
+      "modes": {
+        "program": "o0",
+        "aux": "o1"
+      },
+      "mutes": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "patterns": [
+        {
+          "name": "A01",
+          "rate": 2,
+          "bar": 16,
+          "bars": 1,
+          "lanes": [
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                {
+                  "note": "C-4",
+                  "vel": 100,
+                  "len": 2.5
+                },
+                null
+              ],
+              "transforms": [
+                {
+                  "kind": "ply",
+                  "n": 2
+                }
+              ]
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            }
+          ],
+          "keys": {
+            "z": [],
+            "roll": [],
+            "feedback": []
+          },
+          "easing": {
+            "z": "smooth",
+            "roll": "smooth",
+            "feedback": "smooth"
+          },
+          "scenes": []
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "format": "hydrapy-tracker-3",
+      "bindings": {
+        "z": "Dolly Z",
+        "roll": "Roll",
+        "feedback": "Feedback"
+      },
+      "chain": [
+        0
+      ],
+      "seed": 0,
+      "lanes": [
+        {
+          "name": "Lane 1"
+        },
+        {
+          "name": "Lane 2"
+        },
+        {
+          "name": "Lane 3"
+        },
+        {
+          "name": "Lane 4"
+        },
+        {
+          "name": "Lane 5"
+        },
+        {
+          "name": "Lane 6"
+        }
+      ],
+      "sounds": [
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        }
+      ]
+    },
+    "transport": {
+      "tick": 0
+    },
+    "u0": 3360,
+    "u1": 3840,
+    "candidates": [
+      {
+        "id": "0.0.14.0",
+        "at": 3360,
+        "lane": 0,
+        "duration": 480,
+        "len": 2.5,
+        "note": "C-4",
+        "vel": 100,
+        "locks": null,
+        "fires": true,
+        "why": null,
+        "origin": {
+          "play": 0,
+          "entry": null,
+          "pattern": 0,
+          "row": 14,
+          "lane_row": 14,
+          "cell": 14,
+          "sub": 0,
+          "of": 2,
+          "bar": 0,
+          "cond": null,
+          "via": [
+            "/0"
+          ]
+        }
+      },
+      {
+        "id": "0.0.14.1",
+        "at": 3480,
+        "lane": 0,
+        "duration": 360,
+        "len": 2.5,
+        "note": "C-4",
+        "vel": 100,
+        "locks": null,
+        "fires": true,
+        "why": null,
+        "origin": {
+          "play": 0,
+          "entry": null,
+          "pattern": 0,
+          "row": 14,
+          "lane_row": 14,
+          "cell": 14,
+          "sub": 1,
+          "of": 2,
+          "bar": 0,
+          "cond": null,
+          "via": [
+            "/0"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "name": "seek-held",
+    "score": {
+      "version": 1,
+      "bpm": 120,
+      "key": 2,
+      "sound": false,
+      "loop": true,
+      "pattern": 0,
+      "scene": 0,
+      "modes": {
+        "program": "o0",
+        "aux": "o1"
+      },
+      "mutes": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "patterns": [
+        {
+          "name": "A01",
+          "rate": 1,
+          "bar": 16,
+          "bars": 1,
+          "lanes": [
+            {
+              "len": 16,
+              "cells": [
+                {
+                  "note": "C-4",
+                  "vel": 100,
+                  "len": 12
+                },
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            }
+          ],
+          "keys": {
+            "z": [],
+            "roll": [],
+            "feedback": []
+          },
+          "easing": {
+            "z": "smooth",
+            "roll": "smooth",
+            "feedback": "smooth"
+          },
+          "scenes": []
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "format": "hydrapy-tracker-3",
+      "bindings": {
+        "z": "Dolly Z",
+        "roll": "Roll",
+        "feedback": "Feedback"
+      },
+      "chain": [
+        0
+      ],
+      "seed": 0,
+      "lanes": [
+        {
+          "name": "Lane 1"
+        },
+        {
+          "name": "Lane 2"
+        },
+        {
+          "name": "Lane 3"
+        },
+        {
+          "name": "Lane 4"
+        },
+        {
+          "name": "Lane 5"
+        },
+        {
+          "name": "Lane 6"
+        }
+      ],
+      "sounds": [
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        }
+      ]
+    },
+    "transport": {
+      "tick": 4800
+    },
+    "u0": -7680,
+    "u1": 1,
+    "candidates": [
+      {
+        "id": "0.0.0",
+        "at": -4800,
+        "lane": 0,
+        "duration": 5760,
+        "len": 12,
+        "note": "C-4",
+        "vel": 100,
+        "locks": null,
+        "fires": true,
+        "why": null,
+        "origin": {
+          "play": 0,
+          "entry": null,
+          "pattern": 0,
+          "row": 0,
+          "lane_row": 0,
+          "cell": 0,
+          "sub": 0,
+          "of": 1,
+          "bar": 0,
+          "cond": null,
+          "via": []
+        }
+      }
+    ]
+  },
+  {
+    "name": "no-wrap-tie",
+    "score": {
+      "version": 1,
+      "bpm": 120,
+      "key": 2,
+      "sound": false,
+      "loop": true,
+      "pattern": 0,
+      "scene": 0,
+      "modes": {
+        "program": "o0",
+        "aux": "o1"
+      },
+      "mutes": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "patterns": [
+        {
+          "name": "A01",
+          "rate": 1,
+          "bar": 16,
+          "bars": 1,
+          "lanes": [
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                {
+                  "note": "C-4",
+                  "vel": 100,
+                  "len": 16
+                }
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            },
+            {
+              "len": 16,
+              "cells": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "transforms": []
+            }
+          ],
+          "keys": {
+            "z": [],
+            "roll": [],
+            "feedback": []
+          },
+          "easing": {
+            "z": "smooth",
+            "roll": "smooth",
+            "feedback": "smooth"
+          },
+          "scenes": []
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "format": "hydrapy-tracker-3",
+      "bindings": {
+        "z": "Dolly Z",
+        "roll": "Roll",
+        "feedback": "Feedback"
+      },
+      "chain": [
+        0
+      ],
+      "seed": 0,
+      "lanes": [
+        {
+          "name": "Lane 1"
+        },
+        {
+          "name": "Lane 2"
+        },
+        {
+          "name": "Lane 3"
+        },
+        {
+          "name": "Lane 4"
+        },
+        {
+          "name": "Lane 5"
+        },
+        {
+          "name": "Lane 6"
+        }
+      ],
+      "sounds": [
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        },
+        {
+          "machine": null,
+          "params": {}
+        }
+      ]
+    },
+    "transport": {
+      "tick": 0
+    },
+    "u0": -7680,
+    "u1": 0,
+    "candidates": []
+  }
+]
