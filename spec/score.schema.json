@@ -1014,9 +1014,14 @@
         },
         "cond": {
           "$ref": "#/$defs/cond"
+        },
+        "len": {
+          "type": "number",
+          "minimum": 0.25,
+          "maximum": 16
         }
       },
-      "description": "A version-3 cell: null, or note and velocity with optional locks and cond."
+      "description": "A version-3 cell: null, or note and velocity with optional len (0.25–16 base rows), locks and cond."
     },
     "transformLeaf": {
       "type": "object",

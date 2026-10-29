@@ -3,6 +3,15 @@
 Newest first. Each entry names the HydraPy commit and Rack module version it
 describes.
 
+## 2026-10-28 — Version 3 explicit note length
+
+HydraPy `aef7dfe9e3b5f379109f0fa6baed1cc67132785e` (PR #80 head) · Rack module
+`GorgonBridge` 2.4.2 (unreleased). The hold window is now 7680 ticks,
+superseding the legacy-only bound below.
+
+Optional cell `len` (0.25–16 base rows), fractional clipped durations, held-note recovery, monophonic replacement and 1 ms retriggers. Legacy cells retain existing gates.
+
+
 ## 2026-10-28 — bounded version-3 lookback and evaluator boundary coverage
 
 HydraPy `4ca90cd08cca538352b36e643629f8d0718d7477` (pin unchanged) · Rack module

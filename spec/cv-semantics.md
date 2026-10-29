@@ -81,6 +81,19 @@ For lane `n` at the playhead's cell:
 
 While a lane is muted or the cell is silent, nothing below updates for that lane.
 
+### Explicit note length
+
+An explicit-length gate ignores Gate length and is high over the candidate
+span. Each lane is monophonic: a later firing hit replaces its earlier hit,
+and the earlier hit never resumes. If either hit has explicit length and
+the preceding candidate's full span reaches the new onset, hold the output
+low for the first 1 ms after the new onset, then high for the remaining
+gate span. This applies at shared ends and to overlaps and must survive
+callback boundaries. Seeking into an explicit held note restores its
+remaining span without extending it via a landing pulse. Transport changes
+retain their existing 1 ms low when interrupting an open output. Legacy
+lengths and landing pulses retain their existing behavior.
+
 ## Signals
 
 | Signal | Value |
