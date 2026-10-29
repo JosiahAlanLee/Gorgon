@@ -20,6 +20,7 @@
 #include "engine/ByteBusInput.hpp"
 #include "engine/ByteBusOutput.hpp"
 #include "AudioInput.hpp"
+#include "engine/LaneTiming.hpp"
 
 namespace L = gorgon_layout;
 
@@ -43,6 +44,13 @@ struct Gorgon : Module {
 	gorgon::Follower follower;
 	gorgon::Options options;
 	gorgon::OutputState outputState;
+	std::atomic<float> laneOffsetMs[6]{};
+	gorgon::OutputState laneLegacy[6];
+	gorgon::v3::EngineV3 laneEngine[6];
+	gorgon_sound::Sound laneSound[6];
+	int64_t laneRevision = -1;
+	bool lanesWereMoving = false;
+	double laneElapsed = 0.;
 	// Version 3: elapsed ticks instead of a cycle beat, and the candidates' engine.
 	gorgon::v3::TickFollower tickFollower;
 	gorgon::v3::EngineV3 engine3;
@@ -134,9 +142,9 @@ struct Gorgon : Module {
 		constexpr int lanes = int(sizeof(packet.lanes) / sizeof(packet.lanes[0]));
 		for (int lane = 0; lane < lanes; ++lane) {
 			if (v3)
-				packet.lanes[lane].sound = engine3.sound(*snapshot.score3, lane);
+				packet.lanes[lane].sound = laneSound[lane];
 			else if (lane < gorgon::AUDIO_LANES)
-				packet.lanes[lane].sound = gorgon::soundAt(snapshot.score, pattern, lane, row);
+				packet.lanes[lane].sound = laneSound[lane];
 			packet.lanes[lane].gate = o.gate[lane];
 			packet.lanes[lane].velocity = o.velocity[lane];
 			packet.lanes[lane].pitch = o.linkPitch[lane];
@@ -177,6 +185,9 @@ struct Gorgon : Module {
 		shownBusIn.store(busWord, std::memory_order_relaxed);
 
 		bool moving = haveSnapshot && snapshot.playhead.moving() && (v3 ? tickFollower.locked : follower.locked);
+		if (!moving || !lanesWereMoving || laneRevision != snapshot.playhead.transportRevision) laneElapsed = 0.;
+		lanesWereMoving = moving;
+		laneRevision = snapshot.playhead.transportRevision;
 		gorgon::Outputs o;
 		int pattern = 0, row = 0;
 		if (v3) {
@@ -204,6 +215,15 @@ struct Gorgon : Module {
 				transport = busIn.overlay(transport);
 			engine3.frame = args.frame;
 			o = engine3.render(score, transport, moving, tickFollower.u, h.transportRevision, options, args.sampleRate);
+			for (int l = 0; l < 6; ++l) {
+				if (!wasV3 && rendered) laneEngine[l].continueFrom(laneLegacy[l]);
+				double u = gorgon::lanePosition(tickFollower.u, score.bpm, gorgon::v3::TICKS, laneOffsetMs[l].load());
+				laneEngine[l].frame = args.frame;
+				auto shifted = laneEngine[l].render(score, transport, moving, u, h.transportRevision, options, args.sampleRate);
+				o.gate[l] = shifted.gate[l]; o.velocity[l] = shifted.velocity[l];
+				o.pitch[l] = shifted.pitch[l]; o.linkPitch[l] = shifted.linkPitch[l];
+				laneSound[l] = laneEngine[l].sound(score, l);
+			}
 			if (tick) {
 				gorgon::v3::Position p = gorgon::v3::position(score, snapshot.playhead.startTick, tickFollower.u);
 				int shown = score.entries[size_t(p.entry)];
@@ -219,10 +239,24 @@ struct Gorgon : Module {
 				engine3.continueInto(outputState);
 			o = outputState.render(snapshot.score, moving, follower.beat, snapshot.playhead.transportRevision, options,
 			                       args.sampleTime, snapshot.playhead.anchorBeat);
+			for (int l = 0; l < gorgon::AUDIO_LANES; ++l) {
+				if (wasV3 && rendered) laneEngine[l].continueInto(laneLegacy[l]);
+				float ms = laneOffsetMs[l].load();
+				bool waiting = moving && ms > 0.f && laneElapsed + 1e-9 < ms / 1000.;
+				double beat = snapshot.score.wrap(gorgon::lanePosition(follower.beat, snapshot.score.bpm, 1., ms));
+				auto shifted = laneLegacy[l].render(snapshot.score, moving && !waiting, beat, snapshot.playhead.transportRevision,
+				                                    options, args.sampleTime, snapshot.playhead.anchorBeat);
+				o.gate[l] = shifted.gate[l]; o.velocity[l] = shifted.velocity[l];
+				o.pitch[l] = shifted.pitch[l]; o.linkPitch[l] = shifted.linkPitch[l];
+				int p = std::clamp(int(beat / gorgon::BEATS_PER_PATTERN), 0, gorgon::PATTERNS - 1);
+				int r = std::clamp(int(std::fmod(std::max(0., beat), double(gorgon::BEATS_PER_PATTERN)) * 4.), 0, gorgon::ROWS - 1);
+				laneSound[l] = waiting ? snapshot.score.sounds[l] : gorgon::soundAt(snapshot.score, p, l, r);
+			}
 			pattern = std::clamp(int(follower.beat / gorgon::BEATS_PER_PATTERN), 0, gorgon::PATTERNS - 1);
 			row = std::clamp(int(std::fmod(std::max(0., follower.beat), double(gorgon::BEATS_PER_PATTERN)) * 4.), 0, gorgon::ROWS - 1);
 			shownBeat.store(float(follower.beat), std::memory_order_relaxed);
 		}
+		if (moving) laneElapsed += args.sampleTime;
 		wasV3 = v3;
 		rendered = true;
 		shownV3.store(v3, std::memory_order_relaxed);
@@ -291,6 +325,9 @@ struct Gorgon : Module {
 
 	json_t* dataToJson() override {
 		json_t* root = json_object();
+		json_t* offsets = json_array();
+		for (auto& ms : laneOffsetMs) json_array_append_new(offsets, json_real(ms.load()));
+		json_object_set_new(root, "laneOffsetMs", offsets);
 		json_t* b = json_array();
 		for (int i = 0; i < gorgon::INPUTS; i++)
 			json_array_append_new(b, json_string(bridge.binding(i).c_str()));
@@ -309,6 +346,9 @@ struct Gorgon : Module {
 	}
 
 	void dataFromJson(json_t* root) override {
+		json_t* offsets = json_object_get(root, "laneOffsetMs");
+		for (int l = 0; l < 6; ++l)
+			laneOffsetMs[l] = gorgon::laneOffset(float(json_number_value(json_array_get(offsets, l))));
 		if (json_t* a = json_object_get(root, "audio")) audioInput.fromJson(a);
 		if (json_t* h = json_object_get(root, "outputHigh")) outputHigh = json_number_value(h) == 5. ? 5.f : 10.f;
 		json_t* b = json_object_get(root, "bindings");
@@ -384,6 +424,26 @@ struct GorgonDisplay : TransparentWidget {
 	}
 };
 
+struct LaneOffsetSlider : ui::Slider {
+	struct Offset : Quantity {
+		std::atomic<float>* value = nullptr;
+		int lane = 0;
+		void setValue(float ms) override { *value = gorgon::laneOffset(ms); }
+		float getValue() override { return value->load(); }
+		float getMinValue() override { return -100.f; }
+		float getMaxValue() override { return 100.f; }
+		float getDefaultValue() override { return 0.f; }
+		int getDisplayPrecision() override { return 5; }
+		std::string getLabel() override { return string::f("Lane %d", lane + 1); }
+		std::string getUnit() override { return " ms"; }
+	} offset;
+	LaneOffsetSlider(std::atomic<float>* value, int lane) {
+		offset.value = value; offset.lane = lane;
+		quantity = &offset;
+		box.size.x = 250.f;
+	}
+};
+
 struct GorgonWidget : ModuleWidget {
 	GorgonWidget(Gorgon* module) {
 		setModule(module);
@@ -448,6 +508,10 @@ struct GorgonWidget : ModuleWidget {
 		menu->addChild(createSubmenuItem("CV output levels", string::f("%.0f V", module->outputHigh.load()), [=](Menu* sub) {
 			for (float level : {5.f, 10.f}) sub->addChild(createCheckMenuItem(level == 5.f ? "5 V (match direct CV)" : "10 V (Rack default)", "",
 				[=]{return module->outputHigh.load() == level;}, [=]{module->outputHigh = level;}));
+		}));
+		menu->addChild(createSubmenuItem("Lane timing offsets (ms)", "positive delays", [=](Menu* sub) {
+			for (int l = 0; l < 6; ++l) sub->addChild(new LaneOffsetSlider(&module->laneOffsetMs[l], l));
+			sub->addChild(createMenuLabel("Advance limited to 100 ms; set while stopped"));
 		}));
 		bool v3 = module->shownV3.load();
 		menu->addChild(createSubmenuItem("BUS OUT source",

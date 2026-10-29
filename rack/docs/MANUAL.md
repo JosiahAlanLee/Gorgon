@@ -379,3 +379,33 @@ The Rack module contains only the public BSD sound-link ABI; firmware and the
 AGPL emulation core live in the separate receiver plugin. See
 [`../../spec/sound-locks.md`](../../spec/sound-locks.md) and
 [`../../spec/sound-link.hpp`](../../spec/sound-link.hpp) for the contract.
+
+### Per-lane latency compensation
+
+The context menu's **Lane timing offsets (ms)** sets lanes 1–6 independently with
+continuous millisecond sliders (double-click resets to zero). Positive values delay a lane; negative values advance it. This is
+opposite to the global OFFSET knob, whose positive direction advances the whole
+module. Both settings combine. Gates (individual and polyphonic), held velocity,
+pitch and the adjacent sound receiver's events/locks move together. Clock,
+RESET, RUN, automation, BUS OUT and incoming optical/breaks audio keep their
+original timing.
+
+Offsets are saved as the six-number `data.laneOffsetMs` array in module JSON;
+fractional milliseconds can be saved there. Missing values default to zero,
+nonfinite values become zero, and values clamp to −100…+100 ms. Advances use the
+score evaluator's existing lookahead: they cannot emit a hit before playback
+starts or predict a future live edit, mute or transport command. A discontinuous
+offset edit during playback can skip/retrigger a hit; set offsets while stopped.
+The score and bridge protocol are unchanged.
+
+Use `gorgon measure-latency` with a probe patch that routes the mix to capture
+channels 1/2 and each lane's gate and isolated voice to channels 3/4, 5/6, …,
+13/14. The command plays spaced C4 probes on private dummy JACK, measures the
+steepest smoothed RMS envelope rise in the 150 ms after each gate, and writes
+`latency.json`. It requires three audible hits per lane and reports the median
+and 10th/90th percentiles. Its `laneOffsetMs` delays faster voices to the slowest
+measured lane; copy this array into the module's JSON while stopped, then reload.
+Clear existing lane offsets and external gate delays before measuring. The tool
+measures a particular voice/patch, buffer size and sample rate; repeat after any
+of those change. Ping's round-trip measurement is useful for physical paths but
+cannot separate the gate-to-sound latency of an individual voice.
