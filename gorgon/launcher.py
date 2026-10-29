@@ -130,14 +130,14 @@ def discovery(config):
     return json.loads((run_dir(config) / 'studio.json').read_text())
 
 
-def api(info, endpoint, body=None):
+def api(info, endpoint, body=None, timeout=3):
     parsed = urlsplit(info['url'])
     if parsed.scheme != 'http' or parsed.hostname != '127.0.0.1' or not parsed.port or parsed.path not in ('', '/'):
         raise LaunchError('Studio advertised an invalid local URL')
     request = urllib.request.Request(info['url'] + '/api/' + endpoint,
                                      headers={'X-Hydrapy-Token': info['token'], 'Content-Type': 'application/json'},
                                      data=None if body is None else json.dumps(body, allow_nan=False).encode())
-    with urllib.request.urlopen(request, timeout=3) as response:
+    with urllib.request.urlopen(request, timeout=timeout) as response:
         return json.loads(response.read())
 
 

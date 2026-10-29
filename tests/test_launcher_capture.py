@@ -169,3 +169,21 @@ def test_private_servers_reuse_names_so_jack_reclaims_their_slots():
     every = {'gorgon_capture'} | {f'gorgon_capture_{k}' for k in range(2, 9)}
     with pytest.raises(LaunchError, match='Eight private'):
         capture.private_server(fake(every))
+
+
+def test_studio_api_takes_a_longer_timeout_for_slow_calls(monkeypatch):
+    """Loading a big set's score prewarms every scene; the default 3 s killed a 23-scene capture."""
+    from gorgon import launcher
+    seen = []
+    class Response:
+        def __enter__(self):
+            return self
+        def __exit__(self, *_):
+            return False
+        def read(self):
+            return b'{}'
+    monkeypatch.setattr(launcher.urllib.request, 'urlopen', lambda request, timeout: seen.append(timeout) or Response())
+    info = dict(url='http://127.0.0.1:8000', token='t')
+    launcher.api(info, 'tracker')
+    launcher.api(info, 'tracker_score', {}, timeout=120)
+    assert seen == [3, 120]
