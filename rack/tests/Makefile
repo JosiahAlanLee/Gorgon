@@ -46,8 +46,10 @@ e2e: studio_probe
 	python3 studio_e2e.py ./studio_probe
 module_test: module_test.cpp ../src/Gorgon.cpp ../src/AudioInput.hpp ../src/Layout.hpp $(ENGINE)
 	$(CXX) $(CXXFLAGS) -pthread -I$(RACK_DIR)/include -I$(RACK_DIR)/dep/include -I../src $< -L$(RACK_DIR) -Wl,-rpath,$(abspath $(RACK_DIR)) -lRack $(RACK_TEST_LDFLAGS) -o $@
+module_timing_test: module_timing_test.cpp ../src/Gorgon.cpp ../src/AudioInput.hpp ../src/Layout.hpp $(ENGINE)
+	$(CXX) $(CXXFLAGS) -pthread -I$(RACK_DIR)/include -I$(RACK_DIR)/dep/include -I../src $< -L$(RACK_DIR) -Wl,-rpath,$(abspath $(RACK_DIR)) -lRack $(RACK_TEST_LDFLAGS) -o $@
 ping_module_test: ping_module_test.cpp ../src/Ping.cpp ../src/PingLayout.hpp $(ENGINE)
 	$(CXX) $(CXXFLAGS) -pthread -I$(RACK_DIR)/include -I$(RACK_DIR)/dep/include -I../src $< -L$(RACK_DIR) -Wl,-rpath,$(abspath $(RACK_DIR)) -lRack $(RACK_TEST_LDFLAGS) -o $@
 clean:
-	rm -f ping_test ping_tsan ping_module_test sound_test engine_test evaluator_test evaluator_asan bridge_test bridge_tsan bridge_asan engine_asan studio_probe module_test pcm_test pcm_tsan bytebus_test bytebus_asan
+	rm -f ping_test ping_tsan ping_module_test sound_test engine_test evaluator_test evaluator_asan bridge_test bridge_tsan bridge_asan engine_asan studio_probe module_test module_timing_test pcm_test pcm_tsan bytebus_test bytebus_asan
 .PHONY: all test sanitize e2e clean

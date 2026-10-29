@@ -48,6 +48,7 @@ struct Gorgon : Module {
 	gorgon::OutputState laneLegacy[6];
 	gorgon::v3::EngineV3 laneEngine[6];
 	gorgon_sound::Sound laneSound[6];
+	unsigned shiftedLanes = 0; // which private engines rendered the previous sample
 	int64_t laneRevision = -1;
 	bool lanesWereMoving = false;
 	double laneElapsed = 0.;
@@ -188,6 +189,12 @@ struct Gorgon : Module {
 		if (!moving || !lanesWereMoving || laneRevision != snapshot.playhead.transportRevision) laneElapsed = 0.;
 		lanesWereMoving = moving;
 		laneRevision = snapshot.playhead.transportRevision;
+		float laneMs[6] = {};
+		unsigned shiftedMask = 0;
+		for (int l = 0; l < (v3 ? 6 : gorgon::AUDIO_LANES); ++l) {
+			laneMs[l] = laneOffsetMs[l].load(std::memory_order_relaxed);
+			if (laneMs[l] != 0.f) shiftedMask |= 1u << l;
+		}
 		gorgon::Outputs o;
 		int pattern = 0, row = 0;
 		if (v3) {
@@ -213,11 +220,32 @@ struct Gorgon : Module {
 			// The module that holds the layer plays its own record; others play Studio's.
 			if ((busIn.connected || bridge.busOutstanding()) && !bridge.busRefused())
 				transport = busIn.overlay(transport);
+			// Seed only on activation, BEFORE main hears this sample's new note. Starting
+			// from fresh state loses held CV; starting from main's post-render state can
+			// leak a just-triggered note into a delayed lane. Rebuild candidates because
+			// a positive delay can need a hit main has already expired. Never copy trace.
+			if (shiftedMask) for (int l = 0; l < 6; ++l) {
+				if (!(shiftedMask & (1u << l))) continue;
+				if (!(shiftedLanes & (1u << l))) {
+					if (rendered) {
+						laneEngine[l] = engine3;
+						laneEngine[l].begun = false;
+						laneEngine[l].trace = nullptr;
+					}
+				}
+				else if (!wasV3 && rendered) {
+					laneEngine[l] = gorgon::v3::EngineV3();
+					laneEngine[l].continueFrom(laneLegacy[l]);
+				}
+			}
 			engine3.frame = args.frame;
 			o = engine3.render(score, transport, moving, tickFollower.u, h.transportRevision, options, args.sampleRate);
 			for (int l = 0; l < 6; ++l) {
-				if (!wasV3 && rendered) laneEngine[l].continueFrom(laneLegacy[l]);
-				double u = gorgon::lanePosition(tickFollower.u, score.bpm, gorgon::v3::TICKS, laneOffsetMs[l].load());
+				if (!(shiftedMask & (1u << l))) {
+					laneSound[l] = engine3.sound(score, l);
+					continue; // main already supplies this lane: no private render or copy
+				}
+				double u = gorgon::lanePosition(tickFollower.u, score.bpm, gorgon::v3::TICKS, laneMs[l]);
 				laneEngine[l].frame = args.frame;
 				auto shifted = laneEngine[l].render(score, transport, moving, u, h.transportRevision, options, args.sampleRate);
 				o.gate[l] = shifted.gate[l]; o.velocity[l] = shifted.velocity[l];
@@ -237,11 +265,26 @@ struct Gorgon : Module {
 		else {
 			if (wasV3 && rendered)
 				engine3.continueInto(outputState);
+			if (shiftedMask) for (int l = 0; l < gorgon::AUDIO_LANES; ++l) {
+				if (!(shiftedMask & (1u << l))) continue;
+				if (!(shiftedLanes & (1u << l))) {
+					if (rendered) laneLegacy[l] = outputState;
+				}
+				else if (wasV3 && rendered) {
+					laneLegacy[l] = gorgon::OutputState();
+					laneEngine[l].continueInto(laneLegacy[l]);
+				}
+			}
 			o = outputState.render(snapshot.score, moving, follower.beat, snapshot.playhead.transportRevision, options,
 			                       args.sampleTime, snapshot.playhead.anchorBeat);
+			pattern = std::clamp(int(follower.beat / gorgon::BEATS_PER_PATTERN), 0, gorgon::PATTERNS - 1);
+			row = std::clamp(int(std::fmod(std::max(0., follower.beat), double(gorgon::BEATS_PER_PATTERN)) * 4.), 0, gorgon::ROWS - 1);
 			for (int l = 0; l < gorgon::AUDIO_LANES; ++l) {
-				if (wasV3 && rendered) laneEngine[l].continueInto(laneLegacy[l]);
-				float ms = laneOffsetMs[l].load();
+				if (!(shiftedMask & (1u << l))) {
+					laneSound[l] = gorgon::soundAt(snapshot.score, pattern, l, row);
+					continue;
+				}
+				float ms = laneMs[l];
 				bool waiting = moving && ms > 0.f && laneElapsed + 1e-9 < ms / 1000.;
 				double beat = snapshot.score.wrap(gorgon::lanePosition(follower.beat, snapshot.score.bpm, 1., ms));
 				auto shifted = laneLegacy[l].render(snapshot.score, moving && !waiting, beat, snapshot.playhead.transportRevision,
@@ -252,10 +295,12 @@ struct Gorgon : Module {
 				int r = std::clamp(int(std::fmod(std::max(0., beat), double(gorgon::BEATS_PER_PATTERN)) * 4.), 0, gorgon::ROWS - 1);
 				laneSound[l] = waiting ? snapshot.score.sounds[l] : gorgon::soundAt(snapshot.score, p, l, r);
 			}
-			pattern = std::clamp(int(follower.beat / gorgon::BEATS_PER_PATTERN), 0, gorgon::PATTERNS - 1);
-			row = std::clamp(int(std::fmod(std::max(0., follower.beat), double(gorgon::BEATS_PER_PATTERN)) * 4.), 0, gorgon::ROWS - 1);
 			shownBeat.store(float(follower.beat), std::memory_order_relaxed);
 		}
+		// Deactivation needs no transfer into main: it kept advancing independently.
+		// In particular, never continueInto(main) here or zero offsets would inherit
+		// shifted held CV. Absent legacy lanes 5/6 are also marked dormant.
+		shiftedLanes = shiftedMask;
 		if (moving) laneElapsed += args.sampleTime;
 		wasV3 = v3;
 		rendered = true;
