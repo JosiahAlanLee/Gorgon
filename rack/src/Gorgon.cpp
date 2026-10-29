@@ -214,7 +214,12 @@ struct Gorgon : Module {
 					traceRing.write(gorgon::v3::busRecord(c.function, c.at, c.on, std::max<int64_t>(first, 0), c.revision, c.tick, c.entry,
 					                                      args.frame));
 			}
-			busIn.prune(std::max<int64_t>(first, 0), gorgon::v3::LONGEST_ROW);
+			// A newly activated delayed lane can recover an explicit note from
+			// HOLD_TICKS before its own frontier. Retain the maximum 100 ms
+			// delay even before activation, so its row-onset FILL remains available.
+			int64_t history = std::max(gorgon::v3::LONGEST_ROW, gorgon::v3::HOLD_TICKS) +
+			                  int64_t(std::ceil(100. * score.bpm * gorgon::v3::TICKS / 60000.));
+			busIn.prune(std::max<int64_t>(first, 0), history);
 			bridge.setBusFrontier(std::max<int64_t>(first, 0));
 			gorgon::v3::TransportV3 transport = snapshot.layer->transport(h.startTick);
 			// The module that holds the layer plays its own record; others play Studio's.

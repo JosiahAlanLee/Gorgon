@@ -5,7 +5,7 @@ describes.
 
 ## 2026-10-28 — Version 3 explicit note length
 
-HydraPy `aef7dfe9e3b5f379109f0fa6baed1cc67132785e` (PR #80 head) · Rack module
+HydraPy `aff7e4687e0c274fa9ec6807d5b410dd3ec51813` (PR #80 merge on main) · Rack module
 `GorgonBridge` 2.4.2 (unreleased). The hold window is now 7680 ticks,
 superseding the legacy-only bound below.
 
