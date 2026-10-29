@@ -211,8 +211,8 @@ Xvfb chooses a free display numbered 147 or higher for headless apps. `live`
 displays Studio fullscreen on the requested monitor and otherwise uses the same
 private capture path; it is silent by default too.
 
-`live --jack-server NAME` names the dummy server the command will create. It
-refuses a name already in use. To use a real device, start the desired native JACK
+`render --jack-server NAME` and `live --jack-server NAME` name the dummy server the
+command will create. Each refuses a name already in use. To use a real device, start the desired native JACK
 server yourself, then explicitly pass **both** `--hardware --jack-server NAME`.
 Only this mode attaches to an existing native server. With a PipeWire profile,
 `live --hardware` (without `--jack-server`) instead uses the launcher's `pw-jack`

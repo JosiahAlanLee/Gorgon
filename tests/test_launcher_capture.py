@@ -63,6 +63,10 @@ def test_cli_dispatch(tmp_path, monkeypatch):
                      '--output', str(tmp_path / 'out'), '--seconds', '3', '--link', 'a:out', 'b:in']) == 0
     assert calls[0]['link'] == [['a:out', 'b:in']]
     assert calls[0]['seconds'] == 3
+    assert calls[0]['jack_server'] is None
+    cli.main(['--config', str(tmp_path / 'profile.json'), 'render', 'score.json',
+              '--output', str(tmp_path / 'out'), '--jack-server', 'render_named'])
+    assert calls[1]['jack_server'] == 'render_named'
     with pytest.raises(SystemExit):
         cli.main(['live', 'score.json', '--output', str(tmp_path / 'out'), '--native-output', 'DP-5'])
 
