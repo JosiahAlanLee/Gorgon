@@ -12,6 +12,7 @@ import subprocess
 import sys
 import threading
 import time
+import urllib.error
 import urllib.request
 from urllib.parse import urlsplit
 import uuid
@@ -130,15 +131,24 @@ def discovery(config):
     return json.loads((run_dir(config) / 'studio.json').read_text())
 
 
-def api(info, endpoint, body=None):
+class ApiTimeout(LaunchError):
+    """A retryable Studio request timeout with endpoint context."""
+
+
+def api(info, endpoint, body=None, timeout=3):
     parsed = urlsplit(info['url'])
     if parsed.scheme != 'http' or parsed.hostname != '127.0.0.1' or not parsed.port or parsed.path not in ('', '/'):
         raise LaunchError('Studio advertised an invalid local URL')
     request = urllib.request.Request(info['url'] + '/api/' + endpoint,
                                      headers={'X-Hydrapy-Token': info['token'], 'Content-Type': 'application/json'},
                                      data=None if body is None else json.dumps(body, allow_nan=False).encode())
-    with urllib.request.urlopen(request, timeout=3) as response:
-        return json.loads(response.read())
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            return json.loads(response.read())
+    except (TimeoutError, urllib.error.URLError) as exc:
+        if isinstance(exc, urllib.error.URLError) and not isinstance(exc.reason, TimeoutError):
+            raise
+        raise ApiTimeout(f'Studio /api/{endpoint} timed out after {timeout:g} seconds') from exc
 
 
 def save_score(config):
@@ -345,7 +355,7 @@ def _wait(predicate, end, stopping, children, what):
             value = predicate()
             if value:
                 return value
-        except (OSError, ValueError, KeyError) as exc:
+        except (OSError, ValueError, KeyError, ApiTimeout) as exc:
             last = exc
         time.sleep(.15)
     if stopping.is_set():
@@ -470,8 +480,9 @@ def supervise(config, lock_fd, nonce):
         current = api(info, 'tracker')
         saved = root / '.hydrapy' / 'tracker.json'
         if saved.exists():
-            api(info, 'tracker_score', dict(document=json.loads(saved.read_text()), revision=current['revision']))
-        api(info, 'tracker_transport', dict(playing=False, enabled=True))
+            api(info, 'tracker_score', dict(document=json.loads(saved.read_text()), revision=current['revision']),
+                timeout=config['timeout'])
+        api(info, 'tracker_transport', dict(playing=False, enabled=True), timeout=config['timeout'])
         patch = starter.rack_patch(config, sound['client'], device)
         command = list(config['rack']['command'])
         command[0] = executable(command)

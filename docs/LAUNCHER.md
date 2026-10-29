@@ -231,6 +231,12 @@ Options include `--warmup` (seconds, default 6), `--jack-timeout` (ms, default
 Sample rate and period come from the profile's `audio.rate` and `audio.quantum`.
 JACK1's system library path is selected for these capture processes.
 
+Studio score uploads and transport changes use the profile's `timeout` (seconds),
+allowing scene compilation to finish. Video recording start/stop requests allow
+at least 120 seconds, or the profile timeout if longer. Readiness polls retain
+a three-second request timeout. A request timeout reports the Studio endpoint
+and its timeout.
+
 By default the mux aligns the recording request and audio callbacks using their
 monotonic timestamps. Studio/encoder startup adds an **unmeasured** delay; this is
 an estimate. For a patch whose centre visibly flashes with a particular lane,
