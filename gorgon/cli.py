@@ -118,6 +118,8 @@ def main(argv=None):
             command.add_argument('--audio-device', help='JACK playback client name (overrides profile audio.device)')
             command.add_argument('--hardware', action='store_true', help='explicitly permit the existing server to reach real devices')
             command.add_argument('--jack-server', help='private dummy server name, or existing server with --hardware')
+        elif name == 'render':
+            command.add_argument('--jack-server', help='private dummy server name')
     internal = sub.add_parser('_run')
     internal.add_argument('--lock-fd', type=int, required=True)
     internal.add_argument('--session-id', required=True)
