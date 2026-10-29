@@ -151,3 +151,21 @@ def test_doctor_reports_capture_tools_without_failing_start_users(monkeypatch):
     monkeypatch.setattr(cli.shutil if hasattr(cli, 'shutil') else __import__('shutil'), 'which', lambda name: None)
     detail = cli.capture_tools()
     assert detail.startswith('missing:') and 'jackd' in detail and 'gorgon-live[capture]' in detail
+
+
+def test_private_servers_reuse_names_so_jack_reclaims_their_slots():
+    """JACK1 frees a dead server's slot only for a server of the same name; a fresh name per run leaked one."""
+    from types import SimpleNamespace
+    class JackError(Exception):
+        pass
+    def fake(alive):
+        def client(name, no_start_server, servername):
+            if servername not in alive:
+                raise JackError(servername)
+            return SimpleNamespace(close=lambda: None)
+        return SimpleNamespace(Client=client, JackError=JackError)
+    assert capture.private_server(fake(set())) == 'gorgon_capture'                 # every run, the same name
+    assert capture.private_server(fake({'gorgon_capture', 'gorgon_capture_2'})) == 'gorgon_capture_3'
+    every = {'gorgon_capture'} | {f'gorgon_capture_{k}' for k in range(2, 9)}
+    with pytest.raises(LaunchError, match='Eight private'):
+        capture.private_server(fake(every))

@@ -201,7 +201,11 @@ gorgon --config rig.json live score.json --record --native-output DP-5 \
   --output /path/to/new-live-take --seconds 384
 ```
 
-`render` is offscreen, silent and isolated on a new private **dummy** JACK server.
+`render` is offscreen, silent and isolated on a new private **dummy** JACK server, `gorgon_capture` (or
+`gorgon_capture_2` … `_8` while another capture runs). The name is reused on purpose: JACK1 has eight server
+slots and frees a dead server's slot only for a server of the same name. Gorgon 0.1.1 and earlier used a new name
+per run and leaked a slot each time; if JACK reports "too many servers already active", pass one of the leaked
+names (listed in `/dev/shm/jack-$(id -u)/`) with `--jack-server` to reclaim it, or reboot.
 It runs at wall-clock speed, not faster than real time. It writes `capture.wav`
 (16-channel float), `mix.wav`, `stems/channel-03.wav` through `channel-16.wav`,
 `studio.mp4`, `render.mp4`, timing/xrun/discontinuity diagnostics in `capture.json`, per-block JACK and

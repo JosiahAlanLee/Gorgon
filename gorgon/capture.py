@@ -17,7 +17,6 @@ import sys
 import tarfile
 import threading
 import time
-import uuid
 
 from . import audio, launcher
 from .config import LaunchError, rack_user_dir, write_private
@@ -140,6 +139,20 @@ def write_patch(source, document, target):
         stream.write(zstandard.ZstdCompressor().compress(result.getvalue()))
 
 
+def private_server(jack):
+    """A private server name JACK1 can reuse. JACK1 has eight server slots and frees a dead server's slot only for
+    a new server of the same name, so a fresh name per run leaked a slot every time: after eight captures
+    nothing could start ("too many servers already active") until a reboot. Use gorgon_capture, or the next
+    number when another capture is running under it."""
+    for k in range(1, 9):
+        name = 'gorgon_capture' + ('' if k == 1 else f'_{k}')
+        try:
+            jack.Client('gorgon_name_probe', no_start_server=True, servername=name).close()
+        except jack.JackError:
+            return name            # nothing alive under this name: start it, reclaiming its slot if it died
+    raise LaunchError('Eight private Gorgon JACK servers are running; stop one first')
+
+
 def prepare_patch(document, studio_client, capture_client, explicit_sources=False, calibrate=False):
     document = copy.deepcopy(document)
     captures = []
@@ -247,7 +260,9 @@ def run(config, options):
         signal.signal(sig, lambda *_: stopped.set())
     private = not options.get('hardware')
     pipewire = not private and not options.get('jack_server') and config['audio']['backend'] == 'pipewire'
-    server = options.get('jack_server') or ('pipewire' if pipewire else 'gorgon_' + uuid.uuid4().hex[:12])
+    if private and not options.get('jack_server'):
+        jack.set_error_function(lambda message: None)      # each probe of a stopped name prints connect(2) noise
+    server = options.get('jack_server') or ('pipewire' if pipewire else private_server(jack))
     env = dict(os.environ, JACK_DEFAULT_SERVER=server, JACK_NO_START_SERVER='1',
                LD_LIBRARY_PATH='/lib/x86_64-linux-gnu', HYDRAPY_STUDIO_FILE=str(output / 'studio.json'))
     if pipewire:
