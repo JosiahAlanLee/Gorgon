@@ -96,5 +96,23 @@ mutate('v1 locks rejected', lambda d: d['patterns'][0]['audio'][0].__setitem__(0
 for locks in [None, [], {'p1': True}, {'p1': 128}, {'p1': 1.5}, {'p0': 0}, {'machine': None}, {'machine': 192}, {'unknown': 1}]:
     mutate('invalid locks '+repr(locks), lambda d, value=locks: sound_change(d, value))
 
+# Version-3 length endpoints, fractions and malformed values must agree too.
+from hydrapy.tracker_v3 import validate as validate_v3
+vectors = json.loads((ROOT / 'rack/tests/note-length-vectors.json').read_text())
+for vector in vectors:
+    checker.validate(validate_v3(vector['score']))
+for length in [.25, 16, .333, 2.375, True, None, '3', .249, 16.01]:
+    document = copy.deepcopy(vectors[0]['score'])
+    document['patterns'][0]['lanes'][0]['cells'][0]['len'] = length
+    schema_rejects = bool(list(checker.iter_errors(document)))
+    try:
+        validate_v3(document)
+        validator_rejects = False
+    except ValueError:
+        validator_rejects = True
+    if schema_rejects != validator_rejects:
+        failures += 1
+        print(f'v3 len {length!r}: schema rejects={schema_rejects}, validate() rejects={validator_rejects}')
+
 print(f'{len(accepted)} accepted scores checked, {failures} failure(s)')
 sys.exit(1 if failures else 0)

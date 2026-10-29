@@ -11,6 +11,7 @@ test: all
 	cmp ../src/engine/SoundLink.hpp ../../spec/sound-link.hpp
 	./engine_test fixture.txt
 	./evaluator_test fixture3.txt
+	./evaluator_test fixture-length3.txt
 	./bridge_test
 	./pcm_test
 	./bytebus_test
@@ -38,7 +39,7 @@ sanitize: bridge_test.cpp engine_test.cpp evaluator_test.cpp $(ENGINE)
 	$(CXX) $(CXXFLAGS) -O1 -g -fsanitize=thread -pthread pcm_test.cpp -o pcm_tsan
 	$(CXX) $(CXXFLAGS) -O1 -g -fsanitize=address,undefined bytebus_test.cpp -o bytebus_asan
 	$(CXX) $(CXXFLAGS) -O1 -g -fsanitize=thread -pthread ping_test.cpp -o ping_tsan
-	./bridge_tsan && ./bridge_asan && ./engine_asan fixture.txt && ./evaluator_asan fixture3.txt && ./pcm_tsan && ./bytebus_asan && ./ping_tsan
+	./bridge_tsan && ./bridge_asan && ./engine_asan fixture.txt && ./evaluator_asan fixture3.txt && ./evaluator_asan fixture-length3.txt && ./pcm_tsan && ./bytebus_asan && ./ping_tsan
 studio_probe: studio_probe.cpp $(ENGINE)
 	$(CXX) $(CXXFLAGS) -pthread $< $(JANSSON) -o $@
 # Against a real HydraPy Studio; needs HydraPy importable by python3.

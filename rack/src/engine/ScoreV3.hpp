@@ -7,9 +7,11 @@
 // No Rack or jansson dependency: BridgeJson.hpp parses the document into a
 // ScoreV3 on the bridge thread. evaluate() allocates nothing, so the audio
 // thread can call it; the strings a trace needs are built by the helpers at the
-// end, off the audio path. Times are integer ticks, 1920 per quarter note.
+// end, off the audio path. Onsets are integer ticks (1920 per quarter note);
+// explicit durations may be fractional.
 #pragma once
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <string>
@@ -22,6 +24,7 @@ namespace gorgon {
 namespace v3 {
 
 constexpr int64_t TICKS = 1920;
+constexpr int64_t HOLD_TICKS = 16 * 480;
 constexpr int LANES = 6, PATTERNS = 128, MAX_ROWS = 128;
 constexpr uint32_t PROB = 0x70726f62, DEGRADE = 0x64656772;   // "prob" and "degr", chance's salts
 
@@ -55,6 +58,8 @@ struct Cell {
 	double vel = 0.;
 	int midi = -1;                 // -1 for AIR
 	char note[4] = {};             // as written: "C-4", "D#4", "AIR"
+	bool hasLength = false;
+	double length = 0.;
 	bool hasLocks = false;
 	gorgon_sound::Sound locks;
 	Cond cond;
@@ -190,7 +195,8 @@ struct Why {
 };
 
 struct Candidate {
-	int64_t at = 0, duration = 0;
+	int64_t at = 0;
+	double duration = 0.;
 	int lane = 0;
 	const Cell* cell = nullptr;    // note, velocity, locks and condition
 	bool fires = false;
@@ -236,7 +242,7 @@ struct Event {
 
 // The candidates of one lane on one row, in sub-step order.
 inline int laneRow(const ScoreV3& score, const TransportV3& transport, int64_t u0, int64_t u1, int lane, const LaneV3& l,
-                   int p, int row, int64_t rowAt, int64_t w, int64_t play, int entry, int64_t bar, bool fill, Candidate* out) {
+                   int p, int row, int64_t rowAt, int64_t w, int64_t play, int entry, int64_t bar, bool fill, Candidate* out, bool history) {
 	int leaves[8];
 	int leafCount = activeLeaves(l, bar, leaves);
 	int laneRowIndex = row % l.len;
@@ -313,9 +319,10 @@ inline int laneRow(const ScoreV3& score, const TransportV3& transport, int64_t u
 	}
 	int count = 0;
 	for (int e = 0; e < eventCount; e++) {
-		int64_t duration = w / events[e].of;
-		int64_t at = rowAt + events[e].sub * duration;
-		if (at < u0 || at >= u1 || at + duration <= 0)
+		int64_t step = w / events[e].of;
+		int64_t at = rowAt + events[e].sub * step;
+		double duration = hit.hasLength ? std::min(hit.length * 480., double(rowAt + (score.geometry(p).rows - row) * w - at)) : double(step);
+		if (at < u0 || at >= u1 || (!history && at + duration <= 0))
 			continue;
 		Candidate& c = out[count++];
 		c = Candidate();
@@ -360,23 +367,25 @@ inline int laneRow(const ScoreV3& score, const TransportV3& transport, int64_t u
 
 // Every candidate with u0 <= at < u1 that ends after the anchor, in order of at, then lane
 // (evaluator.md#evaluate), passed to `emit(const Candidate&)`. The anchor's row comes back
-// with a negative at when the anchor is inside it; earlier rows never do. It jumps straight
+// with a negative at when the anchor is inside it; held explicit lengths may
+// also come from earlier rows in the anchor entry. It jumps straight
 // to the row it needs, so its cost doesn't grow with the session.
 template <class Emit>
-void evaluate(const ScoreV3& score, const TransportV3& transport, int64_t u0, int64_t u1, Emit&& emit) {
+void evaluate(const ScoreV3& score, const TransportV3& transport, int64_t u0, int64_t u1, Emit&& emit, bool history = false) {
 	const int64_t cycle = score.cycle;
 	const int64_t a = transport.tick;
 	const int n = int(score.entries.size());
 	if (cycle <= 0 || a < 0 || a >= cycle || n == 0)
 		return;
 	const int first = score.entryAt(a);
-	// Start at the row holding tick max(u0, 0): earlier rows end before u0 or at the anchor.
+	// Locate the anchor entry for negative queries, then scan at most HOLD_TICKS
+	// backward within it. Never recover notes across entry boundaries.
 	const int64_t from = std::max<int64_t>(u0, 0);
 	int64_t cycles = (a + from) / cycle;
 	int i = score.entryAt((a + from) % cycle);
 	int64_t play = cycles * n + i - first;
 	int64_t playStart = cycles * cycle + score.starts[size_t(i)] - a;
-	int row = int((from - playStart) / score.geometry(score.entries[size_t(i)]).w);
+	int row = std::max(0, int(std::floor(double(std::max(u0, -HOLD_TICKS) - playStart) / double(score.geometry(score.entries[size_t(i)]).w))));
 	Candidate buffer[LANES * 4];
 	while (playStart < u1) {
 		const int p = score.entries[size_t(i)];
@@ -394,7 +403,7 @@ void evaluate(const ScoreV3& score, const TransportV3& transport, int64_t u0, in
 			int count = 0;
 			for (int lane = 0; lane < LANES; lane++)
 				count += detail::laneRow(score, transport, u0, u1, lane, pattern->lanes[lane], p, row, rowAt, g.w, play,
-				                         score.loop ? -1 : i, bar, fill, buffer + count);
+				                         score.loop ? -1 : i, bar, fill, buffer + count, history);
 			// A row's events all fall inside it, so ordering each row orders the whole interval.
 			std::stable_sort(buffer, buffer + count,
 			                 [](const Candidate& x, const Candidate& y) { return x.at != y.at ? x.at < y.at : x.lane < y.lane; });
