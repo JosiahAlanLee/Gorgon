@@ -276,7 +276,7 @@ def run(config, options):
                 result = callback()
                 if result:
                     return result
-            except (OSError, ValueError, KeyError, jack.JackError) as exc:
+            except (OSError, ValueError, KeyError, jack.JackError, launcher.ApiTimeout) as exc:
                 last = exc
             stopped.wait(.1)
         raise LaunchError(f'Timed out waiting for {what}: {last or "not ready"}')
@@ -349,8 +349,9 @@ def run(config, options):
                     score['sounds'][lane] = copy.deepcopy(sound)
         else:
             score = json.loads(Path(options['score']).expanduser().read_text())
-        launcher.api(info, 'tracker_transport', dict(enabled=True, playing=False))
-        launcher.api(info, 'tracker_score', dict(document=score, revision=current['revision']))
+        launcher.api(info, 'tracker_transport', dict(enabled=True, playing=False), timeout=config['timeout'])
+        launcher.api(info, 'tracker_score', dict(document=score, revision=current['revision']),
+                     timeout=config['timeout'])
         document = prepare_patch(read_patch(config['rack']['patch']), studio_client, recorder.client.name,
                                  bool(options.get('source')), options['command'] == 'measure-latency')
         write_patch(config['rack']['patch'], document, output / 'capture.vcv')
@@ -382,15 +383,15 @@ def run(config, options):
         recorder.enabled = True
         record_time = time.monotonic()
         if video:
-            launcher.api(info, 'record', {})
+            launcher.api(info, 'record', {}, timeout=max(120, config['timeout']))
         play_time = time.monotonic()
-        launcher.api(info, 'tracker_transport', dict(enabled=True, playing=True, beat=0))
+        launcher.api(info, 'tracker_transport', dict(enabled=True, playing=True, beat=0), timeout=config['timeout'])
         pause(options['seconds'])
         stop_time = time.monotonic()
         recorder.enabled = False         # the take ends here: stopping Studio's encoder stalls JACK, so keep it out
-        launcher.api(info, 'tracker_transport', dict(playing=False))
+        launcher.api(info, 'tracker_transport', dict(playing=False), timeout=config['timeout'])
         if video:
-            launcher.api(info, 'record', {})
+            launcher.api(info, 'record', {}, timeout=max(120, config['timeout']))
         recorder.close()
         import numpy as np
         if len(recorder.clock) < 2:

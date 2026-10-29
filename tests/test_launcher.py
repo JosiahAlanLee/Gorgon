@@ -247,7 +247,8 @@ def test_readiness_order_and_failure_cleanup(profile, monkeypatch, rack_fails):
     monkeypatch.setattr(audio, 'ensure_server', lambda _: graph)
     monkeypatch.setattr(audio, 'probe', lambda _: graph)
     monkeypatch.setattr(launcher, 'discovery', lambda _: dict(pid=children['studio'].pid, root=profile['workspace'], url='http://127.0.0.1:9999'))
-    def api(_, endpoint, body=None):
+    def api(_, endpoint, body=None, timeout=3):
+        assert timeout == (profile['timeout'] if endpoint in ('tracker_score', 'tracker_transport') else 3)
         calls.append(('api', endpoint))
         assert endpoint in ('tracker', 'tracker_score', 'tracker_transport')
         return dict(path='gorgon-visual.py', revision=1, audio=dict(active=True, client='HydraPy', ports=sources))
@@ -329,3 +330,55 @@ def test_window_close_tool_failure_is_best_effort(monkeypatch, error):
     monkeypatch.setattr(launcher.subprocess, 'run', fail)
     assert launcher.close_rack_window(12345) is False
 
+
+
+@pytest.mark.parametrize('timeout', [None, 120])
+def test_api_timeout_passed_to_urlopen(monkeypatch, timeout):
+    import io
+
+    def urlopen(request, **kwargs):
+        assert request.full_url == 'http://127.0.0.1:9999/api/tracker_score'
+        assert kwargs['timeout'] == (3 if timeout is None else timeout)
+        return io.BytesIO(b'{"revision": 2}')
+
+    monkeypatch.setattr(launcher.urllib.request, 'urlopen', urlopen)
+    kwargs = {} if timeout is None else dict(timeout=timeout)
+    assert launcher.api(dict(url='http://127.0.0.1:9999', token='test'),
+                        'tracker_score', dict(document={}), **kwargs) == dict(revision=2)
+
+
+@pytest.mark.parametrize('wrapped', [False, True])
+@pytest.mark.parametrize('during_read', [False, True])
+def test_api_timeout_names_endpoint(monkeypatch, wrapped, during_read):
+    import io
+    import urllib.error
+
+    error = TimeoutError('timed out')
+    if wrapped:
+        error = urllib.error.URLError(error)
+
+    class Response(io.BytesIO):
+        def read(self):
+            raise error
+
+    def urlopen(*args, **kwargs):
+        if during_read:
+            return Response()
+        raise error
+
+    monkeypatch.setattr(launcher.urllib.request, 'urlopen', urlopen)
+    with pytest.raises(LaunchError, match=r'/api/tracker_score timed out after 120 seconds'):
+        launcher.api(dict(url='http://127.0.0.1:9999', token='test'),
+                     'tracker_score', {}, timeout=120)
+
+
+def test_api_preserves_non_timeout_url_errors(monkeypatch):
+    import urllib.error
+
+    error = urllib.error.URLError(ConnectionRefusedError('refused'))
+    def urlopen(*args, **kwargs):
+        raise error
+    monkeypatch.setattr(launcher.urllib.request, 'urlopen', urlopen)
+    with pytest.raises(urllib.error.URLError) as exc:
+        launcher.api(dict(url='http://127.0.0.1:9999', token='test'), 'tracker')
+    assert exc.value is error
