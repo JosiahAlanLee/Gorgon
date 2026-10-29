@@ -48,6 +48,15 @@ def initialize(path, args=None):
     return result
 
 
+def capture_tools():
+    """What render/live/measure-latency need, reported without failing doctor for start/stop users."""
+    import importlib.util
+    import shutil
+    missing = [name for name in ('jack', 'numpy', 'soundfile') if importlib.util.find_spec(name) is None]
+    missing += [tool for tool in ('jackd', 'xvfb-run', 'ffmpeg', 'ffprobe') if not shutil.which(tool)]
+    return 'all present' if not missing else "missing: " + ', '.join(missing) + " (pip install 'gorgon-live[capture]'; jackd, xvfb-run and ffmpeg from the system)"
+
+
 def doctor(config):
     checks = []
     def check(name, callback):
@@ -58,6 +67,7 @@ def doctor(config):
         except Exception as exc:
             checks.append(dict(check=name, ok=False, detail=str(exc)))
     check('Apps, visual patch, desktop and Gorgon plugin', lambda: launcher.check_files(config) or 'available')
+    check('Capture tools (render, live, measure-latency only)', capture_tools)
     # Diagnostic only: never call ensure_server or start systemd units here.
     graph = check('Existing JACK/PipeWire server', lambda: audio.probe(config))
     if graph:

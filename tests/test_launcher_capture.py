@@ -120,3 +120,34 @@ def test_hardware_pipewire_uses_existing_launcher_wrapper(monkeypatch):
     assert capture.invoke(config, options(command='live', native_output='DP-5', hardware=True)) == 0
     assert calls[0] == ('probe', False)
     assert calls[1][1][:2] == ['pw-jack', __import__('sys').executable]
+
+
+def test_flash_gate_sync_ignores_beat_aliases(monkeypatch):
+    """A lane on the beat correlates as well a beat early or late; the window keeps the true lag."""
+    import json
+    from types import SimpleNamespace
+    np = pytest.importorskip('numpy')
+    from gorgon.avsync import align
+    fps, rate, beat, lag = 60, 1000, .46875, .06            # 128 BPM; Studio's video start-up
+    gate = np.zeros((20000, 1))
+    frames = np.zeros((1200, 90, 160), dtype=np.uint8)
+    for k in range(2, 36):
+        at = k * beat
+        gate[round(at * rate):round(at * rate) + 50, 0] = 1
+        frames[round((at - lag) * fps), 22:68, 53:107] = 255
+    def run(argv, **kwargs):
+        if argv[0] == 'ffprobe':
+            return SimpleNamespace(stdout=json.dumps({'streams': [{'r_frame_rate': '60/1'}]}))
+        return SimpleNamespace(stdout=frames.tobytes())
+    monkeypatch.setattr('gorgon.avsync.subprocess.run', run)
+    offset, report = align('video.mp4', gate, rate, 1, 100, 100)
+    assert offset == pytest.approx(lag, abs=1 / fps)       # not lag - 2 beats, which scores the same
+    assert report['window_s'] == [-.25, .5]
+    offset, report = align('video.mp4', gate, rate, 1, 100, 100, window=(-1, 1.5))
+    assert abs(report['lag_s']) <= .5 + 1e-9                # even when wide, near-ties go to the estimate
+
+
+def test_doctor_reports_capture_tools_without_failing_start_users(monkeypatch):
+    monkeypatch.setattr(cli.shutil if hasattr(cli, 'shutil') else __import__('shutil'), 'which', lambda name: None)
+    detail = cli.capture_tools()
+    assert detail.startswith('missing:') and 'jackd' in detail and 'gorgon-live[capture]' in detail
