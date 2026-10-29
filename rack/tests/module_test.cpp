@@ -36,6 +36,10 @@ static void run(Gorgon& m, int n, Module::ProcessArgs& a) {
 }
 
 int main() {
+	assert(std::abs(gorgon::lanePosition(100., 120., 960., 25.f) - 52.) < 1e-9);
+	assert(std::abs(gorgon::lanePosition(100., 120., 960., -25.f) - 148.) < 1e-9);
+	assert(gorgon::laneOffset(1000.f) == 100.f);
+	assert(gorgon::laneOffset(NAN) == 0.f);
 	std::cout << std::unitbuf;
 	// No Studio: the bridge looks at a file that doesn't exist.
 	setenv("HYDRAPY_STUDIO_FILE", "/nonexistent/gorgon-module-test.json", 1);
@@ -283,6 +287,32 @@ int main() {
 		receiver.leftExpander.producerMessage = &packets[0];
 		receiver.leftExpander.consumerMessage = &packets[1];
 		m.rightExpander.module = &receiver;
+		for (float ms : {-25.f, 25.f}) {
+			Gorgon shifted;
+			for (auto& out : shifted.outputs) out.channels = 1;
+			shifted.snapshot = s;
+			shifted.haveSnapshot = true;
+			shifted.laneOffsetMs[4] = 25.f; // a delayed hit right at transport start
+			shifted.laneOffsetMs[5] = ms;
+			shifted.rightExpander.module = &receiver;
+			args.frame = 0;
+			int edge5 = -1, edge6 = -1;
+			for (int i = 0; i < 15000; ++i) {
+				run(shifted, 1, args);
+				if (edge5 < 0 && shifted.outputs[Gorgon::GATE5_OUTPUT].getVoltage() > 1.f) edge5 = i;
+				if (edge6 < 0 && shifted.outputs[Gorgon::GATE6_OUTPUT].getVoltage() > 1.f) {
+					edge6 = i;
+					assert(packets[0].lanes[5].gate == 10.f);
+					assert(packets[0].lanes[5].sound.machine == 48);
+					assert(packets[0].lanes[5].sound.values[0] == 7.f);
+				}
+				if (edge6 < 0) assert(packets[0].lanes[5].sound.machine == 16);
+			}
+			assert(std::abs(edge5 - 1200) <= 2);
+			assert(std::abs(edge6 - (12000 + int(ms * 48))) <= 2);
+			shifted.rightExpander.module = nullptr;
+		}
+		args.frame = 0;
 
 		run(m, 1, args);
 		assert(m.outputs[Gorgon::GATES_OUTPUT].getChannels() == 6 && m.outputs[Gorgon::VEL_OUTPUT].getChannels() == 6);
@@ -370,19 +400,51 @@ int main() {
 		// The bit map is saved with the patch; old patches get the default.
 		m.busBits[gorgon::v3::BUS_FILL] = 7;
 		m.busBits[gorgon::v3::BUS_MUTE1 + 2] = -1;
+		m.laneOffsetMs[0] = -24.f;
+		m.laneOffsetMs[5] = 23.5f;
 		json_t* saved = m.dataToJson();
 		Gorgon restored;
 		restored.dataFromJson(saved);
+		assert(restored.laneOffsetMs[0].load() == -24.f);
+		assert(restored.laneOffsetMs[5].load() == 23.5f);
 		json_decref(saved);
 		assert(restored.busBits[gorgon::v3::BUS_FILL].load() == 7 && restored.busBits[gorgon::v3::BUS_MUTE1 + 2].load() == -1);
 		assert(restored.busBits[gorgon::v3::BUS_MUTE1].load() == 0);
 		json_t* before = json_object();   // a patch saved before BUS IN
 		restored.dataFromJson(before);
+		for (auto& offset : restored.laneOffsetMs) assert(offset.load() == 0.f);
 		json_decref(before);
 		assert(restored.busBits[gorgon::v3::BUS_FILL].load() == 6 && restored.busBits[gorgon::v3::BUS_MUTE1 + 2].load() == 2);
 		m.rightExpander.module = nullptr;
 		machineModel.plugin = nullptr;
 		std::cout << "version 3: six lanes, GATE 5/6, the sound link (versions 1 and 2) and BUS IN passed\n";
+	}
+	// Independent timing for each lane: signed offsets move all held outputs.
+	for (int hitRow : {0, 2}) for (float ms : {-25.f, 0.f, 25.f}) {
+		Gorgon m;
+		for (auto& out : m.outputs) out.channels = 1;
+		m.haveSnapshot = true;
+		m.snapshot.playhead.valid = m.snapshot.playhead.enabled = m.snapshot.playhead.playing = true;
+		m.snapshot.playhead.transportRevision = 1;
+		m.snapshot.score.bpm = 120.;
+		m.snapshot.score.patterns[0].hit[0][hitRow] = true;
+		m.snapshot.score.patterns[0].velocity[0][hitRow] = 127.f;
+		m.snapshot.score.patterns[0].pitched[0][hitRow] = true;
+		m.snapshot.score.patterns[0].midi[0][hitRow] = 69;
+		m.follower.locked = true;
+		m.laneOffsetMs[0] = ms;
+		args.frame = 0;
+		int edge = -1;
+		for (int i = 0; i < 15000; ++i) {
+			run(m, 1, args);
+			if (edge < 0 && m.outputs[Gorgon::GATE1_OUTPUT].getVoltage() > 1.f) {
+				edge = i;
+				assert(m.outputs[Gorgon::GATES_OUTPUT].getVoltage(0) > 1.f);
+				assert(m.outputs[Gorgon::VEL_OUTPUT].getVoltage(0) == 10.f);
+				assert(std::abs(m.outputs[Gorgon::PITCH_OUTPUT].getVoltage(0) - .75f) < 1e-5f);
+			}
+		}
+		assert(std::abs(edge - std::max(0, hitRow * 6000 + int(ms * 48))) <= 2);
 	}
 	std::cout << "module_test: all passed\n";
 	return 0;

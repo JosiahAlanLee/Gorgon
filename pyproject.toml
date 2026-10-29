@@ -12,6 +12,7 @@ dependencies = ["zstandard>=0.21"]
 
 [project.optional-dependencies]
 test = ["pytest>=7"]
+capture = ["JACK-Client>=0.5", "numpy>=1.23", "soundfile>=0.12"]
 
 [project.scripts]
 gorgon = "gorgon.cli:main"

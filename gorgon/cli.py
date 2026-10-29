@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 import sys
 
-from . import audio, launcher, starter
+from . import audio, launcher, starter, capture
 from .config import LaunchError, default_config, defaults, load, rack_user_dir, run_dir, write_private
 
 
@@ -69,7 +69,7 @@ def doctor(config):
 def main(argv=None):
     parser = argparse.ArgumentParser(description='Start the Gorgon tracker, HydraPy visuals and VCV Rack together on Linux')
     parser.add_argument('--config', type=Path, default=default_config(), help='launch profile (default: ~/.config/gorgon/launch.json)')
-    sub = parser.add_subparsers(dest='command', required=True, metavar='{init,start,stop,status,doctor}')
+    sub = parser.add_subparsers(dest='command', required=True, metavar='{init,start,stop,status,doctor,render,live,measure-latency}')
     init = sub.add_parser('init', help='one-time profile setup; existing profiles are never overwritten')
     for option in ('workspace', 'hydrapy', 'visual-patch', 'rack', 'rack-patch', 'rack-user', 'audio-device', 'monitor'):
         init.add_argument('--' + option)
@@ -82,6 +82,32 @@ def main(argv=None):
     status.add_argument('--json', action='store_true')
     doctor_parser = sub.add_parser('doctor', help='read-only checks and actual JACK port names')
     doctor_parser.add_argument('--json', action='store_true')
+    for name in ('render', 'live', 'measure-latency'):
+        command = sub.add_parser(name, help='isolated Rack/Studio capture' if name != 'measure-latency' else 'measure six gate-to-voice latencies on private JACK')
+        if name != 'measure-latency':
+            command.add_argument('score', type=Path, help='tracker score JSON')
+        else:
+            command.add_argument('--score', type=Path, help='take lane sound defaults from this score')
+        command.add_argument('--output', type=Path, required=True, help='new output directory (must not exist)')
+        command.add_argument('--seconds', type=float, default=10 if name == 'measure-latency' else 40)
+        command.add_argument('--warmup', type=float, default=6)
+        command.add_argument('--jack-timeout', type=int, default=10000, help='private JACK client timeout in ms')
+        command.add_argument('--plugin-dir', action='append', default=[], help='built Rack plugin directory to install in this run')
+        command.add_argument('--source', action='append', default=[], help='explicit JACK capture source; repeat sixteen times')
+        command.add_argument('--link', nargs=2, action='append', default=[], metavar=('SOURCE', 'DESTINATION'))
+        command.add_argument('--optical-gain', type=float, default=.5)
+        command.add_argument('--lead-blocks', type=int, default=2)
+        command.add_argument('--size', help='offscreen WIDTHxHEIGHT')
+        command.add_argument('--fps', type=float)
+        command.add_argument('--sync-gate-channel', type=int, help='measure A/V sync from centre flashes and this capture gate channel (1–16)')
+        command.add_argument('--sync-delay-ms', type=float, default=0, help='measured sound latency after the sync gate')
+        command.add_argument('--av-offset-ms', type=float, default=0, help='additional video/audio alignment correction')
+        if name == 'live':
+            command.add_argument('--record', action='store_true', required=True)
+            command.add_argument('--native-output', required=True, metavar='MONITOR')
+            command.add_argument('--audio-device', help='JACK playback client name (overrides profile audio.device)')
+            command.add_argument('--hardware', action='store_true', help='explicitly permit the existing server to reach real devices')
+            command.add_argument('--jack-server', help='private dummy server name, or existing server with --hardware')
     internal = sub.add_parser('_run')
     internal.add_argument('--lock-fd', type=int, required=True)
     internal.add_argument('--session-id', required=True)
@@ -95,6 +121,8 @@ def main(argv=None):
         if args.command == 'start' and not args.config.exists():
             initialize(args.config)
         config = load(args.config)
+        if args.command in ('render', 'live', 'measure-latency'):
+            return capture.invoke(config, vars(args))
         if args.command == '_run':
             if args.no_browser:
                 config['browser'] = False
