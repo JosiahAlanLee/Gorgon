@@ -1,9 +1,9 @@
 # Gorgon
 
-A CV and audio/video tracker, in development. One score, up to 128 patterns
-of notes in six lanes plus automation, drives a picture, a modular synthesizer
-and VCV Rack from a single playhead. Gorgon is the master clock; nothing
-follows an external one.
+A CV and audio/video tracker, in development. One score with up to 128 pattern
+slots and six note lanes, plus visual automation, drives a picture, a modular
+synthesizer and VCV Rack from a single playhead. Gorgon is the master clock;
+nothing follows an external one.
 
 The tracker runs inside [HydraPy](https://github.com/JosiahAlanLee/hydrapy)
 Studio. Use it to enter musical phrases, automate a patch's visual controls,
@@ -45,18 +45,29 @@ also gives a smaller CPU setup.
 ## Tracker interface
 
 A score in **format 3** (`hydrapy-tracker-3`) has **six note lanes** and
-**128 patterns** in eight banks, A–H, of sixteen. A **chain** of pattern codes
-plays them in song order, or ↻ loops the one you are editing. Each pattern has a
-**rate** (¼× to 8×), rows per bar and a number of bars, up to 128 rows. Each lane
-can be shorter than its pattern and repeat. Notes can carry a **condition**
-(`1:4`, `%50`, `F` for FILL, `1ST`) and lanes take **transforms** (`rot`, `rev`,
-`ply`, `degrade`, `every`). The contract is in [`spec/`](spec/README.md),
-starting at [score-v3.md](spec/score-v3.md).
+**128 pattern slots** in eight banks, A–H, of sixteen. A **chain** of 1–256
+pattern codes plays them in song order and may repeat a pattern, or ↻ loops the
+one you are editing. Each pattern has a **rate** (¼× to 8×), **bar** (1–32 rows
+per bar) and **bars** (1–8), with their product at most 128 rows. Each lane has
+its own **length** (1 through the pattern's row count) and repeats within the
+pattern. Notes can carry a
+**condition** (`1:4`, `%50`, `F` for FILL, `1ST`) and lanes take **transforms**
+(`rot`, `rev`, `ply`, `degrade`, `every`). A note can also set an explicit
+**length** of 0.25–16 base rows (480 ticks each), independent of pattern rate;
+it is clipped at the pattern entry boundary. The evaluator places onsets and
+query boundaries on integer ticks, 1920 per quarter note, while an explicit
+duration may be fractional; signals and automation read the real-valued beat.
+
+The versioned [score-v3 contract](spec/score-v3.md) is authoritative; the
+[specification index](spec/README.md) lists the related evaluator, transform
+and bus-I/O contracts.
 
 Versions 1 and 2 are still supported: **four fixed 64-row patterns** and four
 note lanes. A score stays in its format while the edits fit it. The first edit
-that needs version 3 (a fifth lane, a pattern past A04, a rate, a condition…)
-upgrades it, and undo restores the old format. Launching, looping or seeking into a pattern past A04 upgrades it without an undo step. Row numbers are hexadecimal:
+that needs version 3 (a fifth or sixth lane, a pattern past A04, or a rate, bar,
+bars, lane-length, chain, condition or transform edit) upgrades it, and undo
+restores the old format. Launching, looping or seeking into a pattern past A04
+upgrades it without an undo step. Row numbers are hexadecimal:
 `00`–`3F` means rows 0–63. The green playback row and amber edit cursor are
 separate: clicking a cell selects where to edit; it does not move playback.
 
@@ -64,7 +75,7 @@ separate: clicking a cell selects where to edit; it does not move playback.
 | --- | --- |
 | **Arrangement cards** | Select the pattern to edit (in format 3, from banks A–H; the chain sets their song order); each card shows note activity and explicit automation keys. Its **▶** button launches that pattern. Pattern tools rename, copy or clear it. |
 | **Transport** | Set tempo and key, play/pause, Stop, Loop and Follow. **Seek to row** moves playback to the edit cursor. Follow tracks the playing pattern; manual editing turns it off. Selecting another card while looping edits that pattern without switching the active loop. |
-| **Note lanes** | Six lanes, four of them in a version-1 or 2 score. Each shows the score's own lane name (`Lane 1`–`Lane 6` until you rename it), not the voice that auditions it. Each occupied cell has a note and velocity, and in format 3 an optional condition. The lanes supply gates, held pitches and velocities to CV/Rack instruments. |
+| **Note lanes** | Six lanes in format 3; versions 1 and 2 populate only lanes 1–4. Each shows the score's own lane name (`Lane 1`–`Lane 6` until you rename it), not the voice that auditions it. Each occupied cell has a note and velocity, and in format 3 may have a condition, sound locks and an explicit length. The lanes supply gates, held pitches and velocities to CV/Rack instruments. |
 | **Dolly Z / Roll / Feedback** | Three automation lanes, bound to the loaded patch's named controls under **Patch bindings**. Values use their lane units: 0–1, −45° to +45°, and 0–0.9. |
 | **SCENE** | Choose a scene declared by the patch and a fade length in rows. The scene holds until the next change. Try [gorgon_scenes.py](https://github.com/JosiahAlanLee/hydrapy/blob/main/patches/gorgon_scenes.py) for a patch with named scenes. |
 | **Selected-cell editor and curve** | Enter an exact note/velocity, automation value, or scene/fade. The automation curve writes at the edit cursor; **Hold**, **Linear** and **Smooth** choose how that lane moves between keys. |
@@ -146,6 +157,10 @@ is published, build [`rack/`](rack) against the Rack SDK.
 The plugin also has **Ping**, a latency meter: it times a destination from its
 trigger to its sound and stores the result with the patch
 ([manual](rack/docs/MANUAL.md#ping-measuring-latency)).
+
+Tested Gorgon, HydraPy, DSP_Emulation and Generative_Art combinations, their
+validation levels, and the evidence for each are recorded in
+[tested combinations](docs/tested-combinations.md).
 
 ## Status
 

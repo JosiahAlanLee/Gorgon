@@ -65,7 +65,7 @@ is not overwritten by subsequent `start` or `init` commands.
 
 If no profile exists, `gorgon start` creates one and a starter workspace under
 `~/.local/share/gorgon/session`. The starter contains the visual patch, an editable
-four-pattern score and Gorgon → Audio 2 listening patch using Studio's Breaks
+legacy four-pattern version-1 score and Gorgon → Audio 2 listening patch using Studio's Breaks
 kit. It requires GorgonBridge but no extra voice plugin or firmware. Existing
 scores and patches are not overwritten. Use `gorgon init --rack-patch ...` before
 your first start to use your existing Machinemodule rig instead of this starter.

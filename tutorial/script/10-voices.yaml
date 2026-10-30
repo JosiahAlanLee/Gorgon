@@ -36,14 +36,14 @@ shots:
       - "Split output index 1 = channel 2"
       - "Vastish audio reaches the recorder (Audio 2 on the stage JACK server)"
   - id: poly
-    title: All four lanes at once
+    title: All four populated lanes at once
     frames:
       - {window: rack}
     setup:
       rack: {patch: rack-voice-poly, view: {modules: [Gorgon, Vastish]}}
     narration: >
-      Or patch the polyphonic cables straight in. {play} Vastish takes up to eight channels, so all four lanes play it at once. AIR events open
-      a gate but keep the previous pitch; a zero-velocity event opens no gate at all.
+      Or patch the polyphonic cables straight in. {play} Vastish takes up to eight channels, so this score's four populated lanes play it at
+      once; format 3 provides six. AIR events open a gate but keep the previous pitch; a zero-velocity event opens no gate at all.
     actions:
       - at: play
         studio.press: Space
@@ -55,7 +55,7 @@ shots:
     source:
       - Gorgon/README.md
   - id: kit
-    title: A drum kit from the four lanes
+    title: A drum kit from four of the six lanes
     frames:
       - {window: rack}
     source: [DSP_Emulation/vcv/drumlab/docs/MANUAL.md#connect-gorgon, DSP_Emulation/vcv/drumlab/docs/MANUAL.md#models-and-controls]
@@ -80,7 +80,7 @@ shots:
     hold: 1
     mix: {programme: -10}
     verify:
-      - "Four-lane kit by default: channels 1-4 play Kick, Snare, Hat, FM (DrumLab MANUAL)"
+      - "Four-voice kit by default: score lanes 1-4 play Kick, Snare, Hat, FM (DrumLab MANUAL)"
       - "Gorgon GATES -> TRIG, PITCH -> V/OCT, VEL -> VEL as in examples/Gorgon-percussion.vcv (rack-kit.cables.txt)"
       - "with key D, C4 plays each model's base pitch (MANUAL Connect Gorgon 4; Gorgon pitch (midi + key - 2 - 60)/12 V)"
       - "controls are captured at each trigger: turning DECAY changes the next hit, not the sounding one (MANUAL; DSP_Emulation #24)"
