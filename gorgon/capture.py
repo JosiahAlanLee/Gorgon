@@ -17,10 +17,83 @@ import sys
 import tarfile
 import threading
 import time
+import urllib.error
 import uuid
 
 from . import audio, launcher
 from .config import LaunchError, rack_user_dir, write_private
+
+
+def prewarm_requested(config, options):
+    """Resolve the CLI override, falling back to the launch profile."""
+    return config['capture']['prewarm'] if options.get('prewarm') is None else options['prewarm']
+
+
+def _api_error_detail(error):
+    try:
+        payload = json.loads(error.read())
+        detail = payload.get('error', payload) if isinstance(payload, dict) else payload
+        return str(detail)
+    except (OSError, ValueError, TypeError):
+        return f'{type(error).__name__}: {error}'
+
+
+def prewarm_take(info, seconds, enabled, timeout):
+    """Best-effort shader prewarm with a hold that must be released after the take."""
+    result = dict(enabled=bool(enabled), available=None, ran=False, compiled=0, hold=False,
+                  duration_s=0., error=None)
+    if not enabled:
+        return result
+    started = time.monotonic()
+    try:
+        response = launcher.api(info, 'prewarm_take', dict(seconds=seconds, hold=True), timeout=timeout)
+        if not isinstance(response, dict):
+            raise ValueError('prewarm_take returned a non-object response')
+        compiled, hold = response.get('compiled', 0), response.get('hold', False)
+        if type(compiled) is not int or compiled < 0 or type(hold) is not bool:
+            raise ValueError('prewarm_take returned invalid compiled/hold values')
+        result.update(available=True, ran=True, compiled=compiled, hold=hold)
+        result['duration_s'] = round(time.monotonic() - started, 3)
+        if hold:
+            print(f'Studio prewarm_take: compiled {compiled} variants in {result["duration_s"]:.3f} s; '
+                  'compilation held for the take', file=sys.stderr)
+        else:
+            print('Studio prewarm_take: no GL shader variants need to be held', file=sys.stderr)
+    except urllib.error.HTTPError as error:
+        detail = _api_error_detail(error)
+        unsupported = 'unknown action: prewarm_take' in detail.lower()
+        result.update(available=not unsupported, error=detail)
+        if unsupported:
+            print('Studio prewarm_take unavailable (HydraPy predates the action); '
+                  'shader variants may compile during the take', file=sys.stderr)
+        else:
+            print(f'Studio prewarm_take failed ({detail}); continuing without held compilation',
+                  file=sys.stderr)
+    except Exception as error:
+        result['error'] = f'{type(error).__name__}: {error}'
+        print(f'Studio prewarm_take failed ({result["error"]}); continuing without held compilation',
+              file=sys.stderr)
+    finally:
+        result['duration_s'] = round(time.monotonic() - started, 3)
+    return result
+
+
+def release_prewarm_take(info, timeout):
+    """Release a prewarm hold without turning cleanup failure into capture failure."""
+    result = dict(requested=True, released=False, duration_s=0., error=None)
+    started = time.monotonic()
+    try:
+        response = launcher.api(info, 'prewarm_take', dict(release=True), timeout=timeout)
+        if not isinstance(response, dict) or response.get('hold') is not False:
+            raise ValueError('prewarm_take did not confirm the hold was released')
+        result['released'] = True
+    except Exception as error:
+        result['error'] = f'{type(error).__name__}: {error}'
+        print(f'Studio prewarm_take release failed ({result["error"]}); Studio may keep compiling variants held',
+              file=sys.stderr)
+    finally:
+        result['duration_s'] = round(time.monotonic() - started, 3)
+    return result
 
 
 def commands(config, options, output, server):
@@ -379,19 +452,26 @@ def run(config, options):
             for source, target in zip(recorder.monitors, targets[:2]):
                 recorder.client.connect(source, target)
         pause(options['warmup'])
+        prewarm = prewarm_take(info, options['seconds'], prewarm_requested(config, options),
+                                config['timeout'])
         video = options['command'] != 'measure-latency'
-        recorder.enabled = True
-        record_time = time.monotonic()
-        if video:
-            launcher.api(info, 'record', {}, timeout=max(120, config['timeout']))
-        play_time = time.monotonic()
-        launcher.api(info, 'tracker_transport', dict(enabled=True, playing=True, beat=0), timeout=config['timeout'])
-        pause(options['seconds'])
-        stop_time = time.monotonic()
-        recorder.enabled = False         # the take ends here: stopping Studio's encoder stalls JACK, so keep it out
-        launcher.api(info, 'tracker_transport', dict(playing=False), timeout=config['timeout'])
-        if video:
-            launcher.api(info, 'record', {}, timeout=max(120, config['timeout']))
+        try:
+            recorder.enabled = True
+            record_time = time.monotonic()
+            if video:
+                launcher.api(info, 'record', {}, timeout=max(120, config['timeout']))
+            play_time = time.monotonic()
+            launcher.api(info, 'tracker_transport', dict(enabled=True, playing=True, beat=0), timeout=config['timeout'])
+            pause(options['seconds'])
+            stop_time = time.monotonic()
+            recorder.enabled = False     # the take ends here: stopping Studio's encoder stalls JACK, so keep it out
+            launcher.api(info, 'tracker_transport', dict(playing=False), timeout=config['timeout'])
+            if video:
+                launcher.api(info, 'record', {}, timeout=max(120, config['timeout']))
+        finally:
+            # A timeout/transport error may have reached Studio after setting the hold.
+            if prewarm['hold'] or (prewarm['enabled'] and prewarm['available'] is None and prewarm['error']):
+                prewarm['release'] = release_prewarm_take(info, config['timeout'])
         recorder.close()
         import numpy as np
         if len(recorder.clock) < 2:
@@ -408,6 +488,7 @@ def run(config, options):
                       stop_monotonic=stop_time, audio_first_callback=recorder.first_time, xruns=recorder.xruns, blocks=recorder.blocks,
                       xruns_in_take=take_xruns, discontinuities_in_take=take_gaps,
                       xrun_seconds=[round(t - play_time, 3) for t in recorder.xrun_times],
+                      prewarm=prewarm,
                       synchronization='monotonic estimate; video API/encoder startup latency is not measured')
         recorder = None
         write_private(output / 'capture.json', report)

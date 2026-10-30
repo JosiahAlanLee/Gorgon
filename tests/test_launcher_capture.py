@@ -44,6 +44,68 @@ def test_real_server_requires_explicit_opt_in():
         capture.validate(config, options(seconds=float('nan')))
 
 
+def test_capture_prewarm_can_be_disabled_by_profile_or_cli(tmp_path, monkeypatch):
+    config = profile()
+    assert config['capture']['prewarm'] is True
+    config['capture']['prewarm'] = False
+    assert capture.prewarm_requested(config, options()) is False
+    assert capture.prewarm_requested(config, options(prewarm=True)) is True
+
+    calls = []
+    monkeypatch.setattr(capture, 'invoke', lambda config, args: calls.append(args) or 0)
+    cli.main(['--config', str(tmp_path / 'profile.json'), 'render', 'score.json',
+              '--output', str(tmp_path / 'out'), '--no-prewarm'])
+    assert calls[0]['prewarm'] is False
+
+
+def test_prewarm_take_records_and_holds_compiled_variants(monkeypatch):
+    calls = []
+    def api(info, endpoint, body, timeout):
+        calls.append((endpoint, body, timeout))
+        return dict(compiled=51, hold=True)
+    monkeypatch.setattr(capture.launcher, 'api', api)
+    result = capture.prewarm_take(dict(url='http://127.0.0.1:1234', token='test'), 192, True, 90)
+    assert calls == [('prewarm_take', dict(seconds=192, hold=True), 90)]
+    assert result['enabled'] and result['available'] and result['ran']
+    assert result['compiled'] == 51 and result['hold'] and result['error'] is None
+    assert result['duration_s'] >= 0
+
+
+def test_prewarm_take_detects_an_older_studio(monkeypatch):
+    import io
+    import urllib.error
+    def api(*args, **kwargs):
+        body = io.BytesIO(b'{"error": "ValueError: Unknown action: prewarm_take"}')
+        raise urllib.error.HTTPError('http://127.0.0.1:1234/api/prewarm_take', 400, 'Bad Request', {}, body)
+    monkeypatch.setattr(capture.launcher, 'api', api)
+    result = capture.prewarm_take(dict(url='http://127.0.0.1:1234', token='test'), 10, True, 90)
+    assert result['enabled'] and result['available'] is False and result['ran'] is False
+    assert 'Unknown action: prewarm_take' in result['error']
+
+
+def test_prewarm_take_failure_is_best_effort(monkeypatch):
+    import io
+    import urllib.error
+    def api(*args, **kwargs):
+        body = io.BytesIO(b'{"error": "RuntimeError: shader compile failed"}')
+        raise urllib.error.HTTPError('http://127.0.0.1:1234/api/prewarm_take', 400, 'Bad Request', {}, body)
+    monkeypatch.setattr(capture.launcher, 'api', api)
+    result = capture.prewarm_take(dict(url='http://127.0.0.1:1234', token='test'), 10, True, 90)
+    assert result['available'] is True and result['ran'] is False and result['hold'] is False
+    assert 'shader compile failed' in result['error']
+
+
+def test_prewarm_release_is_explicit(monkeypatch):
+    calls = []
+    def api(info, endpoint, body, timeout):
+        calls.append((endpoint, body, timeout))
+        return dict(compiled=0, hold=False)
+    monkeypatch.setattr(capture.launcher, 'api', api)
+    result = capture.release_prewarm_take(dict(url='http://127.0.0.1:1234', token='test'), 90)
+    assert calls == [('prewarm_take', dict(release=True), 90)]
+    assert result['released'] is True and result['error'] is None
+
+
 def test_patch_routing_and_offsets_are_private():
     original = dict(modules=[dict(plugin='GorgonBridge', model='Gorgon', data=dict(laneOffsetMs=[24]*6)),
                              dict(plugin='Core', model='AudioInterface16')])
