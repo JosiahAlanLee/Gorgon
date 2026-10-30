@@ -107,6 +107,8 @@ def main(argv=None):
         command.add_argument('--link', nargs=2, action='append', default=[], metavar=('SOURCE', 'DESTINATION'))
         command.add_argument('--optical-gain', type=float, default=.5)
         command.add_argument('--lead-blocks', type=int, default=2)
+        command.add_argument('--no-prewarm', dest='prewarm', action='store_false', default=None,
+                             help='do not precompile the take\'s shader variants before recording')
         command.add_argument('--size', help='offscreen WIDTHxHEIGHT')
         command.add_argument('--fps', type=float)
         command.add_argument('--sync-gate-channel', type=int, help='measure A/V sync from centre flashes and this capture gate channel (1–16)')

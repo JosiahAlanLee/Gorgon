@@ -48,6 +48,7 @@ def defaults():
                 studio=dict(command=hydrapy_command(), patch='gorgon-visual.py', backend='auto',
                             size='1280x720', fps=30, native_output='window', args=[]),
                 rack=dict(command=[discover_rack()], patch=None, user_dir=None, args=[]),
+                capture=dict(prewarm=True),
                 audio=dict(backend='pipewire', rate=48000, quantum=1024, device=None,
                            start_services=True, connections=[]))
 
@@ -75,11 +76,11 @@ def load(path=None):
         except (OSError, ValueError) as exc:
             raise LaunchError(f'Cannot read {path}: {exc}') from exc
         _fields(supplied, config, 'profile')
-        for key in ('studio', 'rack', 'audio'):
+        for key in ('studio', 'rack', 'capture', 'audio'):
             value = supplied.get(key, {})
             _fields(value, config[key], key)
             config[key].update(value)
-        config.update({k: v for k, v in supplied.items() if k not in ('studio', 'rack', 'audio')})
+        config.update({k: v for k, v in supplied.items() if k not in ('studio', 'rack', 'capture', 'audio')})
     if config['format'] != 'gorgon-launch-1':
         raise LaunchError('Expected profile format gorgon-launch-1')
     if not isinstance(config['workspace'], str) or not config['workspace']:
@@ -89,7 +90,7 @@ def load(path=None):
     timeout = config['timeout']
     if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or not math.isfinite(timeout) or not 1 <= timeout <= 300:
         raise LaunchError('timeout must be 1–300 seconds')
-    studio, rack, audio = (config[k] for k in ('studio', 'rack', 'audio'))
+    studio, rack, capture, audio = (config[k] for k in ('studio', 'rack', 'capture', 'audio'))
     for name, value in [('studio.command', studio['command']), ('rack.command', rack['command'])]:
         _argv(value, name)
     for name, value in [('studio.args', studio['args']), ('rack.args', rack['args'])]:
@@ -112,6 +113,8 @@ def load(path=None):
             raise LaunchError(f'audio.{key} must be an integer in {low}–{high}')
     if type(audio['start_services']) is not bool:
         raise LaunchError('audio.start_services must be true or false')
+    if type(capture['prewarm']) is not bool:
+        raise LaunchError('capture.prewarm must be true or false')
     if audio['device'] is not None and (not isinstance(audio['device'], str) or not audio['device']):
         raise LaunchError('audio.device must be null or a JACK playback device name')
     if not isinstance(audio['connections'], list):

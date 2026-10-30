@@ -45,7 +45,8 @@ def test_profile_preserves_saved_material_and_rejects_mistakes(profile):
     starter.prepare(profile)
     assert json.loads(saved.read_text()) == {'my_score': True}
     path = Path(profile['_path'])
-    for changes in [dict(audio=dict(rate=True)), dict(studio=dict(command='echo bad')),
+    for changes in [dict(audio=dict(rate=True)), dict(capture=dict(prewarm='yes')),
+                    dict(studio=dict(command='echo bad')),
                     dict(studio=dict(patch='../outside.py')), dict(audo={})]:
         value = defaults()
         value.update(changes)

@@ -227,9 +227,25 @@ options can select explicit JACK capture sources instead of rewriting Audio-16.
 The original `gorgon start` retains the profile's existing PipeWire handling.
 
 Options include `--warmup` (seconds, default 6), `--jack-timeout` (ms, default
-10000), `--size WIDTHxHEIGHT`, `--fps`, `--optical-gain` and `--lead-blocks`.
-Sample rate and period come from the profile's `audio.rate` and `audio.quantum`.
-JACK1's system library path is selected for these capture processes.
+10000), `--no-prewarm`, `--size WIDTHxHEIGHT`, `--fps`, `--optical-gain` and
+`--lead-blocks`. Sample rate and period come from the profile's `audio.rate` and
+`audio.quantum`. JACK1's system library path is selected for these capture processes.
+
+After the score, patch and routes are ready and the warmup has elapsed, capture
+asks Studio's `prewarm_take` action to rehearse the take, compile its shader
+variants, and hold compilation until recording stops. The hold is released
+after the take and during failure cleanup. `capture.json` records whether the
+action was available, whether it ran, the number of variants compiled, its
+duration and, when a hold was taken, its release result. This replaces the old private
+`renderer.settle = 1e9` workaround for planned takes. An older HydraPy without
+the action logs a warning and captures as before. Disable prewarming with
+`--no-prewarm`, or set the profile field:
+
+```json
+"capture": {
+  "prewarm": false
+}
+```
 
 Studio score uploads and transport changes use the profile's `timeout` (seconds),
 allowing scene compilation to finish. Video recording start/stop requests allow
