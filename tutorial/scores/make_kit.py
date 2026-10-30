@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Write scores/kit.json: demo.json's picture automation with the four audio lanes as a drum kit.
+"""Write scores/kit.json: demo.json's picture automation and a six-lane v3 score,
+with lanes 1-4 mapped to a drum kit.
 
 DrumLab's Percussion plays Gorgon's lanes 1-4 as Kick, Snare, Hat and FM (its default four-lane kit), and
 tunes each model from Gorgon's pitch with C4 (at key D) as the model's base. demo.json's Breaks lane uses

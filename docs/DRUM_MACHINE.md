@@ -4,6 +4,11 @@ This is a design assessment and implementation sequence, **not an extension of
 the score contract**. The current score, HydraPy pin and Rack outputs are unchanged.
 Snapshot inspected: Gorgon `cb27eb7`, HydraPy `a6031d7`, DSP_Emulation `4587b48`.
 
+The four-lane statements below describe that historical version-1 snapshot and
+the retired DrumLab design. The current format 3 contract has six lanes, 128
+pattern slots and per-lane lengths; see
+[`score-v3.md`](../spec/score-v3.md).
+
 ## The important gap
 
 The biggest obstacle is event semantics, rather than the number of synthesis
